@@ -16,17 +16,38 @@ class ClipboardManagerImpl @Inject constructor(
     private val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as AndroidClipboardManager
     
     override fun copyToClipboard(text: String, label: String) {
-        val clip = ClipData.newPlainText(label, text)
+        // Limit text length to prevent memory issues
+        val sanitizedText = text.take(MAX_CLIPBOARD_LENGTH)
+        val clip = ClipData.newPlainText(label, sanitizedText)
         clipboardManager.setPrimaryClip(clip)
+        
+        // Add flag for sensitive content on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            clip.description.extras = android.os.PersistableBundle().apply {
+                putBoolean("android.content.extra.IS_SENSITIVE", true)
+            }
+        }
     }
     
     override fun pasteFromClipboard(): String? {
-        val primaryClip = clipboardManager.primaryClip
-        return if (primaryClip != null && primaryClip.itemCount > 0) {
-            primaryClip.getItemAt(0).text?.toString()
-        } else {
+        return try {
+            val primaryClip = clipboardManager.primaryClip
+            if (primaryClip != null && primaryClip.itemCount > 0) {
+                val text = primaryClip.getItemAt(0).text?.toString()
+                // Validate and sanitize pasted content
+                text?.take(MAX_CLIPBOARD_LENGTH)?.trim()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            // Handle security exceptions or other clipboard access issues
+            android.util.Log.e("ClipboardManager", "Failed to paste from clipboard", e)
             null
         }
+    }
+    
+    companion object {
+        private const val MAX_CLIPBOARD_LENGTH = 100_000 // 100K chars max
     }
     
     override fun clearClipboard() {

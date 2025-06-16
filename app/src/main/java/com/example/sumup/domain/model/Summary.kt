@@ -6,11 +6,13 @@ package com.example.sumup.domain.model
 data class Summary(
     val id: String,
     val originalText: String,
+    val summary: String = "",
     val bulletPoints: List<String>,
     val persona: SummaryPersona,
     val createdAt: Long,
     val isFavorite: Boolean = false,
-    val metrics: SummaryMetrics
+    val metrics: SummaryMetrics,
+    val confidence: Float = 0.0f
 ) {
     /**
      * Get the summary as a single text string

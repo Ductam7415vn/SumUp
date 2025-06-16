@@ -1,12 +1,20 @@
 package com.example.sumup.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.sumup.data.local.converter.StringListConverter
 import java.util.UUID
 
-@Entity(tableName = "summaries")
+@Entity(
+    tableName = "summaries",
+    indices = [
+        Index(value = ["createdAt"]),
+        Index(value = ["isFavorite"]),
+        Index(value = ["persona"])
+    ]
+)
 @TypeConverters(StringListConverter::class)
 data class SummaryEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),

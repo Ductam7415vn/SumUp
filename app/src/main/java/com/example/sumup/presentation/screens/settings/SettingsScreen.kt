@@ -1,321 +1,391 @@
 package com.example.sumup.presentation.screens.settings
 
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sumup.presentation.components.*
+import com.example.sumup.presentation.components.animations.AnimatedSwitch
+import com.example.sumup.presentation.components.animations.AnimatedSettingToggle
+import com.example.sumup.utils.haptic.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    adaptiveInfo: com.example.sumup.presentation.utils.AdaptiveLayoutInfo? = null,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
-    val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsStateWithLifecycle()
-    
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
-    
-    var showThemeDialog by remember { mutableStateOf(false) }
-    
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { 
-                    Text(
-                        text = "Settings",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
+                title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    HapticIconButton(
+                        onClick = onNavigateBack,
+                        hapticType = HapticFeedbackType.NAVIGATION
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
-        LazyColumn(
+        EnhancedLoadingState(
+            isLoading = uiState.error != null, // Simple loading state check
+            hasData = true,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
+            shimmerContent = {
+                // Show shimmer while loading settings
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Settings sections shimmer
+                    items(4) {
+                        ShimmerSettingsSection(itemCount = 2)
+                    }
+                }
+            },
+            actualContent = {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
             // Appearance Section
             item {
-                SettingsSection(title = "Appearance") {
-                    SettingItem(
-                        icon = Icons.Outlined.FavoriteBorder,
-                        title = "Theme",
-                        subtitle = currentTheme.displayName,
-                        onClick = { showThemeDialog = true }
+                SettingsSection("Appearance") {
+                    ThemePreference(
+                        currentTheme = uiState.themeMode,
+                        onClick = { viewModel.showThemeDialog() }
                     )
                     
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        SettingItem(
-                            icon = Icons.Outlined.Star,
-                            title = "Dynamic Colors",
-                            subtitle = "Use Material You colors from wallpaper",
-                            showToggle = true,
-                            checked = isDynamicColorEnabled,
-                            onCheckedChange = viewModel::setDynamicColorEnabled
-                        )
-                    }
+                    DynamicColorPreference(
+                        enabled = uiState.isDynamicColorEnabled,
+                        onToggle = { viewModel.setDynamicColorEnabled(it) }
+                    )
                 }
             }
             
             // Summarization Section
             item {
-                SettingsSection(title = "Summarization") {
-                    SettingItem(
-                        icon = Icons.Outlined.Settings,
-                        title = "Default Summary Length",
-                        subtitle = "Standard",
-                        onClick = { /* TODO: Add length selection */ }
+                SettingsSection("Summarization") {
+                    DefaultLengthPreference(
+                        currentLength = uiState.summaryLength,
+                        onClick = { viewModel.showLengthDialog() }
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Person,
-                        title = "Language",
-                        subtitle = "English",
-                        onClick = { /* TODO: Add language selection */ }
+                    LanguagePreference(
+                        currentLanguage = uiState.language,
+                        onClick = { viewModel.showLanguageDialog() }
                     )
                 }
             }
             
             // Data & Storage Section
             item {
-                SettingsSection(title = "Data & Storage") {
-                    SettingItem(
-                        icon = Icons.Outlined.Info,
-                        title = "Storage Used",
-                        subtitle = "${uiState.summaryCount} summaries • ${uiState.storageUsed}",
-                        onClick = {}
+                SettingsSection("Data & Storage") {
+                    StorageUsageItem(
+                        storageUsage = uiState.storageUsage
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Delete,
-                        title = "Clear All Data",
-                        subtitle = "Delete all summaries and reset settings",
-                        onClick = viewModel::showClearDataDialog,
-                        tintColor = MaterialTheme.colorScheme.error
+                    ClearHistoryPreference(
+                        onClick = { viewModel.showClearDataDialog() }
+                    )
+                    
+                    ExportDataItem(
+                        onClick = { viewModel.exportData() }
                     )
                 }
             }
             
             // About Section
             item {
-                SettingsSection(title = "About") {
-                    SettingItem(
-                        icon = Icons.Outlined.Info,
-                        title = "Version",
-                        subtitle = "1.0.0 (Build 1)",
-                        onClick = {}
+                SettingsSection("About") {
+                    VersionInfo(
+                        version = uiState.appVersion
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Email,
-                        title = "Send Feedback",
-                        subtitle = "Report issues or suggest features",
-                        onClick = {
-                            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:feedback@sumup.app")
-                                putExtra(Intent.EXTRA_SUBJECT, "SumUp Feedback")
-                            }
-                            context.startActivity(emailIntent)
-                        }
-                    )
-                    
-                    SettingItem(
-                        icon = Icons.Outlined.Lock,
-                        title = "Privacy Policy",
-                        subtitle = "How we protect your data",
-                        onClick = {
-                            val browserIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://sumup.app/privacy")
-                            )
-                            context.startActivity(browserIntent)
-                        }
-                    )
-                    
-                    SettingItem(
-                        icon = Icons.Outlined.Article,
-                        title = "Terms of Service",
-                        subtitle = "Terms and conditions",
-                        onClick = {
-                            val browserIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://sumup.app/terms")
-                            )
-                            context.startActivity(browserIntent)
-                        }
-                    )
+                    SendFeedbackItem()
                 }
             }
-        }
+                }
+            }
+        )
         
-        // Theme selection dialog
-        if (showThemeDialog) {
+        // Dialogs
+        if (uiState.showThemeDialog) {
             ThemeSelectionDialog(
-                currentTheme = currentTheme,
-                onThemeSelected = { theme ->
-                    viewModel.setThemeMode(theme)
-                    showThemeDialog = false
-                },
-                onDismiss = { showThemeDialog = false }
+                currentTheme = uiState.themeMode,
+                onThemeSelected = { viewModel.setThemeMode(it) },
+                onDismiss = { viewModel.hideThemeDialog() }
             )
         }
         
-        // Clear data confirmation dialog
+        if (uiState.showLengthDialog) {
+            LengthSelectionDialog(
+                currentLength = uiState.summaryLength,
+                onLengthSelected = { viewModel.setSummaryLength(it) },
+                onDismiss = { viewModel.hideLengthDialog() }
+            )
+        }
+        
+        if (uiState.showLanguageDialog) {
+            LanguageSelectionDialog(
+                currentLanguage = uiState.language,
+                onLanguageSelected = { viewModel.setLanguage(it) },
+                onDismiss = { viewModel.hideLanguageDialog() }
+            )
+        }
+        
         if (uiState.showClearDataDialog) {
-            AlertDialog(
-                onDismissRequest = viewModel::dismissClearDataDialog,
-                title = { Text("Clear All Data?") },
-                text = { 
-                    Text("This will delete all ${uiState.summaryCount} summaries and reset all settings to defaults. This action cannot be undone.")
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = viewModel::clearAllData,
-                        enabled = !uiState.isClearing,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        if (uiState.isClearing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Clear All")
-                        }
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = viewModel::dismissClearDataDialog,
-                        enabled = !uiState.isClearing
-                    ) {
-                        Text("Cancel")
-                    }
-                }
+            ClearDataConfirmationDialog(
+                onConfirm = { viewModel.clearAllData() },
+                onDismiss = { viewModel.hideClearDataDialog() },
+                isClearing = uiState.isClearing
             )
         }
         
-        // Success/Error handling
-        LaunchedEffect(uiState.clearDataSuccess) {
-            if (uiState.clearDataSuccess) {
-                snackbarHostState.showSnackbar("All data cleared successfully")
-                viewModel.dismissSuccess()
-            }
+        if (uiState.clearDataSuccess) {
+            SuccessDialog(
+                message = "Data cleared successfully",
+                onDismiss = { viewModel.dismissSuccess() }
+            )
         }
         
-        LaunchedEffect(uiState.error) {
-            uiState.error?.let { error ->
-                snackbarHostState.showSnackbar(error)
-                viewModel.dismissError()
-            }
+        uiState.error?.let { error ->
+            ErrorDialog(
+                message = error,
+                onDismiss = { viewModel.dismissError() }
+            )
         }
     }
 }
 
+// Settings Section Component
 @Composable
 fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-        content()
-        Spacer(modifier = Modifier.height(16.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            content()
+        }
     }
 }
 
+// Preference Item Components
 @Composable
-fun SettingItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    showToggle: Boolean = false,
-    checked: Boolean = false,
-    onCheckedChange: (Boolean) -> Unit = {},
-    onClick: () -> Unit = {},
-    tintColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+fun ThemePreference(
+    currentTheme: ThemeMode,
+    onClick: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier
+    PreferenceItem(
+        title = "Theme",
+        subtitle = currentTheme.displayName,
+        icon = Icons.Default.Palette,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun DynamicColorPreference(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    AnimatedSettingToggle(
+        title = "Dynamic Colors",
+        subtitle = if (enabled) "Match system colors" else "Use default theme",
+        checked = enabled,
+        onCheckedChange = onToggle
+    )
+}
+
+@Composable
+fun DefaultLengthPreference(
+    currentLength: Float,
+    onClick: () -> Unit
+) {
+    val lengthText = when {
+        currentLength <= 0.3f -> "Short"
+        currentLength <= 0.7f -> "Medium"
+        else -> "Long"
+    }
+    
+    PreferenceItem(
+        title = "Default Summary Length",
+        subtitle = lengthText,
+        icon = Icons.Default.TextFields,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun LanguagePreference(
+    currentLanguage: String,
+    onClick: () -> Unit
+) {
+    val languageDisplay = when (currentLanguage) {
+        "en" -> "English"
+        "vi" -> "Tiếng Việt"
+        "es" -> "Español"
+        "fr" -> "Français"
+        else -> currentLanguage
+    }
+    
+    PreferenceItem(
+        title = "Language",
+        subtitle = languageDisplay,
+        icon = Icons.Default.Language,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun StorageUsageItem(
+    storageUsage: Long
+) {
+    val usageText = "${storageUsage / 1024} KB used"
+    
+    PreferenceItem(
+        title = "Storage Usage",
+        subtitle = usageText,
+        icon = Icons.Default.Storage
+    )
+}
+
+@Composable
+fun ClearHistoryPreference(
+    onClick: () -> Unit
+) {
+    PreferenceItem(
+        title = "Clear All Data",
+        subtitle = "Remove all summaries and settings",
+        icon = Icons.Default.Delete,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun ExportDataItem(
+    onClick: () -> Unit
+) {
+    PreferenceItem(
+        title = "Export Data",
+        subtitle = "Save your settings and data",
+        icon = Icons.Default.Download,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun VersionInfo(
+    version: String
+) {
+    PreferenceItem(
+        title = "Version",
+        subtitle = version,
+        icon = Icons.Default.Info
+    )
+}
+
+@Composable
+fun SendFeedbackItem() {
+    PreferenceItem(
+        title = "Send Feedback",
+        subtitle = "Help us improve SumUp",
+        icon = Icons.Default.Feedback,
+        onClick = {
+            // In real app, would open email or feedback form
+        }
+    )
+}
+
+// Base Preference Item
+@Composable
+fun PreferenceItem(
+    title: String,
+    subtitle: String? = null,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onClick: (() -> Unit)? = null,
+    trailing: @Composable (() -> Unit)? = null
+) {
+    val clickableModifier = if (onClick != null) {
+        Modifier.clickable { onClick() }
+    } else {
+        Modifier
+    }
+    
+    Row(
+        modifier = clickableModifier
             .fillMaxWidth()
-            .clickable(enabled = !showToggle) { onClick() }
+            .padding(vertical = 8.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = tintColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.padding(end = 16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
+        }
+        
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
-            if (showToggle) {
-                Switch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange
-                )
-            } else {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+        }
+        
+        if (trailing != null) {
+            trailing()
+        } else if (onClick != null) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
 
+// Dialog Components
 @Composable
 fun ThemeSelectionDialog(
     currentTheme: ThemeMode,
@@ -327,22 +397,21 @@ fun ThemeSelectionDialog(
         title = { Text("Choose Theme") },
         text = {
             Column {
-                ThemeMode.entries.forEach { theme ->
+                ThemeMode.values().forEach { theme ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onThemeSelected(theme) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = theme == currentTheme,
                             onClick = { onThemeSelected(theme) }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = theme.displayName,
-                            style = MaterialTheme.typography.bodyLarge
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
@@ -350,7 +419,173 @@ fun ThemeSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun LengthSelectionDialog(
+    currentLength: Float,
+    onLengthSelected: (Float) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val lengths = listOf(
+        0.3f to "Short",
+        0.5f to "Medium", 
+        0.8f to "Long"
+    )
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Summary Length") },
+        text = {
+            Column {
+                lengths.forEach { (value, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLengthSelected(value) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = kotlin.math.abs(value - currentLength) < 0.1f,
+                            onClick = { onLengthSelected(value) }
+                        )
+                        Text(
+                            text = label,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun LanguageSelectionDialog(
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val languages = listOf(
+        "en" to "English",
+        "vi" to "Tiếng Việt",
+        "es" to "Español",
+        "fr" to "Français"
+    )
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose Language") },
+        text = {
+            Column {
+                languages.forEach { (code, name) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLanguageSelected(code) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = code == currentLanguage,
+                            onClick = { onLanguageSelected(code) }
+                        )
+                        Text(
+                            text = name,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun ClearDataConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    isClearing: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Clear All Data?") },
+        text = {
+            Text("This will permanently delete all your summaries and reset settings to defaults. This action cannot be undone.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isClearing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                if (isClearing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onError
+                    )
+                } else {
+                    Text("Clear All")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isClearing
+            ) {
                 Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun SuccessDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Success") },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+@Composable
+fun ErrorDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Error") },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
             }
         }
     )

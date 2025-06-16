@@ -40,7 +40,20 @@ class ResultViewModel @Inject constructor(
                         _uiState.update { 
                             it.copy(
                                 summary = summary,
-                                selectedPersona = summary.persona
+                                selectedPersona = summary.persona,
+                                currentPersona = summary.persona,
+                                isFavorite = summary.isFavorite,
+                                summaryText = summary.bulletPoints.joinToString("\n") { "• $it" },
+                                summaryTitle = "Summary - ${summary.persona.displayName}",
+                                generatedAt = summary.createdAt,
+                                keyPointsCount = summary.bulletPoints.size,
+                                summaryWordCount = summary.bulletPoints.joinToString(" ").split(" ").size,
+                                originalWordCount = summary.originalText?.split(" ")?.size ?: 0,
+                                compressionRatio = if (summary.originalText != null) {
+                                    val original = summary.originalText.split(" ").size.toFloat()
+                                    val compressed = summary.bulletPoints.joinToString(" ").split(" ").size.toFloat()
+                                    (1 - compressed / original) * 100
+                                } else 0f
                             )
                         }
                     }
@@ -71,6 +84,28 @@ class ResultViewModel @Inject constructor(
         }
     }
     
+    fun toggleFavorite() {
+        saveSummary()
+    }
+    
+    fun shareSummary() {
+        // Share functionality will be handled by the UI layer
+    }
+    
+    fun exportSummary() {
+        // Export functionality will be handled by the UI layer
+    }
+    
+    fun changePersona(persona: SummaryPersona) {
+        selectPersona(persona)
+        _uiState.update { it.copy(isRegenerating = true) }
+        // TODO: Implement actual regeneration
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(2000) // Mock delay
+            _uiState.update { it.copy(isRegenerating = false) }
+        }
+    }
+    
     fun regenerateSummary() {
         // TODO: Navigate back to processing with regenerate flag
     }
@@ -93,5 +128,23 @@ data class ResultUiState(
     val selectedPersona: SummaryPersona = SummaryPersona.GENERAL,
     val showAllBullets: Boolean = false,
     val showCopySuccess: Boolean = false,
-    val isLoading: Boolean = false
-)
+    val isLoading: Boolean = false,
+    val isRegenerating: Boolean = false,
+    val isFavorite: Boolean = false,
+    val currentPersona: SummaryPersona = SummaryPersona.GENERAL,
+    val availablePersonas: List<SummaryPersona> = SummaryPersona.entries,
+    val summaryTitle: String = "Summary",
+    val summaryText: String = "",
+    val summaryLanguage: String = "en",
+    val generatedAt: Long = System.currentTimeMillis(),
+    val originalWordCount: Int = 0,
+    val summaryWordCount: Int = 0,
+    val compressionRatio: Float = 0f,
+    val keyPointsCount: Int = 0
+) {
+    init {
+        summary?.let {
+            // Update derived fields when summary changes
+        }
+    }
+}

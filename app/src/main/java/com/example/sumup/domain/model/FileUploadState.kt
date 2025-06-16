@@ -26,6 +26,7 @@ sealed class FileUploadError(val message: String) {
     object CorruptedFile : FileUploadError("File appears to be corrupted.")
     object NoTextFound : FileUploadError("No readable text found in this PDF.")
     object ExtractionFailed : FileUploadError("Failed to extract text from PDF.")
+    data class ProcessingFailed(val details: String) : FileUploadError("Processing failed: $details")
     data class NetworkError(val details: String) : FileUploadError("Network error: $details")
     data class UnknownError(val details: String) : FileUploadError("Unknown error: $details")
 }

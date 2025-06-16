@@ -1,7 +1,10 @@
 package com.example.sumup.di
 
+import com.example.sumup.BuildConfig
 import com.example.sumup.data.remote.api.GeminiApiService
 import com.example.sumup.data.remote.api.MockGeminiApiService
+import com.example.sumup.data.remote.api.RealGeminiApiService
+import com.example.sumup.data.remote.api.EnhancedGeminiApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,9 +45,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGeminiApiService(): GeminiApiService {
-        // For MVP, use mock implementation
-        // In production, return retrofit.create(GeminiApiService::class.java)
-        return MockGeminiApiService()
+    fun provideGeminiApiService(
+        retrofit: Retrofit,
+        apiKeyManager: com.example.sumup.utils.ApiKeyManager
+    ): GeminiApiService {
+        val apiKey = apiKeyManager.getGeminiApiKey()
+        
+        return if (apiKeyManager.hasValidApiKey()) {
+            // Use enhanced API with retry logic when valid key is provided
+            EnhancedGeminiApiService(retrofit, apiKey)
+        } else {
+            // Use mock implementation for development/demo
+            MockGeminiApiService()
+        }
     }
 }

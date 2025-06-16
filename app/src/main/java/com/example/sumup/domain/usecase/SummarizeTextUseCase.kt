@@ -3,30 +3,27 @@ package com.example.sumup.domain.usecase
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.SummaryPersona
 import com.example.sumup.domain.repository.SummaryRepository
+import com.example.sumup.utils.InputValidator
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SummarizeTextUseCase @Inject constructor(
-    private val repository: SummaryRepository
+    private val repository: SummaryRepository,
+    private val inputValidator: InputValidator
 ) {
     suspend operator fun invoke(
         text: String,
         persona: SummaryPersona = SummaryPersona.GENERAL
     ): Result<Summary> = try {
-        val trimmedText = text.trim()
-        
-        // Validation
-        when {
-            trimmedText.length < 50 -> {
-                Result.failure(Exception("Text too short. Need at least 50 characters."))
-            }
-            trimmedText.length > 5000 -> {
-                Result.failure(Exception("Text too long. Maximum 5000 characters."))
-            }
-            else -> {
-                val summary = repository.summarizeText(trimmedText, persona)
+        // Validate and sanitize input
+        when (val validationResult = inputValidator.validateTextInput(text)) {
+            is InputValidator.ValidationResult.Success -> {
+                val summary = repository.summarizeText(validationResult.sanitizedValue, persona)
                 Result.success(summary)
+            }
+            is InputValidator.ValidationResult.Error -> {
+                Result.failure(Exception(validationResult.message))
             }
         }
     } catch (exception: Exception) {

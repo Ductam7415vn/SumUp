@@ -10,31 +10,7 @@ data class PdfDocument(
     val pageCount: Int? = null,
     val isPasswordProtected: Boolean = false,
     val extractedText: String? = null,
-    val processingState: PdfProcessingState = PdfProcessingState.PENDING
+    val processingState: PdfProcessingState = PdfProcessingState.Idle
 )
 
-enum class PdfProcessingState {
-    PENDING,
-    EXTRACTING,
-    EXTRACTED,
-    FAILED
-}
-
-/**
- * PDF extraction result with metadata
- */
-data class PdfExtractionResult(
-    val text: String,
-    val wordCount: Int,
-    val pageCount: Int,
-    val hasImages: Boolean,
-    val hasTables: Boolean,
-    val extractionTimeMs: Long,
-    val confidence: Float = 0.8f // How confident we are in extraction quality
-) {
-    val isTextExtractable: Boolean
-        get() = text.trim().length >= 50 && confidence > 0.5f
-        
-    val estimatedReadingTime: Int
-        get() = (wordCount / 200.0).toInt().coerceAtLeast(1)
-}
+// Moved to PdfDomainModels.kt to avoid duplication

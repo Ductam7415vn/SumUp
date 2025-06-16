@@ -6,8 +6,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SummaryDao {
-    @Query("SELECT * FROM summaries ORDER BY createdAt DESC")
+    @Query("SELECT * FROM summaries ORDER BY createdAt DESC LIMIT 500")
     fun getAllSummaries(): Flow<List<SummaryEntity>>
+    
+    @Query("SELECT * FROM summaries ORDER BY createdAt DESC LIMIT :limit OFFSET :offset")
+    suspend fun getSummariesPaged(limit: Int, offset: Int): List<SummaryEntity>
 
     @Query("SELECT * FROM summaries WHERE id = :id")
     suspend fun getSummaryById(id: String): SummaryEntity?

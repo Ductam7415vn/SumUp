@@ -18,53 +18,102 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
     
-    val currentTheme = settingsRepository.getThemeMode()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ThemeMode.SYSTEM
-        )
-    
-    val isDynamicColorEnabled = settingsRepository.isDynamicColorEnabled()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
-    
     init {
-        loadStorageInfo()
+        loadSettings()
     }
     
-    private fun loadStorageInfo() {
+    private fun loadSettings() {
         viewModelScope.launch {
+            combine(
+                settingsRepository.getThemeMode(),
+                settingsRepository.isDynamicColorEnabled(),
+                settingsRepository.defaultSummaryLength,
+                settingsRepository.language
+            ) { theme: ThemeMode, dynamicColor: Boolean, length: Float, language: String ->
+                _uiState.update {
+                    it.copy(
+                        themeMode = theme,
+                        isDynamicColorEnabled = dynamicColor,
+                        summaryLength = length,
+                        language = language
+                    )
+                }
+            }.collect()
+            
+            // Load storage info
             val summaryCount = summaryRepository.getSummaryCount()
-            _uiState.update { 
+            val storageUsage = summaryCount * 1024L // Rough estimate
+            
+            _uiState.update {
                 it.copy(
-                    summaryCount = summaryCount,
-                    storageUsed = calculateStorageUsed(summaryCount)
+                    storageUsage = storageUsage,
+                    appVersion = settingsRepository.getAppVersion()
                 )
             }
         }
     }
     
+    // Theme management
+    fun showThemeDialog() {
+        _uiState.update { it.copy(showThemeDialog = true) }
+    }
+    
+    fun hideThemeDialog() {
+        _uiState.update { it.copy(showThemeDialog = false) }
+    }
+    
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             settingsRepository.setThemeMode(mode)
+            _uiState.update { it.copy(themeMode = mode, showThemeDialog = false) }
         }
     }
     
     fun setDynamicColorEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setDynamicColorEnabled(enabled)
+            _uiState.update { it.copy(isDynamicColorEnabled = enabled) }
         }
     }
     
+    // Summary length management
+    fun showLengthDialog() {
+        _uiState.update { it.copy(showLengthDialog = true) }
+    }
+    
+    fun hideLengthDialog() {
+        _uiState.update { it.copy(showLengthDialog = false) }
+    }
+    
+    fun setSummaryLength(length: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateDefaultSummaryLength(length)
+            _uiState.update { it.copy(summaryLength = length, showLengthDialog = false) }
+        }
+    }
+    
+    // Language management
+    fun showLanguageDialog() {
+        _uiState.update { it.copy(showLanguageDialog = true) }
+    }
+    
+    fun hideLanguageDialog() {
+        _uiState.update { it.copy(showLanguageDialog = false) }
+    }
+    
+    fun setLanguage(language: String) {
+        viewModelScope.launch {
+            settingsRepository.updateLanguage(language)
+            _uiState.update { it.copy(language = language, showLanguageDialog = false) }
+        }
+    }
+    
+    // Data management
     fun showClearDataDialog() {
         _uiState.update { it.copy(showClearDataDialog = true) }
     }
     
-    fun dismissClearDataDialog() {
+    fun hideClearDataDialog() {
         _uiState.update { it.copy(showClearDataDialog = false) }
     }
     
@@ -76,16 +125,15 @@ class SettingsViewModel @Inject constructor(
                 // Clear all summaries
                 summaryRepository.deleteAllSummaries()
                 
-                // Reset settings to defaults
-                settingsRepository.resetToDefaults()
+                // Clear all data including settings
+                settingsRepository.clearAllData()
                 
                 _uiState.update { 
                     it.copy(
                         isClearing = false,
                         showClearDataDialog = false,
                         clearDataSuccess = true,
-                        summaryCount = 0,
-                        storageUsed = "0 KB"
+                        storageUsage = 0L
                     )
                 }
             } catch (e: Exception) {
@@ -99,6 +147,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
     
+    fun exportData() {
+        viewModelScope.launch {
+            try {
+                val exportData = settingsRepository.exportData()
+                // TODO: Handle exported data (save to file, share, etc.)
+                _uiState.update { it.copy(clearDataSuccess = true) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Export failed: ${e.message}") }
+            }
+        }
+    }
+    
     fun dismissSuccess() {
         _uiState.update { it.copy(clearDataSuccess = false) }
     }
@@ -106,28 +166,30 @@ class SettingsViewModel @Inject constructor(
     fun dismissError() {
         _uiState.update { it.copy(error = null) }
     }
-    
-    private fun calculateStorageUsed(summaryCount: Int): String {
-        // Rough estimate: 1KB per summary
-        val kb = summaryCount
-        return when {
-            kb < 1024 -> "$kb KB"
-            else -> "${kb / 1024} MB"
-        }
-    }
 }
 
 data class SettingsUiState(
-    val summaryCount: Int = 0,
-    val storageUsed: String = "0 KB",
+    // Theme
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val isDynamicColorEnabled: Boolean = false,
+    val showThemeDialog: Boolean = false,
+    
+    // Summarization
+    val summaryLength: Float = 0.5f, // Medium by default
+    val language: String = "en",
+    val showLengthDialog: Boolean = false,
+    val showLanguageDialog: Boolean = false,
+    
+    // Data & Storage
+    val storageUsage: Long = 0L,
     val showClearDataDialog: Boolean = false,
     val isClearing: Boolean = false,
     val clearDataSuccess: Boolean = false,
+    
+    // About
+    val appVersion: String = "1.0.0",
+    
+    // Common
     val error: String? = null
 )
 
-enum class ThemeMode(val displayName: String) {
-    SYSTEM("System default"),
-    LIGHT("Light"),
-    DARK("Dark")
-}

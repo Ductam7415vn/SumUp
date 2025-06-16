@@ -4,6 +4,7 @@ import android.net.Uri
 import com.example.sumup.domain.model.FileUploadError
 import com.example.sumup.domain.model.FileUploadState
 import com.example.sumup.domain.model.ProcessingStage
+import com.example.sumup.domain.model.PdfDocument
 import com.example.sumup.domain.repository.PdfRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -18,14 +19,12 @@ class ProcessPdfUseCase @Inject constructor(
         try {
             emit(FileUploadState.Processing(ProcessingStage.READING_FILE, 0.1f))
             
-            val validation = pdfRepository.validatePdfFile(fileUri)
-            if (!validation.isValid) {
-                emit(FileUploadState.Error(validation.error!!))
-                return@flow
-            }
+            val pdfDocument = pdfRepository.validatePdfFile(fileUri.toString())
             
             emit(FileUploadState.Processing(ProcessingStage.EXTRACTING_TEXT, 0.3f))
-            val extractedText = pdfRepository.extractTextFromPdf(fileUri)
+            
+            val extractionResult = pdfRepository.extractTextFromPdf(pdfDocument)
+            val extractedText = extractionResult.extractedText
             
             emit(FileUploadState.Processing(ProcessingStage.CLEANING_TEXT, 0.7f))
             val cleanedText = cleanExtractedText(extractedText)
@@ -43,3 +42,15 @@ class ProcessPdfUseCase @Inject constructor(
                     emit(FileUploadState.Success(cleanedText))
                 }
             }
+        } catch (exception: Exception) {
+            emit(FileUploadState.Error(FileUploadError.ProcessingFailed(exception.message ?: "Unknown error")))
+        }
+    }
+    
+    private fun cleanExtractedText(text: String): String {
+        return text
+            .replace(Regex("\\s+"), " ") // Replace multiple whitespace with single space
+            .replace(Regex("[\u0000-\u001f\u007f-\u009f]"), "") // Remove control characters
+            .trim()
+    }
+}

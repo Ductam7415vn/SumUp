@@ -2,6 +2,7 @@ package com.example.sumup.presentation.screens.ocr.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -39,6 +40,20 @@ fun OcrOverlay(
     modifier: Modifier = Modifier
 ) {
     var captureMode by remember { mutableStateOf(CaptureMode.Auto) }
+    var flashEnabled by remember { mutableStateOf(false) }
+    var showTextPreview by remember { mutableStateOf(false) }
+    
+    // Auto-capture logic for high confidence text
+    LaunchedEffect(uiState.confidence, captureMode) {
+        if (captureMode == CaptureMode.Auto && 
+            uiState.confidence > 0.85f && 
+            uiState.ocrState == OcrState.Ready &&
+            uiState.detectedText.isNotBlank()) {
+            
+            kotlinx.coroutines.delay(1000) // Wait 1 second for stable text
+            onTextScanned(uiState.detectedText)
+        }
+    }
     
     Box(
         modifier = modifier.fillMaxSize()
@@ -73,17 +88,37 @@ fun OcrOverlay(
             Row {
                 // Flash button
                 IconButton(
-                    onClick = { /* TODO: Toggle flash */ },
+                    onClick = { flashEnabled = !flashEnabled },
                     modifier = Modifier
                         .background(
-                            color = Color.Black.copy(alpha = 0.3f),
+                            color = if (flashEnabled) Color.Yellow.copy(alpha = 0.3f) 
+                                   else Color.Black.copy(alpha = 0.3f),
                             shape = CircleShape
                         )
                 ) {
                     Icon(
-                        Icons.Default.FlashOff,
+                        if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
                         contentDescription = "Flash",
-                        tint = Color.White
+                        tint = if (flashEnabled) Color.Yellow else Color.White
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Text preview toggle
+                IconButton(
+                    onClick = { showTextPreview = !showTextPreview },
+                    modifier = Modifier
+                        .background(
+                            color = if (showTextPreview) Color.Blue.copy(alpha = 0.3f) 
+                                   else Color.Black.copy(alpha = 0.3f),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        if (showTextPreview) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        contentDescription = "Preview Text",
+                        tint = if (showTextPreview) Color.Blue else Color.White
                     )
                 }
                 
@@ -107,14 +142,62 @@ fun OcrOverlay(
             }
         }
         
-        // Guide frame
-        GuideFrame(
+        // Enhanced guide frame with better visual feedback
+        EnhancedGuideFrame(
             state = uiState.ocrState,
+            confidence = uiState.confidence,
+            detectedText = uiState.detectedText,
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.7f)
+                .fillMaxHeight(0.6f)
                 .align(Alignment.Center)
         )
+        
+        // Real-time text preview overlay
+        if (showTextPreview && uiState.detectedText.isNotBlank()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 100.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black.copy(alpha = 0.8f)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Detected Text",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        
+                        // Confidence indicator
+                        ConfidenceIndicator(
+                            confidence = uiState.confidence,
+                            modifier = Modifier
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = uiState.detectedText.take(200) + 
+                               if (uiState.detectedText.length > 200) "..." else "",
+                        color = Color.White.copy(alpha = 0.9f),
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 4
+                    )
+                }
+            }
+        }
         
         // Bottom controls
         Column(
@@ -128,8 +211,12 @@ fun OcrOverlay(
                 .padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // OCR State indicator
-            OcrStateIndicator(state = uiState.ocrState)
+            // OCR State indicator with enhanced info
+            OcrStateIndicator(
+                state = uiState.ocrState,
+                confidence = uiState.confidence,
+                wordCount = uiState.detectedText.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -179,68 +266,205 @@ fun OcrOverlay(
 }
 
 @Composable
-private fun GuideFrame(
+private fun EnhancedGuideFrame(
     state: OcrState,
+    confidence: Float,
+    detectedText: String,
     modifier: Modifier = Modifier
 ) {
     val borderColor by animateColorAsState(
         targetValue = when (state) {
-            OcrState.Searching -> Color.Yellow
-            OcrState.Focusing -> Color(0xFFFFA500) // Orange
-            OcrState.Ready -> Color.Green
-            OcrState.Processing -> Color.Blue
-            else -> Color.Yellow
+            OcrState.Searching -> MaterialTheme.colorScheme.primary
+            OcrState.Focusing -> MaterialTheme.colorScheme.tertiary
+            OcrState.Ready -> Color(0xFF4CAF50) // Green
+            OcrState.Processing -> MaterialTheme.colorScheme.secondary
+            else -> MaterialTheme.colorScheme.outline
+        },
+        animationSpec = tween(400)
+    )
+    
+    val strokeWidth by animateFloatAsState(
+        targetValue = when (state) {
+            OcrState.Ready -> 4f
+            OcrState.Processing -> 3f
+            else -> 2f
         },
         animationSpec = tween(300)
     )
     
-    val strokeWidth by animateFloatAsState(
-        targetValue = if (state == OcrState.Ready) 4f else 3f,
-        animationSpec = tween(300)
+    val cornerRadius by animateFloatAsState(
+        targetValue = if (state == OcrState.Ready) 20f else 16f,
+        animationSpec = spring(dampingRatio = 0.7f)
     )
-    
-    Canvas(
-        modifier = modifier
-            .border(
-                width = strokeWidth.dp,
+
+    Box(modifier = modifier) {
+        // Main frame with enhanced styling
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val pathEffect = when (state) {
+                OcrState.Searching -> PathEffect.dashPathEffect(floatArrayOf(15f, 10f), 0f)
+                else -> null
+            }
+            
+            // Background with subtle fill
+            drawRoundRect(
+                color = borderColor.copy(alpha = 0.1f),
+                topLeft = Offset(0f, 0f),
+                size = Size(size.width, size.height),
+                cornerRadius = CornerRadius(cornerRadius.dp.toPx())
+            )
+            
+            // Border
+            drawRoundRect(
                 color = borderColor,
-                shape = RoundedCornerShape(8.dp)
+                topLeft = Offset(strokeWidth.dp.toPx() / 2, strokeWidth.dp.toPx() / 2),
+                size = Size(
+                    size.width - strokeWidth.dp.toPx(),
+                    size.height - strokeWidth.dp.toPx()
+                ),
+                cornerRadius = CornerRadius(cornerRadius.dp.toPx()),
+                style = Stroke(
+                    width = strokeWidth.dp.toPx(),
+                    pathEffect = pathEffect
+                )
             )
-            .padding(16.dp)
-    ) {
-        val pathEffect = if (state == OcrState.Searching) {
-            PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-        } else null
+            
+            // Corner guides for better alignment
+            val cornerSize = 30.dp.toPx()
+            val cornerStroke = 3.dp.toPx()
+            val margin = 20.dp.toPx()
+            
+            // Top-left corner
+            drawLine(
+                color = borderColor,
+                start = Offset(margin, margin + cornerSize),
+                end = Offset(margin, margin),
+                strokeWidth = cornerStroke
+            )
+            drawLine(
+                color = borderColor,
+                start = Offset(margin, margin),
+                end = Offset(margin + cornerSize, margin),
+                strokeWidth = cornerStroke
+            )
+            
+            // Top-right corner
+            drawLine(
+                color = borderColor,
+                start = Offset(size.width - margin - cornerSize, margin),
+                end = Offset(size.width - margin, margin),
+                strokeWidth = cornerStroke
+            )
+            drawLine(
+                color = borderColor,
+                start = Offset(size.width - margin, margin),
+                end = Offset(size.width - margin, margin + cornerSize),
+                strokeWidth = cornerStroke
+            )
+            
+            // Bottom-left corner
+            drawLine(
+                color = borderColor,
+                start = Offset(margin, size.height - margin - cornerSize),
+                end = Offset(margin, size.height - margin),
+                strokeWidth = cornerStroke
+            )
+            drawLine(
+                color = borderColor,
+                start = Offset(margin, size.height - margin),
+                end = Offset(margin + cornerSize, size.height - margin),
+                strokeWidth = cornerStroke
+            )
+            
+            // Bottom-right corner
+            drawLine(
+                color = borderColor,
+                start = Offset(size.width - margin - cornerSize, size.height - margin),
+                end = Offset(size.width - margin, size.height - margin),
+                strokeWidth = cornerStroke
+            )
+            drawLine(
+                color = borderColor,
+                start = Offset(size.width - margin, size.height - margin),
+                end = Offset(size.width - margin, size.height - margin - cornerSize),
+                strokeWidth = cornerStroke
+            )
+        }
         
-        drawRoundRect(
-            color = borderColor,
-            topLeft = Offset(0f, 0f),
-            size = Size(size.width, size.height),
-            cornerRadius = CornerRadius(8.dp.toPx()),
-            style = Stroke(
-                width = strokeWidth.dp.toPx(),
-                pathEffect = pathEffect
+        // Enhanced guide content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Main instruction text
+            Text(
+                text = when (state) {
+                    OcrState.Searching -> "🔍 Position text within frame"
+                    OcrState.Focusing -> "📸 Hold steady..."
+                    OcrState.Ready -> "✨ Perfect! Ready to capture"
+                    OcrState.Processing -> "⚙️ Processing text..."
+                    else -> "📄 Align document here"
+                },
+                color = borderColor,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
             )
-        )
-    }
-    
-    // Guide text
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "← Align text here →",
-            color = borderColor.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
+            
+            if (confidence > 0.3f) {
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Confidence indicator with visual bar
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = borderColor.copy(alpha = 0.2f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${(confidence * 100).toInt()}% Quality",
+                            color = borderColor,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                        )
+                        
+                        Spacer(modifier = Modifier.height(4.dp))
+                        
+                        LinearProgressIndicator(
+                            progress = { confidence },
+                            modifier = Modifier.width(100.dp),
+                            color = borderColor,
+                            trackColor = borderColor.copy(alpha = 0.3f)
+                        )
+                    }
+                }
+            }
+            
+            // Word count for detected text
+            if (detectedText.isNotBlank() && confidence > 0.4f) {
+                val wordCount = detectedText.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "📝 $wordCount words detected",
+                    color = borderColor.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun OcrStateIndicator(
-    state: OcrState
+    state: OcrState,
+    confidence: Float,
+    wordCount: Int
 ) {
     val (icon, text) = when (state) {
         OcrState.Searching -> "🔍" to "Looking for text..."
@@ -250,19 +474,63 @@ private fun OcrStateIndicator(
         else -> "🔍" to "Looking for text..."
     }
     
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+        
+        // Additional info for detected text
+        if (wordCount > 0 && confidence > 0.3f) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "$wordCount words detected",
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConfidenceIndicator(
+    confidence: Float,
+    modifier: Modifier = Modifier
+) {
+    val color = when {
+        confidence > 0.8f -> Color.Green
+        confidence > 0.6f -> Color.Yellow
+        confidence > 0.3f -> Color(0xFFFFA500) // Orange
+        else -> Color.Red
+    }
+    
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Canvas(
+            modifier = Modifier.size(8.dp)
+        ) {
+            drawCircle(color = color)
+        }
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = icon,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = text,
+            text = "${(confidence * 100).toInt()}%",
             color = Color.White,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }

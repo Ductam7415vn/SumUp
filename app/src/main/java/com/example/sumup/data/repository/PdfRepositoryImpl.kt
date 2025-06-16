@@ -7,11 +7,11 @@ import com.example.sumup.domain.model.PdfExtractionResult
 import com.example.sumup.domain.model.PdfProcessingState
 import com.example.sumup.domain.repository.PdfRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.pdmodel.PDDocument
+import com.tom_roush.pdfbox.text.PDFTextStripper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.apache.pdfbox.android.PDFBoxResourceLoader
-import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.text.PDFTextStripper
 import java.io.InputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,51 +22,152 @@ class PdfRepositoryImpl @Inject constructor(
 ) : PdfRepository {
 
     init {
+        // Initialize PDFBox resources
         PDFBoxResourceLoader.init(context)
     }
 
     override suspend fun extractTextFromPdf(pdfDocument: PdfDocument): PdfExtractionResult {
         return withContext(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
             var document: PDDocument? = null
-            var inputStream: InputStream? = null
-            
             try {
                 val uri = Uri.parse(pdfDocument.uri)
-                inputStream = context.contentResolver.openInputStream(uri)
-                    ?: throw Exception("Cannot open PDF file")
-                
-                document = PDDocument.load(inputStream)
-                
-                if (document.isEncrypted) {
-                    throw Exception("Password-protected PDFs are not supported")
+                val inputStream = context.contentResolver.openInputStream(uri)
+                    ?: return@withContext PdfExtractionResult(
+                        extractedText = "",
+                        pageCount = 0,
+                        success = false,
+                        errorMessage = "Cannot open PDF file. Please check file permissions."
+                    )
+
+                inputStream.use { stream ->
+                    // Check file size before loading
+                    val availableBytes = stream.available()
+                    if (availableBytes > 50 * 1024 * 1024) { // 50MB limit
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = 0,
+                            success = false,
+                            errorMessage = "PDF file too large. Maximum size is 50MB."
+                        )
+                    }
+                    
+                    try {
+                        document = PDDocument.load(stream)
+                    } catch (e: OutOfMemoryError) {
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = 0,
+                            success = false,
+                            errorMessage = "PDF too complex. Try a simpler document."
+                        )
+                    } catch (e: Exception) {
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = 0,
+                            success = false,
+                            errorMessage = when {
+                                e.message?.contains("PDF header signature not found") == true -> 
+                                    "Invalid PDF file. Please select a valid PDF document."
+                                e.message?.contains("corrupt") == true -> 
+                                    "PDF file appears to be corrupted. Try another file."
+                                else -> "Cannot read PDF: ${e.message}"
+                            }
+                        )
+                    }
+                    
+                    val pageCount = document.numberOfPages
+                    
+                    // Check page count
+                    if (pageCount == 0) {
+                        document.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = 0,
+                            success = false,
+                            errorMessage = "PDF has no pages"
+                        )
+                    }
+                    
+                    if (pageCount > 100) {
+                        document.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = pageCount,
+                            success = false,
+                            errorMessage = "PDF has too many pages (${pageCount}). Maximum is 100 pages."
+                        )
+                    }
+                    
+                    // Check if document is encrypted
+                    if (document.isEncrypted) {
+                        document.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = pageCount,
+                            success = false,
+                            errorMessage = "Password-protected PDFs are not supported"
+                        )
+                    }
+
+                    // Extract text from all pages with progress tracking
+                    val stripper = PDFTextStripper()
+                    val extractedText = try {
+                        stripper.getText(document)
+                    } catch (e: Exception) {
+                        document.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = pageCount,
+                            success = false,
+                            errorMessage = "Failed to extract text: ${e.message}"
+                        )
+                    }
+                    
+                    document.close()
+
+                    // Check if we got any text
+                    if (extractedText.isBlank()) {
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = pageCount,
+                            success = false,
+                            errorMessage = "No text found. This might be a scanned PDF with images only."
+                        )
+                    }
+
+                    // Calculate confidence based on extracted content
+                    val confidence = calculateExtractionConfidence(extractedText, pageCount)
+                    val hasTableStructure = detectTableStructure(extractedText)
+
+                    PdfExtractionResult(
+                        extractedText = extractedText.trim(),
+                        pageCount = pageCount,
+                        success = true,
+                        confidence = confidence,
+                        hasTableStructure = hasTableStructure,
+                        errorMessage = null
+                    )
                 }
-                
-                val stripper = PDFTextStripper()
-                val text = stripper.getText(document)
-                
-                val wordCount = text.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
-                val pageCount = document.numberOfPages
-                val extractionTime = System.currentTimeMillis() - startTime                val confidence = calculateExtractionConfidence(text, pageCount)
-                
+            } catch (e: SecurityException) {
                 PdfExtractionResult(
-                    text = text.trim(),
-                    wordCount = wordCount,
-                    pageCount = pageCount,
-                    hasImages = false,
-                    hasTables = text.contains("\\t") || detectTableStructure(text),
-                    extractionTimeMs = extractionTime,
-                    confidence = confidence
+                    extractedText = "",
+                    pageCount = 0,
+                    success = false,
+                    errorMessage = "Permission denied. Please grant storage permission to access PDF files."
                 )
-                
-            } catch (exception: Exception) {
-                throw Exception("PDF extraction failed: ${exception.message}", exception)
+            } catch (e: Exception) {
+                PdfExtractionResult(
+                    extractedText = "",
+                    pageCount = 0,
+                    success = false,
+                    errorMessage = "Unexpected error: ${e.javaClass.simpleName}"
+                )
             } finally {
+                // Ensure document is always closed
                 try {
                     document?.close()
-                    inputStream?.close()
                 } catch (e: Exception) {
-                    // Log but don't throw
+                    // Ignore close errors
                 }
             }
         }
@@ -92,12 +193,21 @@ class PdfRepositoryImpl @Inject constructor(
                         it.getLong(sizeIndex)
                     } else 0L
                     
-                    PdfDocument(
-                        uri = uri,
-                        fileName = fileName,
-                        sizeBytes = size,
-                        processingState = PdfProcessingState.PENDING
-                    )
+                    // Validate file properties
+                    val inputValidator = com.example.sumup.utils.InputValidator()
+                    when (val validationResult = inputValidator.validatePdfFile(fileName, size)) {
+                        is com.example.sumup.utils.InputValidator.ValidationResult.Success -> {
+                            PdfDocument(
+                                uri = uri,
+                                fileName = validationResult.sanitizedValue,
+                                sizeBytes = size,
+                                processingState = PdfProcessingState.Idle
+                            )
+                        }
+                        is com.example.sumup.utils.InputValidator.ValidationResult.Error -> {
+                            throw Exception(validationResult.message)
+                        }
+                    }
                 } else {
                     throw Exception("Cannot access PDF file")
                 }
@@ -107,8 +217,26 @@ class PdfRepositoryImpl @Inject constructor(
     override suspend fun getPdfMetadata(uri: String): PdfDocument {
         return withContext(Dispatchers.IO) {
             val baseDocument = validatePdfFile(uri)
-            // For now, return basic document info
-            baseDocument
+            
+            try {
+                val androidUri = Uri.parse(uri)
+                val inputStream = context.contentResolver.openInputStream(androidUri)
+                
+                inputStream?.use { stream ->
+                    val document = PDDocument.load(stream)
+                    val pageCount = document.numberOfPages
+                    val isPasswordProtected = document.isEncrypted
+                    document.close()
+                    
+                    baseDocument.copy(
+                        pageCount = pageCount,
+                        isPasswordProtected = isPasswordProtected
+                    )
+                } ?: baseDocument
+            } catch (e: Exception) {
+                // If metadata extraction fails, return base document
+                baseDocument
+            }
         }
     }
     

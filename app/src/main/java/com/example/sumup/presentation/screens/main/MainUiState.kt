@@ -1,6 +1,7 @@
 package com.example.sumup.presentation.screens.main
 
 import com.example.sumup.domain.model.AppError
+import com.example.sumup.domain.model.FileUploadState
 import com.example.sumup.domain.model.Summary
 
 data class MainUiState(
@@ -17,7 +18,13 @@ data class MainUiState(
     val processingMessage: String = "",
     val showClearDialog: Boolean = false,
     val showInfoDialog: Boolean = false,
-    val navigateToProcessing: Boolean = false
+    val navigateToProcessing: Boolean = false,
+    // PDF upload state
+    val fileUploadState: FileUploadState? = null,
+    // Draft recovery
+    val showDraftRecoveryDialog: Boolean = false,
+    val recoverableDraftText: String = "",
+    val autoSaveEnabled: Boolean = true
 ) {
     enum class InputType {
         TEXT, PDF, OCR

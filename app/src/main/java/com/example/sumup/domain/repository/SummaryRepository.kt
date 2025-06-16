@@ -2,6 +2,7 @@ package com.example.sumup.domain.repository
 
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.SummaryPersona
+import com.example.sumup.domain.model.SummaryRequest
 import kotlinx.coroutines.flow.Flow
 
 interface SummaryRepository {
@@ -16,4 +17,5 @@ interface SummaryRepository {
         text: String, 
         persona: SummaryPersona = SummaryPersona.GENERAL
     ): Summary
+    suspend fun generateSummary(request: SummaryRequest): Summary
 }

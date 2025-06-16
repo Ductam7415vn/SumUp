@@ -7,12 +7,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sumup.presentation.screens.history.HistoryScreen
 import com.example.sumup.presentation.screens.main.MainScreen
+import com.example.sumup.presentation.screens.main.AdaptiveMainScreen
 import com.example.sumup.presentation.screens.ocr.OcrScreen
+import com.example.sumup.presentation.screens.onboarding.OnboardingScreen
 import com.example.sumup.presentation.screens.processing.ProcessingScreen
 import com.example.sumup.presentation.screens.result.ResultScreen
+import com.example.sumup.presentation.screens.result.AdaptiveResultScreen
 import com.example.sumup.presentation.screens.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
+    object Onboarding : Screen("onboarding")
     object Main : Screen("main")
     object Ocr : Screen("ocr")
     object Processing : Screen("processing")
@@ -30,7 +34,7 @@ fun SumUpNavigation(
         startDestination = Screen.Main.route
     ) {
         composable(Screen.Main.route) {
-            MainScreen(
+            AdaptiveMainScreen(
                 onNavigateToOcr = {
                     navController.navigate(Screen.Ocr.route)
                 },
@@ -60,7 +64,7 @@ fun SumUpNavigation(
         }
         
         composable(Screen.Result.route) {
-            ResultScreen(
+            AdaptiveResultScreen(
                 onNavigateBack = {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Main.route) { inclusive = true }
@@ -79,10 +83,17 @@ fun SumUpNavigation(
                 },
                 onTextScanned = { scannedText ->
                     // Pass scanned text back to main screen
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("scanned_text", scannedText)
-                    navController.popBackStack()
+                    try {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("scanned_text", scannedText)
+                        navController.popBackStack()
+                    } catch (e: Exception) {
+                        // Fallback if navigation state is invalid
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Main.route) { inclusive = true }
+                        }
+                    }
                 }
             )
         }

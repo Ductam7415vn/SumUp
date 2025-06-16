@@ -1,15 +1,38 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+/.idea
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin compiler
+.kotlin/
+
+# Backup files
+*.backup
+*.bak
+
+# Test scripts
+test_*.sh
+test_*.py
+*Test.kt
+fix_*.sh
+
+# Documentation drafts
+CONTINUATION_PROMPT.md
+CLAUDE.md
+docs/[0-9][0-9]-*.md
+
+# Temporary files
+*.tmp
+*.temp
+
+# API test files
+TestGeminiAPI.kt
+
+# Local configuration template should be kept
+!local.properties.template

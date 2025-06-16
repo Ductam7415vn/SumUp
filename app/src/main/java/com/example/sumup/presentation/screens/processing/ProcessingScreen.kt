@@ -12,10 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.sumup.domain.model.ProcessingState
 import com.example.sumup.presentation.components.AnimatedProcessingIcon
+import com.example.sumup.presentation.components.ProgressMorph
+import com.example.sumup.presentation.components.SharedElementKeys
+import com.example.sumup.presentation.components.ContainerTransform
+import com.example.sumup.presentation.components.ConfirmationBackHandler
+import com.example.sumup.presentation.components.animations.LoadingDots
 import kotlinx.coroutines.delay
 
 @Composable
@@ -23,15 +29,10 @@ fun ProcessingScreen(
     onCancel: () -> Unit = {},
     onComplete: () -> Unit = {}
 ) {
-    var progress by remember { mutableStateOf(0f) }
+    var progress by remember { mutableFloatStateOf(0f) }
     var message by remember { mutableStateOf("Reading your text...") }
-    var timeoutLevel by remember { mutableStateOf(0) }
+    var timeoutLevel by remember { mutableIntStateOf(0) }
     var showTimeoutMessage by remember { mutableStateOf(false) }
-    
-    // Handle back button
-    BackHandler {
-        onCancel()
-    }
     
     // Simulate progress
     LaunchedEffect(Unit) {
@@ -81,40 +82,64 @@ fun ProcessingScreen(
         timeoutLevel = 3
     }
     
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    ConfirmationBackHandler(
+        enabled = true,
+        requiresConfirmation = progress > 0.5f, // Require confirmation if processing is more than 50% complete
+        confirmationMessage = "Processing is in progress. Are you sure you want to cancel?",
+        onBackPressed = onCancel
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
-            // Animated Logo
+            ContainerTransform(
+                visible = true,
+                modifier = Modifier.fillMaxSize()
+            ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+            // Animated Logo with shared element key
             AnimatedProcessingIcon(
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier
+                    .size(120.dp)
+                    .testTag(SharedElementKeys.PROCESSING_AI_ICON)
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Progress message
-            Text(
-                text = message,
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            // Progress message with loading dots
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (progress < 1f) {
+                    LoadingDots(
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Smart progress bar
-            SmartProgressBar(
+            // Enhanced progress bar with morphing
+            ProgressMorph(
+                isIndeterminate = progress < 0.1f,
                 progress = progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp)
+                    .testTag(SharedElementKeys.PROCESSING_PROGRESS)
             )
             
             // Show percentage
@@ -182,82 +207,9 @@ fun ProcessingScreen(
             ) {
                 Text("Cancel")
             }
+            }
+            }
         }
     }
 }
 
-@Composable
-private fun SmartProgressBar(
-    progress: Float,
-    modifier: Modifier = Modifier
-) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessVeryLow
-        ),
-        label = "progress"
-    )
-    
-    // Color transition based on progress
-    val progressColor by animateColorAsState(
-        targetValue = when {
-            animatedProgress < 0.3f -> Color(0xFF4CAF50)  // Green
-            animatedProgress < 0.7f -> Color(0xFF2196F3)  // Blue  
-            else -> Color(0xFF9C27B0)                     // Purple
-        },
-        animationSpec = tween(500),
-        label = "color"
-    )
-    
-    LinearProgressIndicator(
-        progress = animatedProgress,
-        modifier = modifier.height(8.dp),
-        color = progressColor,
-        trackColor = MaterialTheme.colorScheme.surfaceVariant
-    )
-}
-
-// Progress state management
-
-class ProcessingProgressManager {
-    private var startTime = 0L
-    private var apiCallStarted = false
-    
-    fun start() {
-        startTime = System.currentTimeMillis()
-    }
-    
-    fun getProgress(realApiProgress: Float? = null): ProcessingState {
-        val elapsed = System.currentTimeMillis() - startTime
-        
-        return when {
-            elapsed < 1000 -> ProcessingState(
-                progress = lerp(0f, 0.3f, elapsed / 1000f),
-                message = "Reading your text..."
-            )
-            elapsed < 3000 && realApiProgress == null -> ProcessingState(
-                progress = lerp(0.3f, 0.5f, (elapsed - 1000) / 2000f),
-                message = "Understanding context..."
-            )
-            elapsed < 5000 -> ProcessingState(
-                progress = realApiProgress?.let { lerp(0.5f, 0.7f, it) } ?: 0.65f,
-                message = "Creating summary..."
-            )
-            elapsed < 7000 -> ProcessingState(
-                progress = 0.85f,
-                message = "Almost ready..."
-            )
-            else -> ProcessingState(
-                progress = 0.95f,
-                message = "Finalizing...",
-                showTimeout = true
-            )
-        }
-    }
-    
-    private fun lerp(start: Float, end: Float, fraction: Float): Float {
-        return start + (end - start) * fraction.coerceIn(0f, 1f)
-    }
-}

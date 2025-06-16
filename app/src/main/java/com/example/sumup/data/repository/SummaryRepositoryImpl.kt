@@ -77,12 +77,17 @@ class SummaryRepositoryImpl @Inject constructor(
             val summary = Summary(
                 id = java.util.UUID.randomUUID().toString(),
                 originalText = text,
+                summary = response.summary,
                 bulletPoints = response.bullets,
                 persona = persona,
                 createdAt = System.currentTimeMillis(),
                 isFavorite = false,
-                metrics = metrics
+                metrics = metrics,
+                confidence = response.confidence
             )
+            
+            android.util.Log.d("SummaryRepository", "Created summary with ${response.bullets.size} bullet points")
+            android.util.Log.d("SummaryRepository", "Bullets: ${response.bullets}")
 
             // Save to local database
             saveSummary(summary)
@@ -91,5 +96,9 @@ class SummaryRepositoryImpl @Inject constructor(
         } catch (exception: Exception) {
             throw Exception("Failed to summarize text: ${exception.message}", exception)
         }
+    }
+    
+    override suspend fun generateSummary(request: com.example.sumup.domain.model.SummaryRequest): Summary {
+        return summarizeText(request.text ?: "", request.persona)
     }
 }

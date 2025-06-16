@@ -14,14 +14,22 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.sumup.presentation.components.AutoSaveTextField
+import com.example.sumup.presentation.components.InlineErrorDisplay
+import com.example.sumup.presentation.components.FieldErrorIndicator
+import com.example.sumup.domain.model.AppError
+import com.example.sumup.utils.drafts.DraftInputType
+import com.example.sumup.utils.drafts.DraftManager
 
 @Composable
 fun TextInputSection(
     text: String,
     onTextChange: (String) -> Unit,
     isError: Boolean = false,
+    inlineError: AppError? = null,
     modifier: Modifier = Modifier,
-    onHelpClick: () -> Unit = {}
+    onHelpClick: () -> Unit = {},
+    draftManager: DraftManager? = null
 ) {
     var showToast by remember { mutableStateOf(false) }
     
@@ -30,7 +38,7 @@ fun TextInputSection(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        OutlinedTextField(
+        AutoSaveTextField(
             value = text,
             onValueChange = { newText ->
                 if (newText.length <= 5000) {
@@ -61,30 +69,50 @@ fun TextInputSection(
                 ) {
                     CharacterCounter(
                         current = text.length,
-                        max = 5000,
+                        max = 30000,
                         modifier = Modifier.testTag("char_counter")
                     )
                     
-                    IconButton(
-                        onClick = onHelpClick,
-                        modifier = Modifier.size(20.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Outlined.Help,
-                            contentDescription = "Help",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        FieldErrorIndicator(
+                            hasError = inlineError != null
                         )
+                        
+                        IconButton(
+                            onClick = onHelpClick,
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.Help,
+                                contentDescription = "Help",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             },
+            trailingIcon = null, // Auto-save status will be shown automatically
             isError = isError,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 autoCorrect = true,
                 keyboardType = KeyboardType.Text
             ),
-            maxLines = Int.MAX_VALUE
+            maxLines = Int.MAX_VALUE,
+            autoSaveEnabled = true,
+            draftInputType = DraftInputType.TEXT,
+            showAutoSaveStatus = true,
+            draftManager = draftManager
+        )
+        
+        // Show inline error for field-specific errors
+        InlineErrorDisplay(
+            error = inlineError,
+            modifier = Modifier.fillMaxWidth()
         )
         
         // Spacer to push content up when keyboard appears

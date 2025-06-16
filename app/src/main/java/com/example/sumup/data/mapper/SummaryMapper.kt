@@ -14,8 +14,13 @@ class SummaryMapper @Inject constructor() {
         return Summary(
             id = entity.id,
             originalText = entity.originalText,
+            summary = entity.summaryText,
             bulletPoints = entity.bullets,
-            persona = SummaryPersona.valueOf(entity.persona),
+            persona = try {
+                SummaryPersona.valueOf(entity.persona)
+            } catch (e: IllegalArgumentException) {
+                SummaryPersona.GENERAL
+            },
             metrics = SummaryMetrics(
                 originalWordCount = entity.originalWordCount,
                 summaryWordCount = entity.summaryWordCount,
@@ -25,7 +30,8 @@ class SummaryMapper @Inject constructor() {
                 confidenceScore = entity.confidence
             ),
             createdAt = entity.createdAt,
-            isFavorite = entity.isFavorite
+            isFavorite = entity.isFavorite,
+            confidence = entity.confidence
         )
     }
     
@@ -33,7 +39,7 @@ class SummaryMapper @Inject constructor() {
         return SummaryEntity(
             id = domain.id,
             originalText = domain.originalText,
-            summaryText = domain.summaryText,
+            summaryText = domain.summary.ifEmpty { domain.summaryText },
             bullets = domain.bulletPoints,
             persona = domain.persona.name,
             originalWordCount = domain.metrics.originalWordCount,
@@ -41,7 +47,7 @@ class SummaryMapper @Inject constructor() {
             originalReadingTime = domain.metrics.originalReadingTime,
             summaryReadingTime = domain.metrics.summaryReadingTime,
             reductionPercent = domain.metrics.reductionPercentage,
-            confidence = domain.metrics.confidenceScore,
+            confidence = domain.confidence,
             createdAt = domain.createdAt,
             isFavorite = domain.isFavorite
         )

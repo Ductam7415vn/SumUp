@@ -24,10 +24,10 @@ class ExtractPdfTextUseCase @Inject constructor(
                 val result = pdfRepository.extractTextFromPdf(pdfDocument)
                 val extractionTime = System.currentTimeMillis() - startTime
                 
-                val enhancedResult = result.copy(extractionTimeMs = extractionTime)
+                // Enhanced result - for now just use the original result
                 
-                if (enhancedResult.isTextExtractable) {
-                    Result.success(enhancedResult)
+                if (result.success && result.extractedText.isNotBlank()) {
+                    Result.success(result)
                 } else {
                     Result.failure(Exception("Could not extract readable text from PDF. Try a text-based PDF instead of scanned images."))
                 }
