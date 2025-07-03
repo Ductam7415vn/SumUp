@@ -26,8 +26,15 @@ fun AdaptiveResultScreen(
     onNavigateBack: () -> Unit,
     onNavigateToHistory: () -> Unit = {},
     adaptiveInfo: com.example.sumup.presentation.utils.AdaptiveLayoutInfo? = null,
+    summaryId: String? = null,
     viewModel: ResultViewModel = hiltViewModel()
 ) {
+    // Load specific summary if ID is provided
+    LaunchedEffect(summaryId) {
+        summaryId?.let {
+            viewModel.loadSummary(it)
+        }
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (adaptiveInfo?.deviceType == com.example.sumup.presentation.utils.DeviceType.TABLET ||

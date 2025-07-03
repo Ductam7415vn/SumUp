@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - OCR Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Camera Preview */
+        .camera-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Simulated camera view */
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23222"/><text x="50" y="50" text-anchor="middle" fill="%23666" font-size="8">Camera Feed</text></svg>');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.8;
+        }
+
+        /* Top Controls */
+        .top-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button .material-icons {
+            color: white;
+            font-size: 24px;
+        }
+
+        .flash-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .flash-button .material-icons {
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Detection Overlay */
+        .detection-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 200px;
+            border: 3px solid #4ade80;
+            border-radius: 12px;
+            animation: pulse 2s infinite;
+            z-index: 5;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .detection-corners {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #4ade80;
+        }
+
+        .corner.tl {
+            top: -3px;
+            left: -3px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 12px 0 0 0;
+        }
+
+        .corner.tr {
+            top: -3px;
+            right: -3px;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 12px 0 0;
+        }
+
+        .corner.bl {
+            bottom: -3px;
+            left: -3px;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 12px;
+        }
+
+        .corner.br {
+            bottom: -3px;
+            right: -3px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 12px 0;
+        }
+
+        /* Detection Status */
+        .detection-status {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .status-text {
+            color: #4ade80;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-text .material-icons {
+            font-size: 18px;
+        }
+
+        /* Bottom Controls */
+        .bottom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 32px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .capture-button {
+            width: 72px;
+            height: 72px;
+            background: white;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .capture-button:hover {
+            transform: scale(1.05);
+        }
+
+        .capture-button:active {
+            transform: scale(0.95);
+        }
+
+        .capture-button-inner {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Permission Screen */
+        .permission-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .permission-screen.active {
+            display: flex;
+        }
+
+        .permission-icon {
+            width: 100px;
+            height: 100px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .permission-icon .material-icons {
+            font-size: 48px;
+            color: #6366f1;
+        }
+
+        .permission-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        .permission-text {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 32px;
+        }
+
+        .permission-button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .permission-button:hover {
+            background: #5558e3;
+            transform: translateY(-1px);
+        }
+
+        /* Review Dialog */
+        .review-dialog {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 30;
+        }
+
+        .review-dialog.active {
+            display: flex;
+        }
+
+        .review-content {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 340px;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .review-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .review-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .confidence-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: #4ade80;
+            width: 85%;
+            transition: width 0.3s ease;
+        }
+
+        .confidence-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .review-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .detected-text {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .detected-text:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .review-actions {
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .review-button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .retake-button {
+            background: #f3f4f6;
+            color: #666;
+        }
+
+        .continue-button {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <!-- Camera Preview -->
+            <div class="camera-preview">
+                <div class="camera-feed"></div>
+                
+                <!-- Top Controls -->
+                <div class="top-controls">
+                    <button class="back-button" onclick="goBack()">
+                        <span class="material-icons">arrow_back</span>
+                    </button>
+                    <button class="flash-button" onclick="toggleFlash()">
+                        <span class="material-icons" id="flashIcon">flash_off</span>
+                    </button>
+                </div>
+
+                <!-- Detection Overlay -->
+                <div class="detection-overlay">
+                    <div class="detection-corners">
+                        <div class="corner tl"></div>
+                        <div class="corner tr"></div>
+                        <div class="corner bl"></div>
+                        <div class="corner br"></div>
+                    </div>
+                </div>
+
+                <!-- Detection Status -->
+                <div class="detection-status">
+                    <div class="status-text">
+                        <span class="material-icons">check_circle</span>
+                        Text detected
+                    </div>
+                </div>
+
+                <!-- Bottom Controls -->
+                <div class="bottom-controls">
+                    <button class="capture-button" onclick="captureText()">
+                        <div class="capture-button-inner"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Permission Screen -->
+            <div class="permission-screen" id="permissionScreen">
+                <div class="permission-icon">
+                    <span class="material-icons">photo_camera</span>
+                </div>
+                <h2 class="permission-title">Camera Permission</h2>
+                <p class="permission-text">
+                    SumUp needs camera access to scan and extract text from documents. 
+                    Your photos are processed locally and never stored.
+                </p>
+                <button class="permission-button" onclick="requestPermission()">
+                    Allow Camera Access
+                </button>
+            </div>
+
+            <!-- Review Dialog -->
+            <div class="review-dialog" id="reviewDialog">
+                <div class="review-content">
+                    <div class="review-header">
+                        <h2 class="review-title">Review Detected Text</h2>
+                        <div class="confidence-indicator">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill"></div>
+                            </div>
+                            <span class="confidence-text">85% confidence</span>
+                        </div>
+                    </div>
+                    <div class="review-body">
+                        <textarea class="detected-text" id="detectedText">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</textarea>
+                    </div>
+                    <div class="review-actions">
+                        <button class="review-button retake-button" onclick="retakePhoto()">
+                            Retake
+                        </button>
+                        <button class="review-button continue-button" onclick="continueWithText()">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let flashOn = false;
+        let hasPermission = false;
+
+        // Check initial permission (simulate)
+        window.onload = () => {
+            // Simulate permission check
+            setTimeout(() => {
+                if (!hasPermission) {
+                    document.getElementById('permissionScreen').classList.add('active');
+                }
+            }, 500);
+        };
+
+        function requestPermission() {
+            // Simulate permission grant
+            hasPermission = true;
+            document.getElementById('permissionScreen').classList.remove('active');
+            
+            // Show camera feed
+            setTimeout(() => {
+                console.log('Camera activated');
+            }, 300);
+        }
+
+        function goBack() {
+            if (confirm('Exit OCR scanner?')) {
+                window.history.back();
+            }
+        }
+
+        function toggleFlash() {
+            flashOn = !flashOn;
+            const flashIcon = document.getElementById('flashIcon');
+            flashIcon.textContent = flashOn ? 'flash_on' : 'flash_off';
+        }
+
+        function captureText() {
+            // Simulate text capture
+            const captureButton = document.querySelector('.capture-button');
+            captureButton.style.transform = 'scale(0.9)';
+            
+            setTimeout(() => {
+                captureButton.style.transform = 'scale(1)';
+                // Show review dialog
+                document.getElementById('reviewDialog').classList.add('active');
+            }, 200);
+        }
+
+        function retakePhoto() {
+            document.getElementById('reviewDialog').classList.remove('active');
+        }
+
+        function continueWithText() {
+            const text = document.getElementById('detectedText').value;
+            alert(`Text captured! Would navigate back to main screen with:\n\n${text.substring(0, 100)}...`);
+            document.getElementById('reviewDialog').classList.remove('active');
+        }
+
+        // Simulate text detection animation
+        setInterval(() => {
+            const overlay = document.querySelector('.detection-overlay');
+            if (Math.random() > 0.7) {
+                overlay.style.borderColor = '#4ade80';
+                document.querySelector('.status-text').style.color = '#4ade80';
+            } else {
+                overlay.style.borderColor = '#fbbf24';
+                document.querySelector('.status-text').style.color = '#fbbf24';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

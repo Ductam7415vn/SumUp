@@ -9,28 +9,77 @@ import javax.net.ssl.SSLException
 object GeminiErrorHandler {
     
     fun handleApiError(throwable: Throwable): AppError {
+        android.util.Log.e("GeminiErrorHandler", "=== ERROR HANDLING ===")
+        android.util.Log.e("GeminiErrorHandler", "Error type: ${throwable.javaClass.simpleName}")
+        android.util.Log.e("GeminiErrorHandler", "Error message: ${throwable.message}")
+        
         return when (throwable) {
-            is HttpException -> handleHttpError(throwable)
-            is UnknownHostException -> AppError.NetworkError
-            is SocketTimeoutException -> AppError.NetworkError
-            is SSLException -> AppError.NetworkError
-            is GeminiApiException -> throwable.toAppError()
-            else -> AppError.UnknownError(
-                throwable.message ?: "An unexpected error occurred"
-            )
+            is HttpException -> {
+                android.util.Log.e("GeminiErrorHandler", "HTTP Error code: ${throwable.code()}")
+                handleHttpError(throwable)
+            }
+            is UnknownHostException -> {
+                android.util.Log.e("GeminiErrorHandler", "Network error: UnknownHostException")
+                AppError.NetworkError
+            }
+            is SocketTimeoutException -> {
+                android.util.Log.e("GeminiErrorHandler", "Network error: SocketTimeoutException")
+                AppError.NetworkError
+            }
+            is SSLException -> {
+                android.util.Log.e("GeminiErrorHandler", "Network error: SSLException")
+                AppError.NetworkError
+            }
+            is GeminiApiException -> {
+                android.util.Log.e("GeminiErrorHandler", "Gemini API Exception: ${throwable.javaClass.simpleName}")
+                throwable.toAppError()
+            }
+            else -> {
+                android.util.Log.e("GeminiErrorHandler", "Unknown error type")
+                android.util.Log.e("GeminiErrorHandler", "Stack trace:", throwable)
+                AppError.UnknownError(
+                    throwable.message ?: "An unexpected error occurred"
+                )
+            }
         }
     }
     
     private fun handleHttpError(exception: HttpException): AppError {
+        val errorBody = try {
+            exception.response()?.errorBody()?.string()
+        } catch (e: Exception) {
+            "Unable to read error body"
+        }
+        
+        android.util.Log.e("GeminiErrorHandler", "HTTP ${exception.code()}: $errorBody")
+        
         return when (exception.code()) {
-            400 -> AppError.InvalidInputError
-            401 -> AppError.ServerError
-            403 -> AppError.ServerError
-            429 -> AppError.RateLimitError(
-                resetTime = System.currentTimeMillis() + 60000 // Reset in 1 minute
-            )
-            500, 502, 503 -> AppError.ServerError
-            else -> AppError.ServerError
+            400 -> {
+                android.util.Log.e("GeminiErrorHandler", "Bad Request (400) - Invalid input")
+                AppError.InvalidInputError
+            }
+            401 -> {
+                android.util.Log.e("GeminiErrorHandler", "Unauthorized (401) - Invalid API key")
+                AppError.ServerError
+            }
+            403 -> {
+                android.util.Log.e("GeminiErrorHandler", "Forbidden (403) - Access denied")
+                AppError.ServerError
+            }
+            429 -> {
+                android.util.Log.e("GeminiErrorHandler", "Rate Limited (429) - Too many requests")
+                AppError.RateLimitError(
+                    resetTime = System.currentTimeMillis() + 60000 // Reset in 1 minute
+                )
+            }
+            500, 502, 503 -> {
+                android.util.Log.e("GeminiErrorHandler", "Server Error (${exception.code()}) - Backend issue")
+                AppError.ServerError
+            }
+            else -> {
+                android.util.Log.e("GeminiErrorHandler", "Unexpected HTTP error: ${exception.code()}")
+                AppError.ServerError
+            }
         }
     }
 }

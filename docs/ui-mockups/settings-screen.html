@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - Settings Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: #f0f0f0;
+        }
+
+        .top-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* Settings Content */
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Settings Section */
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6366f1;
+            margin-bottom: 16px;
+        }
+
+        /* Settings Item */
+        .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .settings-item:hover {
+            background: #f8f9fa;
+            padding: 12px;
+            margin: 0 -12px;
+        }
+
+        .settings-item + .settings-item {
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .settings-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            color: #666;
+        }
+
+        .settings-content-wrapper {
+            flex: 1;
+        }
+
+        .settings-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+
+        .settings-value {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .settings-action {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .chevron {
+            color: #999;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            width: 48px;
+            height: 28px;
+            background: #e5e7eb;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #6366f1;
+        }
+
+        .toggle-knob {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(20px);
+        }
+
+        /* Dialogs */
+        .dialog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .dialog-overlay.active {
+            display: flex;
+        }
+
+        .dialog {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            cursor: pointer;
+        }
+
+        .radio-button {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 50%;
+            margin-right: 12px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .radio-button.selected {
+            border-color: #6366f1;
+        }
+
+        .radio-button.selected::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border-radius: 50%;
+        }
+
+        .radio-label {
+            font-size: 16px;
+            color: #1a1a1a;
+        }
+
+        .dialog-actions {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: #6366f1;
+        }
+
+        .dialog-button:hover {
+            background: #f3f4f6;
+        }
+
+        /* Clear Data Dialog */
+        .warning-dialog .dialog-content {
+            margin-bottom: 24px;
+            line-height: 1.5;
+            color: #666;
+        }
+
+        .warning-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .cancel-button {
+            background: transparent;
+            color: #666;
+        }
+
+        .delete-button {
+            background: #ef4444;
+            color: white;
+        }
+
+        .delete-button:hover {
+            background: #dc2626;
+        }
+
+        /* Success Dialog */
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .success-icon .material-icons {
+            font-size: 32px;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="back-button" onclick="goBack()">
+                        <span class="material-icons">arrow_back</span>
+                    </button>
+                    <h1 class="top-title">Settings</h1>
+                </div>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="settings-content">
+                <!-- Appearance Section -->
+                <div class="settings-section">
+                    <h2 class="section-title">Appearance</h2>
+                    
+                    <div class="settings-item" onclick="showThemeDialog()">
+                        <div class="settings-icon">
+                            <span class="material-icons">palette</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Theme</div>
+                            <div class="settings-value" id="themeValue">System Default</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" onclick="toggleDynamicColors()">
+                        <div class="settings-icon">
+                            <span class="material-icons">color_lens</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Dynamic Colors</div>
+                            <div class="settings-value">Match system colors</div>
+                        </div>
+                        <div class="settings-action">
+                            <div class="toggle-switch active" id="dynamicToggle">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summarization Section -->
+                <div class="settings-section">
+                    <h2 class="section-title">Summarization</h2>
+                    
+                    <div class="settings-item" onclick="showLengthDialog()">
+                        <div class="settings-icon">
+                            <span class="material-icons">text_fields</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Default Summary Length</div>
+                            <div class="settings-value" id="lengthValue">Medium</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" onclick="showLanguageDialog()">
+                        <div class="settings-icon">
+                            <span class="material-icons">language</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Language</div>
+                            <div class="settings-value" id="languageValue">English</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data & Storage Section -->
+                <div class="settings-section">
+                    <h2 class="section-title">Data & Storage</h2>
+                    
+                    <div class="settings-item">
+                        <div class="settings-icon">
+                            <span class="material-icons">storage</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Storage Usage</div>
+                            <div class="settings-value">12.5 MB used</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" onclick="showClearDataDialog()">
+                        <div class="settings-icon">
+                            <span class="material-icons">delete</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Clear All Data</div>
+                            <div class="settings-value">Remove all summaries and settings</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" onclick="exportData()">
+                        <div class="settings-icon">
+                            <span class="material-icons">download</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Export Data</div>
+                            <div class="settings-value">Save your settings and data</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About Section -->
+                <div class="settings-section">
+                    <h2 class="section-title">About</h2>
+                    
+                    <div class="settings-item">
+                        <div class="settings-icon">
+                            <span class="material-icons">info</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Version</div>
+                            <div class="settings-value">2.0.0 (Build 1234)</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item" onclick="sendFeedback()">
+                        <div class="settings-icon">
+                            <span class="material-icons">feedback</span>
+                        </div>
+                        <div class="settings-content-wrapper">
+                            <div class="settings-label">Send Feedback</div>
+                            <div class="settings-value">Help us improve SumUp</div>
+                        </div>
+                        <div class="settings-action">
+                            <span class="material-icons chevron">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme Dialog -->
+        <div class="dialog-overlay" id="themeDialog">
+            <div class="dialog">
+                <h2 class="dialog-title">Choose Theme</h2>
+                <div class="radio-option" onclick="selectTheme('system', 'System Default')">
+                    <div class="radio-button selected" data-value="system"></div>
+                    <span class="radio-label">System Default</span>
+                </div>
+                <div class="radio-option" onclick="selectTheme('light', 'Light')">
+                    <div class="radio-button" data-value="light"></div>
+                    <span class="radio-label">Light</span>
+                </div>
+                <div class="radio-option" onclick="selectTheme('dark', 'Dark')">
+                    <div class="radio-button" data-value="dark"></div>
+                    <span class="radio-label">Dark</span>
+                </div>
+                <div class="dialog-actions">
+                    <button class="dialog-button" onclick="closeDialog('themeDialog')">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Length Dialog -->
+        <div class="dialog-overlay" id="lengthDialog">
+            <div class="dialog">
+                <h2 class="dialog-title">Summary Length</h2>
+                <div class="radio-option" onclick="selectLength('short', 'Short')">
+                    <div class="radio-button" data-value="short"></div>
+                    <span class="radio-label">Short</span>
+                </div>
+                <div class="radio-option" onclick="selectLength('medium', 'Medium')">
+                    <div class="radio-button selected" data-value="medium"></div>
+                    <span class="radio-label">Medium</span>
+                </div>
+                <div class="radio-option" onclick="selectLength('long', 'Long')">
+                    <div class="radio-button" data-value="long"></div>
+                    <span class="radio-label">Long</span>
+                </div>
+                <div class="dialog-actions">
+                    <button class="dialog-button" onclick="closeDialog('lengthDialog')">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Language Dialog -->
+        <div class="dialog-overlay" id="languageDialog">
+            <div class="dialog">
+                <h2 class="dialog-title">Choose Language</h2>
+                <div class="radio-option" onclick="selectLanguage('en', 'English')">
+                    <div class="radio-button selected" data-value="en"></div>
+                    <span class="radio-label">English</span>
+                </div>
+                <div class="radio-option" onclick="selectLanguage('vi', 'Tiếng Việt')">
+                    <div class="radio-button" data-value="vi"></div>
+                    <span class="radio-label">Tiếng Việt</span>
+                </div>
+                <div class="radio-option" onclick="selectLanguage('es', 'Español')">
+                    <div class="radio-button" data-value="es"></div>
+                    <span class="radio-label">Español</span>
+                </div>
+                <div class="radio-option" onclick="selectLanguage('fr', 'Français')">
+                    <div class="radio-button" data-value="fr"></div>
+                    <span class="radio-label">Français</span>
+                </div>
+                <div class="dialog-actions">
+                    <button class="dialog-button" onclick="closeDialog('languageDialog')">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clear Data Dialog -->
+        <div class="dialog-overlay" id="clearDataDialog">
+            <div class="dialog warning-dialog">
+                <h2 class="dialog-title">Clear All Data?</h2>
+                <p class="dialog-content">
+                    This will permanently delete all your summaries and reset settings to defaults. This action cannot be undone.
+                </p>
+                <div class="warning-actions">
+                    <button class="dialog-button cancel-button" onclick="closeDialog('clearDataDialog')">Cancel</button>
+                    <button class="dialog-button delete-button" onclick="clearAllData()">Clear All</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Dialog -->
+        <div class="dialog-overlay" id="successDialog">
+            <div class="dialog">
+                <div class="success-icon">
+                    <span class="material-icons">check</span>
+                </div>
+                <h2 class="dialog-title">Success</h2>
+                <p class="dialog-content" id="successMessage">Data cleared successfully</p>
+                <div class="dialog-actions">
+                    <button class="dialog-button" onclick="closeDialog('successDialog')">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dialog management
+        function showThemeDialog() {
+            document.getElementById('themeDialog').classList.add('active');
+        }
+
+        function showLengthDialog() {
+            document.getElementById('lengthDialog').classList.add('active');
+        }
+
+        function showLanguageDialog() {
+            document.getElementById('languageDialog').classList.add('active');
+        }
+
+        function showClearDataDialog() {
+            document.getElementById('clearDataDialog').classList.add('active');
+        }
+
+        function closeDialog(dialogId) {
+            document.getElementById(dialogId).classList.remove('active');
+        }
+
+        // Theme selection
+        function selectTheme(value, label) {
+            document.querySelectorAll('#themeDialog .radio-button').forEach(rb => {
+                rb.classList.remove('selected');
+            });
+            document.querySelector(`[data-value="${value}"]`).classList.add('selected');
+            document.getElementById('themeValue').textContent = label;
+            setTimeout(() => closeDialog('themeDialog'), 300);
+        }
+
+        // Length selection
+        function selectLength(value, label) {
+            document.querySelectorAll('#lengthDialog .radio-button').forEach(rb => {
+                rb.classList.remove('selected');
+            });
+            document.querySelector(`#lengthDialog [data-value="${value}"]`).classList.add('selected');
+            document.getElementById('lengthValue').textContent = label;
+            setTimeout(() => closeDialog('lengthDialog'), 300);
+        }
+
+        // Language selection
+        function selectLanguage(value, label) {
+            document.querySelectorAll('#languageDialog .radio-button').forEach(rb => {
+                rb.classList.remove('selected');
+            });
+            document.querySelector(`#languageDialog [data-value="${value}"]`).classList.add('selected');
+            document.getElementById('languageValue').textContent = label;
+            setTimeout(() => closeDialog('languageDialog'), 300);
+        }
+
+        // Toggle dynamic colors
+        function toggleDynamicColors() {
+            const toggle = document.getElementById('dynamicToggle');
+            toggle.classList.toggle('active');
+        }
+
+        // Clear all data
+        function clearAllData() {
+            closeDialog('clearDataDialog');
+            setTimeout(() => {
+                document.getElementById('successMessage').textContent = 'Data cleared successfully';
+                document.getElementById('successDialog').classList.add('active');
+            }, 300);
+        }
+
+        // Export data
+        function exportData() {
+            document.getElementById('successMessage').textContent = 'Data exported successfully';
+            document.getElementById('successDialog').classList.add('active');
+        }
+
+        // Send feedback
+        function sendFeedback() {
+            alert('Opening email client to send feedback...');
+        }
+
+        // Navigation
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

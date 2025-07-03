@@ -65,5 +65,11 @@ data class SummarizeResponse(
     val summary: String,
     val bullets: List<String>,
     val confidence: Float,
-    val processingTime: Long
+    val processingTime: Long,
+    // Multi-tier content fields
+    val briefOverview: String? = null,
+    val detailedSummary: String? = null,
+    val keyInsights: List<String>? = null,
+    val actionItems: List<String>? = null,
+    val keywords: List<String>? = null
 )

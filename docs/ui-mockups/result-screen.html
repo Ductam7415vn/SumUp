@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - Result Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: #f0f0f0;
+        }
+
+        .top-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .more-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        /* KPI Cards */
+        .kpi-container {
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .kpi-card {
+            min-width: 150px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .kpi-change .material-icons {
+            font-size: 16px;
+        }
+
+        /* Persona Selector */
+        .persona-section {
+            padding: 0 16px 16px;
+        }
+
+        .section-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .persona-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .persona-chip {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .persona-chip.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .persona-chip .material-icons {
+            font-size: 18px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 0 16px 16px;
+        }
+
+        /* Summary Section */
+        .summary-section {
+            padding: 0 16px 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .summary-card {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1a1a1a;
+        }
+
+        /* Key Points */
+        .bullet-point {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .bullet-icon {
+            color: #6366f1;
+            margin-top: 2px;
+        }
+
+        .bullet-text {
+            flex: 1;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #1a1a1a;
+        }
+
+        .show-more-button {
+            background: transparent;
+            border: none;
+            color: #6366f1;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 0;
+            margin-top: 8px;
+        }
+
+        /* Bottom Action Bar */
+        .action-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f3f4f6;
+            color: #666;
+        }
+
+        .action-button:hover {
+            background: #e5e7eb;
+        }
+
+        .action-button .material-icons {
+            font-size: 20px;
+        }
+
+        .action-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Confetti Effect */
+        .confetti-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+
+        .confetti-container.active {
+            display: block;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #6366f1;
+            animation: fall 3s linear;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(850px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Snackbar */
+        .snackbar {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a1a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .snackbar.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="back-button" onclick="goBack()">
+                        <span class="material-icons">arrow_back</span>
+                    </button>
+                    <h1 class="top-title">Summary Result</h1>
+                </div>
+                <button class="more-button">
+                    <span class="material-icons">more_vert</span>
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- KPI Cards -->
+                <div class="kpi-container">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Original Words</div>
+                        <div class="kpi-value">1,234</div>
+                        <div class="kpi-change">
+                            <span class="material-icons">trending_down</span>
+                            <span>75% reduced</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Summary Words</div>
+                        <div class="kpi-value">308</div>
+                        <div class="kpi-change">
+                            <span class="material-icons">check_circle</span>
+                            <span>Optimized</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Time Saved</div>
+                        <div class="kpi-value">4 min</div>
+                        <div class="kpi-change">
+                            <span class="material-icons">schedule</span>
+                            <span>Quick read</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Persona Selector -->
+                <div class="persona-section">
+                    <div class="section-label">Optimize for:</div>
+                    <div class="persona-chips">
+                        <button class="persona-chip active" onclick="selectPersona(this, 'general')">
+                            <span class="material-icons">people</span>
+                            General
+                        </button>
+                        <button class="persona-chip" onclick="selectPersona(this, 'academic')">
+                            <span class="material-icons">school</span>
+                            Academic
+                        </button>
+                        <button class="persona-chip" onclick="selectPersona(this, 'business')">
+                            <span class="material-icons">business</span>
+                            Business
+                        </button>
+                        <button class="persona-chip" onclick="selectPersona(this, 'technical')">
+                            <span class="material-icons">code</span>
+                            Technical
+                        </button>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <h2 class="section-title">Summary</h2>
+                    <div class="summary-card">
+                        <p class="summary-text">
+                            This comprehensive analysis explores the transformative impact of artificial intelligence on modern healthcare systems. The study reveals that AI-powered diagnostic tools have achieved 95% accuracy in early disease detection, significantly outperforming traditional methods. Implementation across 50 hospitals showed a 40% reduction in diagnostic errors and 30% faster patient processing times, leading to improved outcomes and reduced healthcare costs.
+                        </p>
+                    </div>
+
+                    <h2 class="section-title">Key Points</h2>
+                    <div id="bulletPoints">
+                        <div class="bullet-point">
+                            <span class="material-icons bullet-icon">circle</span>
+                            <span class="bullet-text">AI diagnostic tools achieve 95% accuracy in early disease detection</span>
+                        </div>
+                        <div class="bullet-point">
+                            <span class="material-icons bullet-icon">circle</span>
+                            <span class="bullet-text">40% reduction in diagnostic errors across participating hospitals</span>
+                        </div>
+                        <div class="bullet-point">
+                            <span class="material-icons bullet-icon">circle</span>
+                            <span class="bullet-text">Patient processing times improved by 30% with AI integration</span>
+                        </div>
+                    </div>
+                    <button class="show-more-button" onclick="toggleBullets()">
+                        Show more...
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Action Bar -->
+            <div class="action-bar">
+                <button class="action-button" onclick="copySummary()">
+                    <span class="material-icons">content_copy</span>
+                    <span class="action-label">Copy</span>
+                </button>
+                <button class="action-button" onclick="shareSummary()">
+                    <span class="material-icons">share</span>
+                    <span class="action-label">Share</span>
+                </button>
+                <button class="action-button" onclick="saveSummary()">
+                    <span class="material-icons">bookmark</span>
+                    <span class="action-label">Save</span>
+                </button>
+                <button class="action-button" onclick="regenerateSummary()">
+                    <span class="material-icons">refresh</span>
+                    <span class="action-label">Regenerate</span>
+                </button>
+            </div>
+
+            <!-- Confetti Container -->
+            <div class="confetti-container" id="confettiContainer"></div>
+
+            <!-- Snackbar -->
+            <div class="snackbar" id="snackbar">Copied to clipboard!</div>
+        </div>
+    </div>
+
+    <script>
+        // Show confetti on load
+        window.onload = () => {
+            setTimeout(showConfetti, 500);
+        };
+
+        function showConfetti() {
+            const container = document.getElementById('confettiContainer');
+            container.classList.add('active');
+            
+            // Create confetti pieces
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.animationDuration = (Math.random() * 1 + 2) + 's';
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+            
+            setTimeout(() => container.classList.remove('active'), 3000);
+        }
+
+        function selectPersona(chip, persona) {
+            document.querySelectorAll('.persona-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            
+            // Simulate persona change
+            showSnackbar('Summary optimized for ' + persona);
+        }
+
+        function toggleBullets() {
+            const button = event.target;
+            const moreBullets = [
+                'Healthcare costs reduced by 25% in implementing facilities',
+                'AI models trained on 10 million patient records for accuracy',
+                'Integration compatible with existing hospital management systems'
+            ];
+            
+            if (button.textContent === 'Show more...') {
+                const container = document.getElementById('bulletPoints');
+                moreBullets.forEach((text, index) => {
+                    setTimeout(() => {
+                        const bullet = document.createElement('div');
+                        bullet.className = 'bullet-point';
+                        bullet.innerHTML = `
+                            <span class="material-icons bullet-icon">circle</span>
+                            <span class="bullet-text">${text}</span>
+                        `;
+                        container.appendChild(bullet);
+                    }, index * 100);
+                });
+                button.textContent = 'Show less';
+            } else {
+                // Remove extra bullets
+                const bullets = document.querySelectorAll('.bullet-point');
+                for (let i = bullets.length - 1; i >= 3; i--) {
+                    bullets[i].remove();
+                }
+                button.textContent = 'Show more...';
+            }
+        }
+
+        function copySummary() {
+            // Simulate copy
+            showSnackbar('Copied to clipboard!');
+        }
+
+        function shareSummary() {
+            showSnackbar('Opening share menu...');
+        }
+
+        function saveSummary() {
+            showSnackbar('Summary saved!');
+        }
+
+        function regenerateSummary() {
+            if (confirm('Regenerate summary with different parameters?')) {
+                showSnackbar('Regenerating summary...');
+                // Would navigate back to processing
+            }
+        }
+
+        function showSnackbar(message) {
+            const snackbar = document.getElementById('snackbar');
+            snackbar.textContent = message;
+            snackbar.classList.add('show');
+            
+            setTimeout(() => {
+                snackbar.classList.remove('show');
+            }, 2000);
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

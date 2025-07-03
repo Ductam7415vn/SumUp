@@ -16,6 +16,8 @@ fun getErrorInfo(error: AppError): ErrorInfo = when (error) {
     is AppError.ModelLoadingError -> ErrorInfo("AI Warming Up", "First-time setup. This takes about 10 seconds.", "🤖")
     is AppError.StorageFullError -> ErrorInfo("Storage Full", "You've reached the 100 MB limit. Delete old summaries.", "💾")
     is AppError.InvalidInputError -> ErrorInfo("Can't Process This", "Text contains too many special characters.", "⚠️")
+    is AppError.ApiKeyError -> ErrorInfo("API Key Required", "Add your Gemini API key in settings.", "🔑")
+    is AppError.InvalidApiKeyError -> ErrorInfo("Invalid API Key", "Check your API key and try again.", "❌")
     is AppError.UnknownError -> ErrorInfo("Something Went Wrong", error.originalMessage, "😕")
 }
 
@@ -73,6 +75,8 @@ fun AppError.getUserFriendlyMessage(): String {
         is AppError.OCRFailedError -> "Could not scan text. Try better lighting."
         is AppError.ModelLoadingError -> "AI is loading. Please wait a moment."
         is AppError.StorageFullError -> "Storage full. Please delete old summaries."
+        is AppError.ApiKeyError -> "API key required. Add it in settings."
+        is AppError.InvalidApiKeyError -> "Invalid API key. Please check and try again."
         is AppError.UnknownError -> originalMessage.ifEmpty { "Something went wrong." }
     }
 }
@@ -90,6 +94,8 @@ fun AppError.getActionText(): String {
         is AppError.OCRFailedError -> "Scan Again"
         is AppError.ModelLoadingError -> "Wait"
         is AppError.StorageFullError -> "Manage Storage"
+        is AppError.ApiKeyError -> "Add Key"
+        is AppError.InvalidApiKeyError -> "Fix Key"
         is AppError.UnknownError -> "Retry"
     }
 }

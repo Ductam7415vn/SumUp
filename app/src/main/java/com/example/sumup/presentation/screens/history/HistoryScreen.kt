@@ -1,6 +1,8 @@
 package com.example.sumup.presentation.screens.history
 
 import android.content.Intent
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sumup.presentation.preview.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -268,4 +270,49 @@ private fun shareSummary(context: android.content.Context, summary: Summary) {
     }
     
     context.startActivity(Intent.createChooser(shareIntent, "Share summary"))
+}
+
+// Preview Composables
+@ThemePreview
+@Composable
+fun HistoryScreenPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@Preview(name = "History Screen - Empty", showBackground = true)
+@Composable
+fun HistoryScreenEmptyPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@Preview(name = "History Screen - With Items", showBackground = true)
+@Composable
+fun HistoryScreenWithItemsPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@AllDevicePreview
+@Composable
+fun HistoryScreenDevicePreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
 }

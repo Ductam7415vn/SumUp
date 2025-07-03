@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - Onboarding Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .onboarding-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .page {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .page1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .page2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .page3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .page4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .skip-button {
+            position: absolute;
+            top: 50px;
+            right: 24px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .skip-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .icon-container {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 48px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .icon-container .material-icons {
+            font-size: 64px;
+            color: white;
+        }
+
+        .page-content {
+            text-align: center;
+            color: white;
+            max-width: 300px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+
+        .page-description {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .bottom-navigation {
+            position: absolute;
+            bottom: 40px;
+            left: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .page-indicators {
+            display: flex;
+            gap: 8px;
+        }
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .indicator.active {
+            width: 32px;
+            background: white;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        .nav-button {
+            padding: 16px 32px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prev-button {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .prev-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .next-button {
+            background: white;
+            color: #333;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .next-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+        }
+
+        .next-button.get-started {
+            background: white;
+            color: #333;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <button class="skip-button" id="skipBtn">Skip</button>
+            
+            <div class="onboarding-container" id="container">
+                <!-- Page 1 -->
+                <div class="page page1">
+                    <div class="icon-container">
+                        <span class="material-icons">auto_awesome</span>
+                    </div>
+                    <div class="page-content">
+                        <h1 class="page-title">Welcome to SumUp</h1>
+                        <p class="page-description">Transform long texts into concise summaries with the power of AI. Save time and grasp key information instantly.</p>
+                    </div>
+                </div>
+
+                <!-- Page 2 -->
+                <div class="page page2">
+                    <div class="icon-container">
+                        <span class="material-icons">description</span>
+                    </div>
+                    <div class="page-content">
+                        <h1 class="page-title">Multiple Input Methods</h1>
+                        <p class="page-description">Type, paste, upload PDFs, or scan text with your camera. We support all the ways you work with text.</p>
+                    </div>
+                </div>
+
+                <!-- Page 3 -->
+                <div class="page page3">
+                    <div class="icon-container">
+                        <span class="material-icons">psychology</span>
+                    </div>
+                    <div class="page-content">
+                        <h1 class="page-title">AI-Powered Intelligence</h1>
+                        <p class="page-description">Our advanced AI understands context and extracts the most important information, creating summaries that matter.</p>
+                    </div>
+                </div>
+
+                <!-- Page 4 -->
+                <div class="page page4">
+                    <div class="icon-container">
+                        <span class="material-icons">rocket_launch</span>
+                    </div>
+                    <div class="page-content">
+                        <h1 class="page-title">Ready to Start?</h1>
+                        <p class="page-description">Join thousands who save hours every week. Let's begin your journey to smarter reading.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-navigation">
+                <div class="page-indicators">
+                    <div class="indicator active" data-page="0"></div>
+                    <div class="indicator" data-page="1"></div>
+                    <div class="indicator" data-page="2"></div>
+                    <div class="indicator" data-page="3"></div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-button prev-button hidden" id="prevBtn">
+                        Previous
+                    </button>
+                    <div style="flex: 1"></div>
+                    <button class="nav-button next-button" id="nextBtn">
+                        Next
+                        <span class="material-icons">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const totalPages = 4;
+        const container = document.getElementById('container');
+        const indicators = document.querySelectorAll('.indicator');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const skipBtn = document.getElementById('skipBtn');
+
+        function updatePage() {
+            // Update container transform
+            container.style.transform = `translateX(-${currentPage * 100}%)`;
+            
+            // Update indicators
+            indicators.forEach((ind, idx) => {
+                ind.classList.toggle('active', idx === currentPage);
+            });
+            
+            // Update buttons
+            prevBtn.classList.toggle('hidden', currentPage === 0);
+            
+            if (currentPage === totalPages - 1) {
+                nextBtn.innerHTML = 'Get Started <span class="material-icons">check</span>';
+                nextBtn.classList.add('get-started');
+                skipBtn.classList.add('hidden');
+            } else {
+                nextBtn.innerHTML = 'Next <span class="material-icons">arrow_forward</span>';
+                nextBtn.classList.remove('get-started');
+                skipBtn.classList.remove('hidden');
+            }
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                updatePage();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                updatePage();
+            } else {
+                // Show loading and complete
+                nextBtn.innerHTML = '<div class="loading-spinner" style="display: block;"></div>';
+                setTimeout(() => {
+                    alert('Onboarding completed! Moving to main screen...');
+                }, 1000);
+            }
+        });
+
+        skipBtn.addEventListener('click', () => {
+            currentPage = totalPages - 1;
+            updatePage();
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        container.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        container.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50 && currentPage < totalPages - 1) {
+                currentPage++;
+                updatePage();
+            }
+            if (touchEndX > touchStartX + 50 && currentPage > 0) {
+                currentPage--;
+                updatePage();
+            }
+        }
+    </script>
+</body>
+</html>

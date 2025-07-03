@@ -43,6 +43,8 @@ app/
 └── di/            # Dependency injection modules
 ```
 
+For detailed architecture documentation, see [Technical Architecture](docs/architecture/02-technical-architecture.md).
+
 ### Tech Stack
 
 - **UI**: Jetpack Compose, Material 3
@@ -103,9 +105,23 @@ git clone https://github.com/yourusername/SumUp.git
 
 ## 📖 Documentation
 
-- [API Setup Guide](GEMINI_API_SETUP.md)
-- [Testing Guide](TEST_CASES.md)
-- [Architecture Overview](docs/technical/architecture.md)
+Comprehensive documentation is available in the [docs/](docs/) directory:
+
+### 🚀 Quick Start
+- [API Setup Guide](GEMINI_API_SETUP.md) - Configure Gemini API
+- [Quick Test Guide](QUICK_TEST_GUIDE.md) - Test the API
+- [Implementation Guide](docs/technical/implementation-guide.md) - Development guide
+
+### 📚 Full Documentation
+- [Documentation Index](docs/README.md) - Complete documentation overview
+- [Technical Architecture](docs/architecture/02-technical-architecture.md) - System design
+- [Testing Guide](TEST_CASES.md) - Comprehensive testing documentation
+- [Contributing Guidelines](CONTRIBUTING.md) - How to contribute
+
+### 🔧 Development
+- [Development Roadmap](docs/development/05-development-roadmap.md) - Future plans
+- [Launch Checklist](docs/development/launch-checklist.md) - Release preparation
+- [CHANGELOG](CHANGELOG.md) - Version history
 
 ## 🤝 Contributing
 

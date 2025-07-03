@@ -1,22 +1,52 @@
 package com.example.sumup.presentation.screens.settings
 
+import androidx.compose.animation.*
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sumup.presentation.preview.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.presentation.components.*
-import com.example.sumup.presentation.components.animations.AnimatedSwitch
-import com.example.sumup.presentation.components.animations.AnimatedSettingToggle
+import com.example.sumup.presentation.screens.settings.components.*
+import com.example.sumup.domain.model.Achievement
+import com.example.sumup.domain.model.AchievementType
 import com.example.sumup.utils.haptic.*
+import com.example.sumup.presentation.components.EnhancedLoadingState
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,23 +55,55 @@ fun SettingsScreen(
     adaptiveInfo: com.example.sumup.presentation.utils.AdaptiveLayoutInfo? = null,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+    
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchExpanded by remember { mutableStateOf(false) }
+    
+    // Dialog states
+    var showExportImportDialog by remember { mutableStateOf(false) }
+    var showAchievementsDialog by remember { mutableStateOf(false) }
+    var showRotationRemindersDialog by remember { mutableStateOf(false) }
+    var exportImportMode by remember { mutableStateOf(ExportImportMode.EXPORT) }
+    
+    // Calculate scroll offset for parallax effect
+    val scrollOffset = listState.firstVisibleItemScrollOffset.toFloat()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    HapticIconButton(
-                        onClick = onNavigateBack,
-                        hapticType = HapticFeedbackType.NAVIGATION
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
+                    )
+                )
             )
-        }
-    ) { paddingValues ->
+    ) {
+        // Background effects
+        AnimatedBackgroundEffect(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = 0.3f }
+        )
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                ModernSettingsTopBar(
+                    onNavigateBack = onNavigateBack,
+                    scrollOffset = scrollOffset,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    userName = uiState.userEmail?.substringBefore("@") ?: "User"
+                )
+            }
+        ) { paddingValues ->
         EnhancedLoadingState(
             isLoading = uiState.error != null, // Simple loading state check
             hasData = true,
@@ -63,95 +125,379 @@ fun SettingsScreen(
             },
             actualContent = {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
+            // Profile Header
+            item {
+                ProfileHeaderSection(
+                    userProfile = UserProfile(
+                        name = "SumUp User",
+                        email = uiState.userEmail ?: "",
+                        totalSummaries = uiState.totalSummaries,
+                        totalTimeSaved = uiState.totalTimeSaved
+                    ),
+                    onEditProfile = { viewModel.showEditProfileDialog() },
+                    scrollOffset = scrollOffset,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             // Appearance Section
             item {
-                SettingsSection("Appearance") {
-                    ThemePreference(
-                        currentTheme = uiState.themeMode,
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "Appearance",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
+                        title = "Theme",
+                        subtitle = uiState.themeMode.displayName,
+                        icon = Icons.Default.Palette,
                         onClick = { viewModel.showThemeDialog() }
                     )
                     
-                    DynamicColorPreference(
-                        enabled = uiState.isDynamicColorEnabled,
-                        onToggle = { viewModel.setDynamicColorEnabled(it) }
+                    AnimatedToggleSettingItem(
+                        title = "Dynamic Colors",
+                        subtitle = if (uiState.isDynamicColorEnabled) "Match system colors" else "Use default theme",
+                        icon = Icons.Default.ColorLens,
+                        checked = uiState.isDynamicColorEnabled,
+                        onCheckedChange = { viewModel.setDynamicColorEnabled(it) }
                     )
-                }
+                    }
+                }, index = 0)
+            }
+            
+            // API Configuration Section
+            item {
+                AnimatedSettingsItem(content = {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // API Key Management
+                        ApiKeyManagementCard(
+                            apiKeys = uiState.apiKeys,
+                            activeKeyId = uiState.activeApiKeyId,
+                            rotationReminders = uiState.keyRotationReminders,
+                            onAddKey = viewModel::addApiKey,
+                            onDeleteKey = viewModel::deleteApiKey,
+                            onSetActiveKey = viewModel::setActiveApiKey,
+                            onExport = { /* Handle export - needs password dialog */ },
+                            onImport = { /* TODO: Implement file picker */ }
+                        )
+                        
+                        // Show rotation warning badge if needed
+                        if (uiState.showRotationWarning) {
+                            Card(
+                                onClick = { showRotationRemindersDialog = true },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                        Column {
+                                            Text(
+                                                text = "API Keys Need Rotation",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = "${uiState.keyRotationReminders.count { it.isOverdue }} keys are overdue",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
+                                    }
+                                    Icon(
+                                        Icons.Default.ChevronRight,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Usage Analytics Dashboard
+                        uiState.apiUsageStats?.let { stats ->
+                            ApiUsageDashboard(
+                                usageStats = stats,
+                                onRefresh = viewModel::refreshUsageStats
+                            )
+                        }
+                    }
+                }, index = 1)
             }
             
             // Summarization Section
             item {
-                SettingsSection("Summarization") {
-                    DefaultLengthPreference(
-                        currentLength = uiState.summaryLength,
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                    title = "Summarization",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    EnhancedSettingItem(
+                        title = "Default Summary Length",
+                        subtitle = when {
+                            uiState.summaryLength <= 0.3f -> "Short"
+                            uiState.summaryLength <= 0.7f -> "Medium"
+                            else -> "Long"
+                        },
+                        icon = Icons.Default.TextFields,
                         onClick = { viewModel.showLengthDialog() }
                     )
                     
-                    LanguagePreference(
-                        currentLanguage = uiState.language,
+                    EnhancedSettingItem(
+                        title = "Language",
+                        subtitle = when (uiState.language) {
+                            "en" -> "English"
+                            "vi" -> "Tiếng Việt"
+                            "es" -> "Español"
+                            "fr" -> "Français"
+                            else -> uiState.language
+                        },
+                        icon = Icons.Default.Language,
                         onClick = { viewModel.showLanguageDialog() }
                     )
-                }
+                    }
+                }, index = 2)
             }
             
             // Data & Storage Section
             item {
-                SettingsSection("Data & Storage") {
-                    StorageUsageItem(
-                        storageUsage = uiState.storageUsage
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "Data & Storage",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
+                        title = "Storage Usage",
+                        subtitle = "${uiState.storageUsage / 1024} KB used",
+                        icon = Icons.Default.Storage,
+                        onClick = null
                     )
                     
-                    ClearHistoryPreference(
+                    EnhancedSettingItem(
+                        title = "Clear All Data",
+                        subtitle = "Remove all summaries and settings",
+                        icon = Icons.Default.Delete,
                         onClick = { viewModel.showClearDataDialog() }
                     )
                     
-                    ExportDataItem(
-                        onClick = { viewModel.exportData() }
-                    )
-                }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            onClick = {
+                                exportImportMode = ExportImportMode.EXPORT
+                                showExportImportDialog = true
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Upload,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Export",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = "Save settings",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        Card(
+                            onClick = {
+                                exportImportMode = ExportImportMode.IMPORT
+                                showExportImportDialog = true
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Download,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Import",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = "Restore settings",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    }
+                }, index = 3)
             }
             
             // About Section
             item {
-                SettingsSection("About") {
-                    VersionInfo(
-                        version = uiState.appVersion
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "About",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
+                        title = "Version",
+                        subtitle = uiState.appVersion,
+                        icon = Icons.Default.Info,
+                        onClick = null
                     )
                     
-                    SendFeedbackItem()
+                    EnhancedSettingItem(
+                        title = "Send Feedback",
+                        subtitle = "Help us improve SumUp",
+                        icon = Icons.Default.Feedback,
+                        onClick = { /* TODO: Implement feedback */ }
+                    )
+                    
+                    EnhancedSettingItem(
+                        title = "Privacy Policy",
+                        subtitle = "Learn how we protect your data",
+                        icon = Icons.Default.Security,
+                        onClick = { /* TODO: Open privacy policy */ }
+                    )
+                    }
+                }, index = 4)
+            }
+            
+            // Achievements Section
+            item {
+                AnimatedSettingsItem(content = {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        SettingsAchievementsCard(
+                            totalPoints = uiState.achievementPoints,
+                            unlockedCount = uiState.unlockedAchievements,
+                            totalCount = uiState.totalAchievements,
+                            onClick = { showAchievementsDialog = true }
+                        )
+                    }
+                }, index = 5)
+            }
+            
+            // Additional visual effects
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                ) {
+                    AnimatedWaveEffect(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
                 }
             }
         )
-        
-        // Dialogs
-        if (uiState.showThemeDialog) {
-            ThemeSelectionDialog(
-                currentTheme = uiState.themeMode,
-                onThemeSelected = { viewModel.setThemeMode(it) },
-                onDismiss = { viewModel.hideThemeDialog() }
-            )
         }
         
-        if (uiState.showLengthDialog) {
-            LengthSelectionDialog(
-                currentLength = uiState.summaryLength,
-                onLengthSelected = { viewModel.setSummaryLength(it) },
-                onDismiss = { viewModel.hideLengthDialog() }
-            )
-        }
+        // Edit Profile Dialog
+        EditProfileDialog(
+            visible = uiState.showEditProfileDialog,
+            currentProfile = UserProfile(
+                name = uiState.userEmail?.substringBefore("@") ?: "User",
+                email = uiState.userEmail ?: "",
+                totalSummaries = uiState.totalSummaries,
+                totalTimeSaved = uiState.totalTimeSaved
+            ),
+            onDismiss = { viewModel.hideEditProfileDialog() },
+            onSave = { profile ->
+                // TODO: Save profile changes
+                viewModel.hideEditProfileDialog()
+            }
+        )
         
-        if (uiState.showLanguageDialog) {
-            LanguageSelectionDialog(
-                currentLanguage = uiState.language,
-                onLanguageSelected = { viewModel.setLanguage(it) },
-                onDismiss = { viewModel.hideLanguageDialog() }
-            )
-        }
+        // Enhanced Dialogs
+        AnimatedSelectionDialog(
+            visible = uiState.showThemeDialog,
+            onDismiss = { viewModel.hideThemeDialog() },
+            title = "Choose Theme",
+            options = listOf(
+                ThemeMode.SYSTEM.name to "System",
+                ThemeMode.LIGHT.name to "Light",
+                ThemeMode.DARK.name to "Dark"
+            ),
+            selectedOption = uiState.themeMode.name,
+            onOptionSelected = { selectedMode ->
+                viewModel.setThemeMode(ThemeMode.valueOf(selectedMode))
+            }
+        )
+        
+        AnimatedSelectionDialog(
+            visible = uiState.showLengthDialog,
+            onDismiss = { viewModel.hideLengthDialog() },
+            title = "Summary Length",
+            options = listOf(
+                "0.3" to "Short",
+                "0.5" to "Medium",
+                "0.8" to "Long"
+            ),
+            selectedOption = when {
+                uiState.summaryLength <= 0.3f -> "0.3"
+                uiState.summaryLength <= 0.7f -> "0.5"
+                else -> "0.8"
+            },
+            onOptionSelected = { viewModel.setSummaryLength(it.toFloat()) }
+        )
+        
+        AnimatedSelectionDialog(
+            visible = uiState.showLanguageDialog,
+            onDismiss = { viewModel.hideLanguageDialog() },
+            title = "Choose Language",
+            options = listOf(
+                "en" to "English",
+                "vi" to "Tiếng Việt",
+                "es" to "Español",
+                "fr" to "Français"
+            ),
+            selectedOption = uiState.language,
+            onOptionSelected = { viewModel.setLanguage(it) }
+        )
         
         if (uiState.showClearDataDialog) {
             ClearDataConfirmationDialog(
@@ -169,352 +515,106 @@ fun SettingsScreen(
         }
         
         uiState.error?.let { error ->
-            ErrorDialog(
-                message = error,
-                onDismiss = { viewModel.dismissError() }
-            )
-        }
-    }
-}
-
-// Settings Section Component
-@Composable
-fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            content()
-        }
-    }
-}
-
-// Preference Item Components
-@Composable
-fun ThemePreference(
-    currentTheme: ThemeMode,
-    onClick: () -> Unit
-) {
-    PreferenceItem(
-        title = "Theme",
-        subtitle = currentTheme.displayName,
-        icon = Icons.Default.Palette,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun DynamicColorPreference(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
-    AnimatedSettingToggle(
-        title = "Dynamic Colors",
-        subtitle = if (enabled) "Match system colors" else "Use default theme",
-        checked = enabled,
-        onCheckedChange = onToggle
-    )
-}
-
-@Composable
-fun DefaultLengthPreference(
-    currentLength: Float,
-    onClick: () -> Unit
-) {
-    val lengthText = when {
-        currentLength <= 0.3f -> "Short"
-        currentLength <= 0.7f -> "Medium"
-        else -> "Long"
-    }
-    
-    PreferenceItem(
-        title = "Default Summary Length",
-        subtitle = lengthText,
-        icon = Icons.Default.TextFields,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun LanguagePreference(
-    currentLanguage: String,
-    onClick: () -> Unit
-) {
-    val languageDisplay = when (currentLanguage) {
-        "en" -> "English"
-        "vi" -> "Tiếng Việt"
-        "es" -> "Español"
-        "fr" -> "Français"
-        else -> currentLanguage
-    }
-    
-    PreferenceItem(
-        title = "Language",
-        subtitle = languageDisplay,
-        icon = Icons.Default.Language,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun StorageUsageItem(
-    storageUsage: Long
-) {
-    val usageText = "${storageUsage / 1024} KB used"
-    
-    PreferenceItem(
-        title = "Storage Usage",
-        subtitle = usageText,
-        icon = Icons.Default.Storage
-    )
-}
-
-@Composable
-fun ClearHistoryPreference(
-    onClick: () -> Unit
-) {
-    PreferenceItem(
-        title = "Clear All Data",
-        subtitle = "Remove all summaries and settings",
-        icon = Icons.Default.Delete,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun ExportDataItem(
-    onClick: () -> Unit
-) {
-    PreferenceItem(
-        title = "Export Data",
-        subtitle = "Save your settings and data",
-        icon = Icons.Default.Download,
-        onClick = onClick
-    )
-}
-
-@Composable
-fun VersionInfo(
-    version: String
-) {
-    PreferenceItem(
-        title = "Version",
-        subtitle = version,
-        icon = Icons.Default.Info
-    )
-}
-
-@Composable
-fun SendFeedbackItem() {
-    PreferenceItem(
-        title = "Send Feedback",
-        subtitle = "Help us improve SumUp",
-        icon = Icons.Default.Feedback,
-        onClick = {
-            // In real app, would open email or feedback form
-        }
-    )
-}
-
-// Base Preference Item
-@Composable
-fun PreferenceItem(
-    title: String,
-    subtitle: String? = null,
-    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    onClick: (() -> Unit)? = null,
-    trailing: @Composable (() -> Unit)? = null
-) {
-    val clickableModifier = if (onClick != null) {
-        Modifier.clickable { onClick() }
-    } else {
-        Modifier
-    }
-    
-    Row(
-        modifier = clickableModifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-    ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissError() },
+                title = { Text("Error") },
+                text = { Text(error) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissError() }) {
+                        Text("OK")
+                    }
+                }
             )
         }
         
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        // Export/Import Dialog with Password
+        ExportImportPasswordDialog(
+            visible = showExportImportDialog,
+            mode = exportImportMode,
+            onDismiss = { 
+                showExportImportDialog = false
+                viewModel.clearExportData()
+            },
+            onExport = { password ->
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.exportApiKeys(password)
+            },
+            onImport = { fileContent, password ->
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.importApiKeys(fileContent, password)
+            },
+            exportData = uiState.exportData,
+            isProcessing = uiState.isExporting || uiState.isImporting,
+            error = uiState.exportImportError
+        )
+        
+        // Achievements Dialog
+        AchievementsDialog(
+            visible = showAchievementsDialog,
+            achievements = uiState.achievements,
+            onDismiss = { showAchievementsDialog = false }
+        )
+        
+        // Key Rotation Reminder Dialog
+        KeyRotationReminderDialog(
+            visible = showRotationRemindersDialog,
+            reminders = uiState.keyRotationReminders,
+            onDismiss = { showRotationRemindersDialog = false },
+            onRotateKey = { keyId ->
+                showRotationRemindersDialog = false
+                // TODO: Navigate to key rotation flow
+                viewModel.showApiKeyDialog()
+            },
+            onSnoozeReminder = { keyId, days ->
+                viewModel.snoozeRotationReminder(keyId, days)
             }
+        )
+        
+        // API Key Dialog
+        ApiKeyDialog(
+            visible = uiState.showApiKeyDialog,
+            currentKey = uiState.apiKeyInput,
+            isValidating = uiState.isValidatingApiKey,
+            errorMessage = uiState.apiKeyError,
+            hasExistingKey = uiState.hasValidApiKey,
+            onKeyChange = { viewModel.updateApiKeyInput(it) },
+            onValidate = { viewModel.validateApiKey() },
+            onClear = { viewModel.clearApiKey() },
+            onDismiss = { viewModel.hideApiKeyDialog() }
+        )
+        
+        // API Key Validation Success
+        if (uiState.apiKeyValidationSuccess) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissApiKeySuccess() },
+                icon = {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = { Text("API Key Validated") },
+                text = { Text("Your Gemini API key has been successfully validated and saved.") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissApiKeySuccess() }) {
+                        Text("OK")
+                    }
+                }
+            )
         }
         
-        if (trailing != null) {
-            trailing()
-        } else if (onClick != null) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        // Floating bubbles effect
+        FloatingBubbles(
+            bubbleCount = 5,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = 0.2f }
+        )
     }
 }
 
-// Dialog Components
-@Composable
-fun ThemeSelectionDialog(
-    currentTheme: ThemeMode,
-    onThemeSelected: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Choose Theme") },
-        text = {
-            Column {
-                ThemeMode.values().forEach { theme ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onThemeSelected(theme) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = theme == currentTheme,
-                            onClick = { onThemeSelected(theme) }
-                        )
-                        Text(
-                            text = theme.displayName,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-fun LengthSelectionDialog(
-    currentLength: Float,
-    onLengthSelected: (Float) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val lengths = listOf(
-        0.3f to "Short",
-        0.5f to "Medium", 
-        0.8f to "Long"
-    )
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Summary Length") },
-        text = {
-            Column {
-                lengths.forEach { (value, label) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLengthSelected(value) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = kotlin.math.abs(value - currentLength) < 0.1f,
-                            onClick = { onLengthSelected(value) }
-                        )
-                        Text(
-                            text = label,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-fun LanguageSelectionDialog(
-    currentLanguage: String,
-    onLanguageSelected: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val languages = listOf(
-        "en" to "English",
-        "vi" to "Tiếng Việt",
-        "es" to "Español",
-        "fr" to "Français"
-    )
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Choose Language") },
-        text = {
-            Column {
-                languages.forEach { (code, name) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLanguageSelected(code) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = code == currentLanguage,
-                            onClick = { onLanguageSelected(code) }
-                        )
-                        Text(
-                            text = name,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
+// Enhanced Clear Data Dialog
 
 @Composable
 fun ClearDataConfirmationDialog(
@@ -574,19 +674,171 @@ fun SuccessDialog(
     )
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ErrorDialog(
-    message: String,
+fun ApiKeyDialog(
+    visible: Boolean,
+    currentKey: String,
+    isValidating: Boolean,
+    errorMessage: String?,
+    hasExistingKey: Boolean,
+    onKeyChange: (String) -> Unit,
+    onValidate: () -> Unit,
+    onClear: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Error") },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("OK")
+    if (visible) {
+        var showKey by remember { mutableStateOf(false) }
+        
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    Icons.Outlined.VpnKey,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Gemini API Key") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Enter your Gemini API key to enable AI-powered summarization.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    OutlinedTextField(
+                        value = currentKey,
+                        onValueChange = onKeyChange,
+                        label = { Text("API Key") },
+                        placeholder = { Text("Enter your Gemini API key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (showKey) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showKey = !showKey }) {
+                                Icon(
+                                    imageVector = if (showKey) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = if (showKey) "Hide key" else "Show key"
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { onValidate() }
+                        ),
+                        isError = errorMessage != null,
+                        supportingText = errorMessage?.let { { Text(it) } },
+                        enabled = !isValidating
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val context = LocalContext.current
+                        AssistChip(
+                            onClick = { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://makersuite.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            },
+                            label = { Text("Get API Key") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.OpenInNew,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        
+                        if (hasExistingKey) {
+                            AssistChip(
+                                onClick = onClear,
+                                label = { Text("Clear Key") },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = onValidate,
+                    enabled = currentKey.isNotBlank() && !isValidating
+                ) {
+                    if (isValidating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Validate")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isValidating
+                ) {
+                    Text("Cancel")
+                }
             }
-        }
-    )
+        )
+    }
+}
+
+// Preview Composables
+@ThemePreview
+@Composable
+fun SettingsScreenPreview() {
+    PreviewWrapper {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview(name = "Settings - Dark Mode", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun SettingsScreenDarkPreview() {
+    PreviewWrapper(darkTheme = true) {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
+}
+
+@AllDevicePreview
+@Composable
+fun SettingsScreenDevicePreview() {
+    PreviewWrapper {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
 }

@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.sumup.presentation.components.ModernInfoDialog
 
 object MainScreenDialogs {
     
@@ -50,7 +51,7 @@ object MainScreenDialogs {
     ) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Text Summarization Tips") },
+            title = { Text("How to Use SumUp") },
             text = {
                 Text(
                     "• Works best with 100-2000 words\n" +
@@ -58,7 +59,7 @@ object MainScreenDialogs {
                     "• Preserves key information\n" +
                     "• Choose persona style for different summaries\n\n" +
                     "Minimum: 50 characters\n" +
-                    "Maximum: 5000 characters",
+                    "Maximum: 30,000 characters",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },

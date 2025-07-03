@@ -13,6 +13,8 @@ import com.example.sumup.presentation.screens.ocr.OcrScreen
 import com.example.sumup.presentation.screens.processing.ProcessingScreen
 import com.example.sumup.presentation.screens.result.AdaptiveResultScreen
 import com.example.sumup.presentation.screens.settings.SettingsScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Enhanced navigation with shared element transitions
@@ -22,6 +24,9 @@ fun TransitionNavigation(
     navController: NavHostController = rememberNavController()
 ) {
     val sharedElementState = rememberSharedElementTransition()
+    
+    // Create a shared MainViewModel at the navigation level
+    val mainViewModel: com.example.sumup.presentation.screens.main.MainViewModel = hiltViewModel()
     
     NavHost(
         navController = navController,
@@ -62,6 +67,7 @@ fun TransitionNavigation(
             }
         ) {
             AdaptiveMainScreen(
+                viewModel = mainViewModel,
                 onNavigateToOcr = {
                     navController.navigate(Screen.Ocr.route)
                 },
@@ -104,15 +110,30 @@ fun TransitionNavigation(
                 }
             }
         ) {
+            // Enable mock mode based on service type
+            val uiState by mainViewModel.uiState.collectAsStateWithLifecycle()
+            val isMockMode = remember(uiState.serviceInfo) { 
+                uiState.serviceInfo?.type == com.example.sumup.domain.model.ServiceType.MOCK_API
+            }
+            
             ProcessingScreen(
+                viewModel = mainViewModel,
                 onCancel = {
                     navController.popBackStack()
                 },
-                onComplete = {
-                    navController.navigate(Screen.Result.route) {
-                        popUpTo(Screen.Main.route)
+                onComplete = { summaryId ->
+                    if (summaryId != null) {
+                        navController.navigate(Screen.Result.createRoute(summaryId)) {
+                            popUpTo(Screen.Main.route)
+                        }
+                    } else {
+                        // Fallback to main if no summaryId
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Main.route) { inclusive = true }
+                        }
                     }
-                }
+                },
+                isMockMode = isMockMode
             )
         }
         

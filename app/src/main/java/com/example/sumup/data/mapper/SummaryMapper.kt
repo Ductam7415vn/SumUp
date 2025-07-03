@@ -31,7 +31,13 @@ class SummaryMapper @Inject constructor() {
             ),
             createdAt = entity.createdAt,
             isFavorite = entity.isFavorite,
-            confidence = entity.confidence
+            confidence = entity.confidence,
+            // Multi-tier content
+            briefOverview = entity.briefOverview,
+            detailedSummary = entity.detailedSummary,
+            keyInsights = entity.keyInsights,
+            actionItems = entity.actionItems,
+            keywords = entity.keywords
         )
     }
     
@@ -49,7 +55,13 @@ class SummaryMapper @Inject constructor() {
             reductionPercent = domain.metrics.reductionPercentage,
             confidence = domain.confidence,
             createdAt = domain.createdAt,
-            isFavorite = domain.isFavorite
+            isFavorite = domain.isFavorite,
+            // Multi-tier content
+            briefOverview = domain.briefOverview,
+            detailedSummary = domain.detailedSummary,
+            keyInsights = domain.keyInsights,
+            actionItems = domain.actionItems,
+            keywords = domain.keywords
         )
     }
 }

@@ -25,7 +25,13 @@ fun SmartErrorHandler(
     
     // Show dialog for other errors
     error?.let {
+        android.util.Log.e("SmartErrorHandler", "=== ERROR DETECTED ===")
+        android.util.Log.e("SmartErrorHandler", "Error type: ${it.javaClass.simpleName}")
+        android.util.Log.e("SmartErrorHandler", "Error message: ${it.message}")
+        android.util.Log.e("SmartErrorHandler", "Is form context: $isFormContext")
+        
         if (!isFormContext || error !is AppError.TextTooShortError) {
+            android.util.Log.e("SmartErrorHandler", "Showing error dialog")
             AdvancedErrorDialog(
                 error = it,
                 onDismiss = onDismiss,
@@ -33,7 +39,7 @@ fun SmartErrorHandler(
                 onReportIssue = {
                     // TODO: Implement issue reporting
                     // For now, we'll just log it
-                    println("User reported issue: $error")
+                    android.util.Log.d("SmartErrorHandler", "User reported issue: $error")
                 },
                 hapticManager = hapticManager
             )

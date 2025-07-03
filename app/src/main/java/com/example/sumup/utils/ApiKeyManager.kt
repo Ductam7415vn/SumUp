@@ -11,7 +11,14 @@ import javax.inject.Singleton
 /**
  * Manages API keys securely using Android Keystore
  * In production, API keys should be fetched from a secure backend
+ * 
+ * @deprecated Use EnhancedApiKeyManager instead. This class is kept for migration purposes only.
  */
+@Deprecated(
+    message = "Use EnhancedApiKeyManager instead",
+    replaceWith = ReplaceWith("EnhancedApiKeyManager"),
+    level = DeprecationLevel.WARNING
+)
 @Singleton
 class ApiKeyManager @Inject constructor(
     @ApplicationContext private val context: Context

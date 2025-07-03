@@ -7,4 +7,9 @@ interface PdfRepository {
     suspend fun extractTextFromPdf(pdfDocument: PdfDocument): PdfExtractionResult
     suspend fun validatePdfFile(uri: String): PdfDocument
     suspend fun getPdfMetadata(uri: String): PdfDocument
+    suspend fun extractTextFromPdfRange(
+        uri: String,
+        startPage: Int,
+        endPage: Int
+    ): PdfExtractionResult
 }

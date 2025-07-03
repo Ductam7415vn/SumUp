@@ -10,6 +10,10 @@ sealed class FileUploadState {
     data class Processing(val stage: ProcessingStage, val progress: Float) : FileUploadState()
     data class Success(val extractedText: String) : FileUploadState()
     data class Error(val error: FileUploadError) : FileUploadState()
+    data class LargePdfDetected(
+        val pageCount: Int,
+        val estimatedProcessingTime: Long
+    ) : FileUploadState()
 }
 
 enum class ProcessingStage(val displayName: String) {

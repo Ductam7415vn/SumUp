@@ -14,12 +14,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.*
 import com.example.sumup.presentation.components.AutoSaveTextField
 import com.example.sumup.presentation.components.InlineErrorDisplay
 import com.example.sumup.presentation.components.FieldErrorIndicator
+import com.example.sumup.presentation.components.AccessibilityUtils
 import com.example.sumup.domain.model.AppError
 import com.example.sumup.utils.drafts.DraftInputType
 import com.example.sumup.utils.drafts.DraftManager
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun TextInputSection(
@@ -32,6 +35,8 @@ fun TextInputSection(
     draftManager: DraftManager? = null
 ) {
     var showToast by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val isScreenReaderOn = remember { AccessibilityUtils.isScreenReaderEnabled(context) }
     
     Column(
         modifier = modifier
@@ -41,11 +46,17 @@ fun TextInputSection(
         AutoSaveTextField(
             value = text,
             onValueChange = { newText ->
-                if (newText.length <= 5000) {
+                if (newText.length <= 30000) {
                     onTextChange(newText)
                 } else {
-                    onTextChange(newText.take(5000))
+                    onTextChange(newText.take(30000))
                     showToast = true
+                    if (isScreenReaderOn) {
+                        AccessibilityUtils.announceForAccessibility(
+                            context, 
+                            "Character limit reached. Maximum 30,000 characters allowed."
+                        )
+                    }
                 }
             },
             modifier = Modifier
@@ -53,10 +64,19 @@ fun TextInputSection(
                 .heightIn(min = 120.dp)
                 .weight(1f, fill = false)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .testTag("input_field"),
+                .testTag("input_field")
+                .semantics {
+                    contentDescription = "Text input field. ${text.length} of 30,000 characters"
+                    if (text.length > 27000) {
+                        stateDescription = "${30000 - text.length} characters remaining"
+                    }
+                    if (isError || inlineError != null) {
+                        error("Input error: ${inlineError?.message ?: "Invalid input"}")
+                    }
+                },
             placeholder = {
                 Text(
-                    text = "Paste or type your text here...\n\nTip: Works best with 100-2000 words",
+                    text = "Paste or type your text here...\n\nTip: Supports up to 30,000 characters (~6,000 words)",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
@@ -83,11 +103,16 @@ fun TextInputSection(
                         
                         IconButton(
                             onClick = onHelpClick,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier
+                                .size(20.dp)
+                                .semantics {
+                                    contentDescription = "Get help with text input"
+                                    role = Role.Button
+                                }
                         ) {
                             Icon(
                                 Icons.Outlined.Help,
-                                contentDescription = "Help",
+                                contentDescription = null, // contentDescription is set on IconButton
                                 modifier = Modifier.size(16.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

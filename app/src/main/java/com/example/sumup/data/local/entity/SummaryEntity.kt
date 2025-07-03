@@ -29,5 +29,11 @@ data class SummaryEntity(
     val reductionPercent: Int,
     val confidence: Float,
     val createdAt: Long = System.currentTimeMillis(),
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    // Multi-tier content fields
+    val briefOverview: String? = null,
+    val detailedSummary: String? = null,
+    val keyInsights: List<String>? = null,
+    val actionItems: List<String>? = null,
+    val keywords: List<String>? = null
 )

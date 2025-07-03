@@ -64,20 +64,33 @@ class HapticFeedbackManager(private val context: Context) {
     fun performHapticFeedback(type: HapticFeedbackType) {
         if (!isHapticEnabled) return
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Use predefined effects for API 29+
             val vibrationEffect = when (type) {
                 HapticFeedbackType.CLICK -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
                 HapticFeedbackType.TICK -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+                HapticFeedbackType.LONG_PRESS -> VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
                 HapticFeedbackType.SUCCESS -> createCustomEffect(longArrayOf(0, 50, 50, 100), intArrayOf(0, 255, 0, 255))
                 HapticFeedbackType.WARNING -> createCustomEffect(longArrayOf(0, 100, 100, 100), intArrayOf(0, 200, 0, 200))
                 HapticFeedbackType.ERROR -> createCustomEffect(longArrayOf(0, 100, 50, 100, 50, 100), intArrayOf(0, 255, 0, 255, 0, 255))
-                HapticFeedbackType.LONG_PRESS -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-                    } else {
-                        createCustomEffect(longArrayOf(0, 200), intArrayOf(0, 255))
-                    }
-                }
+                HapticFeedbackType.SELECTION_START -> createCustomEffect(longArrayOf(0, 80), intArrayOf(0, 200))
+                HapticFeedbackType.SWIPE_REFRESH -> createCustomEffect(longArrayOf(0, 30, 30, 60), intArrayOf(0, 150, 0, 200))
+                HapticFeedbackType.SWIPE_DELETE -> createCustomEffect(longArrayOf(0, 50, 30, 80), intArrayOf(0, 200, 0, 255))
+                HapticFeedbackType.NAVIGATION -> createCustomEffect(longArrayOf(0, 40), intArrayOf(0, 120))
+                HapticFeedbackType.IMPACT_LIGHT -> createCustomEffect(longArrayOf(0, 30), intArrayOf(0, 100))
+                HapticFeedbackType.IMPACT_MEDIUM -> createCustomEffect(longArrayOf(0, 60), intArrayOf(0, 180))
+                HapticFeedbackType.IMPACT_HEAVY -> createCustomEffect(longArrayOf(0, 120), intArrayOf(0, 255))
+            }
+            vibrator.vibrate(vibrationEffect)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Use custom effects for API 26-28
+            val vibrationEffect = when (type) {
+                HapticFeedbackType.CLICK -> createCustomEffect(longArrayOf(0, 10), intArrayOf(0, 255))
+                HapticFeedbackType.TICK -> createCustomEffect(longArrayOf(0, 20), intArrayOf(0, 200))
+                HapticFeedbackType.SUCCESS -> createCustomEffect(longArrayOf(0, 50, 50, 100), intArrayOf(0, 255, 0, 255))
+                HapticFeedbackType.WARNING -> createCustomEffect(longArrayOf(0, 100, 100, 100), intArrayOf(0, 200, 0, 200))
+                HapticFeedbackType.ERROR -> createCustomEffect(longArrayOf(0, 100, 50, 100, 50, 100), intArrayOf(0, 255, 0, 255, 0, 255))
+                HapticFeedbackType.LONG_PRESS -> createCustomEffect(longArrayOf(0, 200), intArrayOf(0, 255))
                 HapticFeedbackType.SELECTION_START -> createCustomEffect(longArrayOf(0, 80), intArrayOf(0, 200))
                 HapticFeedbackType.SWIPE_REFRESH -> createCustomEffect(longArrayOf(0, 30, 30, 60), intArrayOf(0, 150, 0, 200))
                 HapticFeedbackType.SWIPE_DELETE -> createCustomEffect(longArrayOf(0, 50, 30, 80), intArrayOf(0, 200, 0, 255))

@@ -1,5 +1,10 @@
 package com.example.sumup.presentation.components
 
+/**
+ * Legacy PdfPreviewDialog wrapper for backward compatibility.
+ * Uses ModernPdfPreviewDialog internally.
+ */
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -31,6 +36,27 @@ import com.example.sumup.domain.usecase.ProcessingMetrics
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PdfPreviewDialog(
+    pdfDocument: PdfDocument,
+    extractionResult: PdfExtractionResult? = null,
+    structuredData: StructuredPdfData? = null,
+    metrics: ProcessingMetrics? = null,
+    onDismiss: () -> Unit,
+    onConfirmProcess: () -> Unit
+) {
+    // Use the legacy dialog for now
+    LegacyPdfPreviewDialog(
+        pdfDocument = pdfDocument,
+        extractionResult = extractionResult,
+        structuredData = structuredData,
+        metrics = metrics,
+        onDismiss = onDismiss,
+        onConfirmProcess = onConfirmProcess
+    )
+}
+
+// Original implementation kept for reference
+@Composable
+private fun LegacyPdfPreviewDialog(
     pdfDocument: PdfDocument,
     extractionResult: PdfExtractionResult? = null,
     structuredData: StructuredPdfData? = null,
@@ -616,3 +642,5 @@ private fun formatDocumentType(type: DocumentType): String {
 private fun formatReadingLevel(level: ReadingLevel): String {
     return level.name.capitalize()
 }
+
+// End of LegacyPdfPreviewDialog

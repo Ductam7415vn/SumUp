@@ -194,12 +194,12 @@ class PdfRepositoryImpl @Inject constructor(
                     } else 0L
                     
                     // Validate file properties
-                    val inputValidator = com.example.sumup.utils.InputValidator()
-                    when (val validationResult = inputValidator.validatePdfFile(fileName, size)) {
-                        is com.example.sumup.utils.InputValidator.ValidationResult.Success -> {
-                            PdfDocument(
+                    when (val validationResult = com.example.sumup.utils.InputValidator.validatePdfFile(context, androidUri)) {
+                        is com.example.sumup.utils.InputValidator.ValidationResult.Success,
+                        is com.example.sumup.utils.InputValidator.ValidationResult.Warning -> {
+                            return@withContext PdfDocument(
                                 uri = uri,
-                                fileName = validationResult.sanitizedValue,
+                                fileName = fileName,
                                 sizeBytes = size,
                                 processingState = PdfProcessingState.Idle
                             )
@@ -257,5 +257,94 @@ class PdfRepositoryImpl @Inject constructor(
         val lines = text.split('\n')
         val tabCount = lines.count { it.contains('\t') }
         return tabCount > lines.size * 0.3
+    }
+    
+    override suspend fun extractTextFromPdfRange(
+        uri: String,
+        startPage: Int,
+        endPage: Int
+    ): PdfExtractionResult {
+        return withContext(Dispatchers.IO) {
+            var document: PDDocument? = null
+            try {
+                val androidUri = Uri.parse(uri)
+                val inputStream = context.contentResolver.openInputStream(androidUri)
+                    ?: return@withContext PdfExtractionResult(
+                        extractedText = "",
+                        pageCount = 0,
+                        success = false,
+                        errorMessage = "Cannot open PDF file"
+                    )
+                
+                inputStream.use { stream ->
+                    try {
+                        document = PDDocument.load(stream)
+                    } catch (e: OutOfMemoryError) {
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = 0,
+                            success = false,
+                            errorMessage = "Not enough memory to process this PDF chunk"
+                        )
+                    }
+                    
+                    val totalPages = document.numberOfPages
+                    
+                    // Validate page range
+                    if (startPage < 1 || endPage > totalPages || startPage > endPage) {
+                        document?.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = totalPages,
+                            success = false,
+                            errorMessage = "Invalid page range: $startPage-$endPage (total pages: $totalPages)"
+                        )
+                    }
+                    
+                    // Extract text from specified range
+                    val stripper = PDFTextStripper().apply {
+                        this.startPage = startPage
+                        this.endPage = endPage
+                    }
+                    
+                    val extractedText = try {
+                        stripper.getText(document)
+                    } catch (e: Exception) {
+                        document?.close()
+                        return@withContext PdfExtractionResult(
+                            extractedText = "",
+                            pageCount = endPage - startPage + 1,
+                            success = false,
+                            errorMessage = "Failed to extract text from pages $startPage-$endPage: ${e.message}"
+                        )
+                    }
+                    
+                    document?.close()
+                    
+                    // Return result
+                    PdfExtractionResult(
+                        extractedText = extractedText.trim(),
+                        pageCount = endPage - startPage + 1,
+                        success = true,
+                        confidence = calculateExtractionConfidence(extractedText, endPage - startPage + 1),
+                        hasTableStructure = detectTableStructure(extractedText),
+                        errorMessage = null
+                    )
+                }
+            } catch (e: Exception) {
+                PdfExtractionResult(
+                    extractedText = "",
+                    pageCount = 0,
+                    success = false,
+                    errorMessage = "Error processing PDF range: ${e.message}"
+                )
+            } finally {
+                try {
+                    document?.close()
+                } catch (e: Exception) {
+                    // Ignore close errors
+                }
+            }
+        }
     }
 }

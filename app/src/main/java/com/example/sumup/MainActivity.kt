@@ -25,6 +25,7 @@ import com.example.sumup.ui.theme.SumUpTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -34,9 +35,24 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
     
+    @Inject
+    lateinit var apiKeyMigration: com.example.sumup.utils.migration.ApiKeyMigration
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Perform API key migration on app startup
+        lifecycleScope.launch {
+            try {
+                val migrated = apiKeyMigration.migrateIfNeeded()
+                if (migrated) {
+                    android.util.Log.d("MainActivity", "API key migration completed successfully")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Error during API key migration", e)
+            }
+        }
         
         // Predictive back gesture is handled by individual screens
         
@@ -69,7 +85,7 @@ class MainActivity : ComponentActivity() {
             
             SumUpTheme(
                 darkTheme = darkTheme,
-                dynamicColor = isDynamicColorEnabled
+                dynamicColor = false // Temporarily disable to see custom UI
             ) {
                 val navController = rememberNavController()
                 
@@ -90,6 +106,18 @@ class MainActivity : ComponentActivity() {
                                     popUpTo(Screen.Onboarding.route) {
                                         inclusive = true
                                     }
+                                }
+                            },
+                            onNavigateToSettings = {
+                                // Navigate to main flow and then to settings
+                                navController.navigate("main_flow") {
+                                    popUpTo(Screen.Onboarding.route) {
+                                        inclusive = true
+                                    }
+                                }
+                                // Mark onboarding as completed
+                                lifecycleScope.launch {
+                                    settingsRepository.setOnboardingCompleted(true)
                                 }
                             }
                         )

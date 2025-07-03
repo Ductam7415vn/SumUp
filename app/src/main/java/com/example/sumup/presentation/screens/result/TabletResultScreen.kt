@@ -22,6 +22,7 @@ import com.example.sumup.presentation.components.PredictiveBackGestureHandler
 import com.example.sumup.presentation.screens.result.components.PersonaSelector
 import com.example.sumup.presentation.screens.result.components.SummaryActionBar
 import com.example.sumup.presentation.screens.result.components.SummaryKPICard
+import com.example.sumup.presentation.screens.result.components.ExportFormat
 import com.example.sumup.presentation.utils.AdaptiveLayoutInfo
 import com.example.sumup.presentation.utils.DeviceType
 
@@ -226,7 +227,7 @@ fun TabletResultScreen(
                             
                             // Export button
                             OutlinedButton(
-                                onClick = { viewModel.exportSummary() },
+                                onClick = { viewModel.exportSummary(ExportFormat.PDF) },
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = !uiState.isRegenerating
                             ) {

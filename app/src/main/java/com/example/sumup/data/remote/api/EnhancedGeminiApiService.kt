@@ -33,9 +33,14 @@ class EnhancedGeminiApiService(
     }
     
     override suspend fun generateContent(apiKey: String, request: GeminiRequest): GeminiResponse {
+        android.util.Log.d("EnhancedGeminiAPI", "generateContent called with key: ${apiKey.take(10)}...")
         return withTimeout(TIMEOUT_MILLIS) {
+            android.util.Log.d("EnhancedGeminiAPI", "Inside withTimeout block")
             executeWithRetry {
-                geminiApi.generateContent(apiKey, request)
+                android.util.Log.d("EnhancedGeminiAPI", "Calling geminiApi.generateContent...")
+                val response = geminiApi.generateContent(apiKey, request)
+                android.util.Log.d("EnhancedGeminiAPI", "Got response from geminiApi")
+                response
             }
         }
     }
@@ -44,26 +49,44 @@ class EnhancedGeminiApiService(
         val startTime = System.currentTimeMillis()
         
         return try {
+            android.util.Log.d("EnhancedGeminiAPI", "=== STARTING API CALL ===")
+            android.util.Log.d("EnhancedGeminiAPI", "API Key: ${apiKey.take(10)}...")
+            android.util.Log.d("EnhancedGeminiAPI", "Request text length: ${request.text.length}")
+            android.util.Log.d("EnhancedGeminiAPI", "Request style: ${request.style}")
+            android.util.Log.d("EnhancedGeminiAPI", "Request maxLength: ${request.maxLength}")
+            android.util.Log.d("EnhancedGeminiAPI", "API endpoint: v1beta/models/gemini-1.5-flash:generateContent")
+            
             // Build optimized prompt
             val prompt = GeminiPromptBuilder.buildAdvancedPrompt(request)
+            android.util.Log.d("EnhancedGeminiAPI", "Prompt length: ${prompt.length}")
             android.util.Log.d("EnhancedGeminiAPI", "Prompt preview: ${prompt.take(300)}...")
             
             // Create request with optimized parameters
             val geminiRequest = createOptimizedRequest(prompt, request)
+            android.util.Log.d("EnhancedGeminiAPI", "Request created with ${geminiRequest.generationConfig?.maxOutputTokens} max tokens")
             
             // Execute with retry logic
+            android.util.Log.d("EnhancedGeminiAPI", "Executing API call...")
+            android.util.Log.d("EnhancedGeminiAPI", "Calling Gemini API with timeout: ${TIMEOUT_MILLIS}ms")
             val response = executeWithRetry {
-                generateContent(apiKey, geminiRequest)
+                android.util.Log.d("EnhancedGeminiAPI", "Making actual HTTP request...")
+                val result = generateContent(apiKey, geminiRequest)
+                android.util.Log.d("EnhancedGeminiAPI", "HTTP request completed")
+                result
             }
             
             val processingTime = System.currentTimeMillis() - startTime
             android.util.Log.d("EnhancedGeminiAPI", "Got Gemini response in ${processingTime}ms")
+            android.util.Log.d("EnhancedGeminiAPI", "Response candidates: ${response.candidates.size}")
             
             // Parse and validate response
             parseAndValidateResponse(response, processingTime, request)
             
         } catch (e: Exception) {
-            android.util.Log.e("EnhancedGeminiAPI", "API call failed after retries", e)
+            android.util.Log.e("EnhancedGeminiAPI", "=== API CALL FAILED ===")
+            android.util.Log.e("EnhancedGeminiAPI", "Error type: ${e.javaClass.simpleName}")
+            android.util.Log.e("EnhancedGeminiAPI", "Error message: ${e.message}")
+            android.util.Log.e("EnhancedGeminiAPI", "Stack trace:", e)
             
             // Convert to appropriate AppError
             val appError = GeminiErrorHandler.handleApiError(e)
@@ -229,13 +252,23 @@ class EnhancedGeminiApiService(
         
         val lines = text.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
         
-        // Find SUMMARY section
+        // Find all sections
+        val briefIndex = lines.indexOfFirst { it.equals("BRIEF:", ignoreCase = true) }
         val summaryIndex = lines.indexOfFirst { it.equals("SUMMARY:", ignoreCase = true) }
+        val detailedIndex = lines.indexOfFirst { it.equals("DETAILED:", ignoreCase = true) }
         val keyPointsIndex = lines.indexOfFirst { it.equals("KEY POINTS:", ignoreCase = true) }
+        val keyInsightsIndex = lines.indexOfFirst { it.equals("KEY INSIGHTS:", ignoreCase = true) }
+        val actionItemsIndex = lines.indexOfFirst { it.equals("ACTION ITEMS:", ignoreCase = true) }
+        val keywordsIndex = lines.indexOfFirst { it.equals("KEYWORDS:", ignoreCase = true) }
         
-        val summary = if (summaryIndex >= 0 && keyPointsIndex > summaryIndex) {
-            // Get all lines between SUMMARY: and KEY POINTS:
-            lines.subList(summaryIndex + 1, keyPointsIndex).joinToString(" ").trim()
+        // Extract BRIEF (5%)
+        val brief = if (briefIndex >= 0 && summaryIndex > briefIndex) {
+            lines.subList(briefIndex + 1, summaryIndex).joinToString(" ").trim()
+        } else null
+        
+        // Extract SUMMARY (10%)
+        val summary = if (summaryIndex >= 0 && detailedIndex > summaryIndex) {
+            lines.subList(summaryIndex + 1, detailedIndex).joinToString(" ").trim()
         } else {
             // Fallback: first substantial paragraph
             lines.firstOrNull { line ->
@@ -243,46 +276,91 @@ class EnhancedGeminiApiService(
             } ?: "Unable to generate summary"
         }
         
-        // Extract bullet points
-        val bullets = if (keyPointsIndex >= 0) {
-            lines.subList(keyPointsIndex + 1, lines.size)
-                .filter { it.startsWith("•") || it.startsWith("-") || it.startsWith("*") }
-                .map { it.removePrefix("•").removePrefix("-").removePrefix("*").trim() }
-        } else {
-            // Fallback: look for any bullet patterns
-            val bulletPatterns = listOf(
-                """^[-•*]\s*(.+)$""".toRegex(),
-                """^\d+[.)]\s*(.+)$""".toRegex()
-            )
-            
-            lines.mapNotNull { line ->
-                bulletPatterns.firstNotNullOfOrNull { pattern ->
-                    pattern.find(line)?.groupValues?.getOrNull(1)?.trim()
-                }
-            }
-        }.filter { it.isNotEmpty() }
+        // Extract DETAILED (20%)
+        val detailed = if (detailedIndex >= 0 && keyPointsIndex > detailedIndex) {
+            lines.subList(detailedIndex + 1, keyPointsIndex).joinToString(" ").trim()
+        } else null
+        
+        // Extract KEY POINTS
+        val bullets = extractBulletPoints(lines, keyPointsIndex, keyInsightsIndex)
+        
+        // Extract KEY INSIGHTS
+        val keyInsights = if (keyInsightsIndex >= 0) {
+            val endIndex = if (actionItemsIndex > keyInsightsIndex) actionItemsIndex 
+                          else if (keywordsIndex > keyInsightsIndex) keywordsIndex 
+                          else lines.size
+            extractBulletPoints(lines, keyInsightsIndex, endIndex)
+        } else null
+        
+        // Extract ACTION ITEMS
+        val actionItems = if (actionItemsIndex >= 0) {
+            val endIndex = if (keywordsIndex > actionItemsIndex) keywordsIndex else lines.size
+            extractBulletPoints(lines, actionItemsIndex, endIndex)
+        } else null
+        
+        // Extract KEYWORDS
+        val keywords = if (keywordsIndex >= 0 && keywordsIndex < lines.size - 1) {
+            lines[keywordsIndex + 1]
+                .split(",")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+        } else null
         
         // Ensure we have at least some content
         val finalBullets = if (bullets.isEmpty()) {
-            // Create fallback bullets from summary
             listOf(
                 "Key information has been summarized",
                 "Please review the summary above for details",
                 "Original text has been condensed for clarity"
             )
         } else {
-            bullets.take(5)
+            bullets.take(7)
         }
         
+        android.util.Log.d("EnhancedGeminiAPI", "Parsed brief: $brief")
         android.util.Log.d("EnhancedGeminiAPI", "Parsed summary: $summary")
+        android.util.Log.d("EnhancedGeminiAPI", "Parsed detailed: $detailed")
         android.util.Log.d("EnhancedGeminiAPI", "Parsed bullets: $finalBullets")
+        android.util.Log.d("EnhancedGeminiAPI", "Parsed insights: $keyInsights")
+        android.util.Log.d("EnhancedGeminiAPI", "Parsed actions: $actionItems")
+        android.util.Log.d("EnhancedGeminiAPI", "Parsed keywords: $keywords")
         
         return SummarizeResponse(
-            summary = summary.take(300),
+            summary = summary,
             bullets = finalBullets,
-            confidence = if (bullets.isEmpty()) 0.5f else 0.75f,
-            processingTime = processingTime
+            confidence = calculateConfidenceFromParsing(brief, summary, detailed, finalBullets),
+            processingTime = processingTime,
+            briefOverview = brief,
+            detailedSummary = detailed,
+            keyInsights = keyInsights,
+            actionItems = actionItems,
+            keywords = keywords
         )
+    }
+    
+    private fun extractBulletPoints(lines: List<String>, startIndex: Int, endIndex: Int): List<String> {
+        return if (startIndex >= 0 && endIndex > startIndex) {
+            lines.subList(startIndex + 1, endIndex)
+                .filter { it.startsWith("•") || it.startsWith("-") || it.startsWith("*") }
+                .map { it.removePrefix("•").removePrefix("-").removePrefix("*").trim() }
+                .filter { it.isNotEmpty() }
+        } else {
+            emptyList()
+        }
+    }
+    
+    private fun calculateConfidenceFromParsing(
+        brief: String?, 
+        summary: String, 
+        detailed: String?, 
+        bullets: List<String>
+    ): Float {
+        var score = 0.5f
+        if (!brief.isNullOrBlank()) score += 0.15f
+        if (summary.length > 50) score += 0.15f
+        if (!detailed.isNullOrBlank()) score += 0.15f
+        if (bullets.size >= 3) score += 0.05f
+        return score.coerceIn(0f, 1f)
     }
     
     /**

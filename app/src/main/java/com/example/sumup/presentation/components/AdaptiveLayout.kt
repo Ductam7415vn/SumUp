@@ -27,9 +27,9 @@ enum class WindowOrientation {
 }
 
 /**
- * Device type classification
+ * Device category classification
  */
-enum class DeviceType {
+enum class DeviceCategory {
     PHONE,
     FOLDABLE,
     TABLET
@@ -41,7 +41,7 @@ enum class DeviceType {
 data class AdaptiveInfo(
     val screenSize: ScreenSize,
     val orientation: WindowOrientation,
-    val deviceType: DeviceType,
+    val deviceType: DeviceCategory,
     val isTablet: Boolean,
     val isFoldable: Boolean,
     val useTwoPane: Boolean,
@@ -72,13 +72,13 @@ fun rememberAdaptiveInfo(): AdaptiveInfo {
     }
     
     val deviceType = when {
-        screenWidthDp >= 840.dp -> DeviceType.TABLET
-        screenWidthDp >= 600.dp && orientation == WindowOrientation.LANDSCAPE -> DeviceType.FOLDABLE
-        else -> DeviceType.PHONE
+        screenWidthDp >= 840.dp -> DeviceCategory.TABLET
+        screenWidthDp >= 600.dp && orientation == WindowOrientation.LANDSCAPE -> DeviceCategory.FOLDABLE
+        else -> DeviceCategory.PHONE
     }
     
-    val isTablet = deviceType == DeviceType.TABLET
-    val isFoldable = deviceType == DeviceType.FOLDABLE
+    val isTablet = deviceType == DeviceCategory.TABLET
+    val isFoldable = deviceType == DeviceCategory.FOLDABLE
     val useTwoPane = screenSize == ScreenSize.EXPANDED || 
                     (screenSize == ScreenSize.MEDIUM && orientation == WindowOrientation.LANDSCAPE)
     val useCompactLayout = screenSize == ScreenSize.COMPACT && orientation == WindowOrientation.PORTRAIT
@@ -224,9 +224,9 @@ fun responsiveMaxWidth(): Dp {
     val adaptiveInfo = rememberAdaptiveInfo()
     
     return when (adaptiveInfo.deviceType) {
-        DeviceType.PHONE -> Dp.Unspecified
-        DeviceType.FOLDABLE -> 800.dp
-        DeviceType.TABLET -> 1200.dp
+        DeviceCategory.PHONE -> Dp.Unspecified
+        DeviceCategory.FOLDABLE -> 800.dp
+        DeviceCategory.TABLET -> 1200.dp
     }
 }
 

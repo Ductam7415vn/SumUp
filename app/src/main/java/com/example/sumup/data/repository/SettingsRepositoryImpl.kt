@@ -21,6 +21,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val LANGUAGE_KEY = stringPreferencesKey("language")
         val AUTO_DELETE_DAYS_KEY = intPreferencesKey("auto_delete_days")
         val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+        val SUMMARY_VIEW_MODE_KEY = stringPreferencesKey("summary_view_mode")
     }
 
     override val theme: Flow<String> = dataStore.data
@@ -40,6 +41,9 @@ class SettingsRepositoryImpl @Inject constructor(
         
     override val isOnboardingCompleted: Flow<Boolean> = dataStore.data
         .map { preferences -> preferences[ONBOARDING_COMPLETED_KEY] ?: false }
+        
+    override val summaryViewMode: Flow<String> = dataStore.data
+        .map { preferences -> preferences[SUMMARY_VIEW_MODE_KEY] ?: "STANDARD" }
     override suspend fun updateTheme(theme: String) {
         dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
@@ -67,6 +71,12 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun updateAutoDeleteDays(days: Int) {
         dataStore.edit { preferences ->
             preferences[AUTO_DELETE_DAYS_KEY] = days
+        }
+    }
+    
+    override suspend fun updateSummaryViewMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[SUMMARY_VIEW_MODE_KEY] = mode
         }
     }
     

@@ -11,6 +11,7 @@ interface SettingsRepository {
     val language: Flow<String>
     val autoDeleteDays: Flow<Int>
     val isOnboardingCompleted: Flow<Boolean>
+    val summaryViewMode: Flow<String>
     
     // Theme and appearance
     fun getThemeMode(): Flow<ThemeMode>
@@ -24,6 +25,7 @@ interface SettingsRepository {
     suspend fun updateDefaultSummaryLength(length: Float)
     suspend fun updateLanguage(language: String)
     suspend fun updateAutoDeleteDays(days: Int)
+    suspend fun updateSummaryViewMode(mode: String)
     
     // Storage and data
     suspend fun clearAllData()

@@ -8,11 +8,14 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -22,8 +25,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.sumup.R
+import com.example.sumup.presentation.components.drawer.NavigationDrawer
 import com.example.sumup.presentation.screens.history.HistoryScreen
-import com.example.sumup.presentation.screens.main.AdaptiveMainScreen
+import com.example.sumup.presentation.screens.history.HistoryViewModel
+import com.example.sumup.presentation.screens.main.MainScreen
+import com.example.sumup.presentation.screens.main.MainUiState
 import com.example.sumup.presentation.screens.ocr.OcrScreen
 import com.example.sumup.presentation.screens.processing.ProcessingScreen
 import com.example.sumup.presentation.screens.result.AdaptiveResultScreen
@@ -31,37 +37,12 @@ import com.example.sumup.presentation.screens.settings.SettingsScreen
 import com.example.sumup.presentation.utils.AdaptiveLayoutInfo
 import com.example.sumup.presentation.utils.DeviceType
 import com.example.sumup.presentation.utils.rememberAdaptiveLayoutInfo
+import com.example.sumup.utils.haptic.rememberHapticFeedback
+import com.example.sumup.domain.repository.SummaryRepository
+import kotlinx.coroutines.launch
 
-data class NavigationItem(
-    val route: String,
-    val icon: ImageVector,
-    val selectedIcon: ImageVector,
-    val label: String,
-    val showInBottomBar: Boolean = true,
-    val showInNavRail: Boolean = true
-)
 
-val navigationItems = listOf(
-    NavigationItem(
-        route = Screen.Main.route,
-        icon = Icons.Default.Home,
-        selectedIcon = Icons.Default.Home,
-        label = "Home"
-    ),
-    NavigationItem(
-        route = Screen.History.route,
-        icon = Icons.Default.History,
-        selectedIcon = Icons.Default.History,
-        label = "History"
-    ),
-    NavigationItem(
-        route = Screen.Settings.route,
-        icon = Icons.Default.Settings,
-        selectedIcon = Icons.Default.Settings,
-        label = "Settings"
-    )
-)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdaptiveNavigation(
     windowSizeClass: WindowSizeClass,
@@ -69,189 +50,97 @@ fun AdaptiveNavigation(
 ) {
     val navController = rememberNavController()
     val adaptiveInfo = rememberAdaptiveLayoutInfo(windowSizeClass)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val hapticManager = rememberHapticFeedback()
     
-    when {
-        adaptiveInfo.shouldShowNavRail -> {
-            NavigationRailLayout(
-                navController = navController,
-                adaptiveInfo = adaptiveInfo,
-                modifier = modifier
-            )
-        }
-        else -> {
-            BottomNavigationLayout(
-                navController = navController,
-                adaptiveInfo = adaptiveInfo,
-                modifier = modifier
-            )
-        }
+    // Get current route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Main.route
+    
+    // Get history data
+    val historyViewModel: HistoryViewModel = hiltViewModel()
+    val historyUiState by historyViewModel.uiState.collectAsStateWithLifecycle()
+    
+    // Flatten grouped summaries into a single list
+    val allSummaries = historyUiState.groupedSummaries.values.flatten()
+    
+    // Get database size
+    var databaseSize by remember { mutableStateOf("0 MB") }
+    LaunchedEffect(Unit) {
+        databaseSize = historyViewModel.getDatabaseSize()
     }
-}
-
-@Composable
-private fun NavigationRailLayout(
-    navController: NavHostController,
-    adaptiveInfo: AdaptiveLayoutInfo,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // Navigation Rail
-        AdaptiveNavigationRail(
-            navController = navController,
-            adaptiveInfo = adaptiveInfo
-        )
-        
-        // Main Content
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)
-        ) {
-            AdaptiveNavHost(
-                navController = navController,
-                adaptiveInfo = adaptiveInfo,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavigationLayout(
-    navController: NavHostController,
-    adaptiveInfo: AdaptiveLayoutInfo,
-    modifier: Modifier = Modifier
-) {
-    Scaffold(
-        modifier = modifier,
-        bottomBar = {
-            if (adaptiveInfo.shouldShowBottomBar) {
-                AdaptiveBottomNavigation(
-                    navController = navController,
-                    adaptiveInfo = adaptiveInfo
-                )
+    
+    NavigationDrawer(
+        drawerState = drawerState,
+        currentRoute = currentRoute,
+        summaryHistory = allSummaries,
+        userEmail = "user@example.com", // TODO: Get from user preferences
+        totalSummaries = historyUiState.totalCount,
+        storageUsed = databaseSize,
+        onNavigateToHome = {
+            navController.navigate(Screen.Main.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
             }
-        }
-    ) { paddingValues ->
+        },
+        onNavigateToHistory = {
+            navController.navigate(Screen.History.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+        onNavigateToSettings = {
+            navController.navigate(Screen.Settings.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+        onNavigateToSummary = { summary ->
+            // Navigate to result with summary ID
+            navController.navigate("${Screen.Result.route}/${summary.id}")
+        },
+        onStartNewSummary = { inputType ->
+            // Navigate to main and set input type
+            navController.navigate(Screen.Main.route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+        hapticManager = hapticManager
+    ) {
+        // Main content with NavHost
         AdaptiveNavHost(
             navController = navController,
             adaptiveInfo = adaptiveInfo,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            drawerState = drawerState,
+            modifier = modifier.fillMaxSize()
         )
     }
 }
 
-@Composable
-private fun AdaptiveNavigationRail(
-    navController: NavHostController,
-    adaptiveInfo: AdaptiveLayoutInfo,
-    modifier: Modifier = Modifier
-) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-    
-    NavigationRail(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // FAB for tablets
-        if (adaptiveInfo.deviceType == DeviceType.TABLET) {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.Ocr.route) },
-                modifier = Modifier.padding(bottom = 16.dp),
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(
-                    Icons.Default.CameraAlt,
-                    contentDescription = "Scan Text"
-                )
-            }
-        }
-        
-        navigationItems.filter { it.showInNavRail }.forEach { item ->
-            NavigationRailItem(
-                icon = {
-                    Icon(
-                        if (currentDestination?.hierarchy?.any { it.route == item.route } == true) {
-                            item.selectedIcon
-                        } else {
-                            item.icon
-                        },
-                        contentDescription = item.label
-                    )
-                },
-                label = { Text(item.label) },
-                selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-                alwaysShowLabel = adaptiveInfo.deviceType == DeviceType.TABLET
-            )
-        }
-        
-        Spacer(modifier = Modifier.weight(1f))
-    }
-}
 
-@Composable
-private fun AdaptiveBottomNavigation(
-    navController: NavHostController,
-    adaptiveInfo: AdaptiveLayoutInfo,
-    modifier: Modifier = Modifier
-) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-    
-    NavigationBar(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
-    ) {
-        navigationItems.filter { it.showInBottomBar }.forEach { item ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        if (currentDestination?.hierarchy?.any { it.route == item.route } == true) {
-                            item.selectedIcon
-                        } else {
-                            item.icon
-                        },
-                        contentDescription = item.label
-                    )
-                },
-                label = { Text(item.label) },
-                selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
-                onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
-        }
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AdaptiveNavHost(
     navController: NavHostController,
     adaptiveInfo: AdaptiveLayoutInfo,
+    drawerState: DrawerState,
     modifier: Modifier = Modifier
 ) {
+    val scope = rememberCoroutineScope()
     NavHost(
         navController = navController,
         startDestination = Screen.Main.route,
@@ -270,7 +159,7 @@ private fun AdaptiveNavHost(
         }
     ) {
         composable(Screen.Main.route) {
-            AdaptiveMainScreen(
+            MainScreen(
                 onNavigateToOcr = {
                     navController.navigate(Screen.Ocr.route)
                 },
@@ -283,7 +172,16 @@ private fun AdaptiveNavHost(
                 onNavigateToProcessing = {
                     navController.navigate(Screen.Processing.route)
                 },
-                adaptiveInfo = adaptiveInfo
+                onNavigateToResult = { summaryId ->
+                    navController.navigate("${Screen.Result.route}/$summaryId") {
+                        popUpTo(Screen.Main.route)
+                    }
+                },
+                onOpenDrawer = {
+                    scope.launch {
+                        drawerState.open()
+                    }
+                }
             )
         }
         
@@ -304,21 +202,36 @@ private fun AdaptiveNavHost(
         }
         
         composable(Screen.Processing.route) {
+            // Get the MainViewModel from the parent NavBackStackEntry
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry(Screen.Main.route)
+            }
+            val mainViewModel: com.example.sumup.presentation.screens.main.MainViewModel = hiltViewModel(parentEntry)
+            
             ProcessingScreen(
+                viewModel = mainViewModel,
                 onCancel = {
                     navController.popBackStack()
                 },
-                onComplete = {
-                    navController.navigate(Screen.Result.route) {
-                        popUpTo(Screen.Processing.route) {
-                            inclusive = true
+                onComplete = { summaryId ->
+                    if (summaryId != null) {
+                        navController.navigate("${Screen.Result.route}/$summaryId") {
+                            popUpTo(Screen.Main.route)
+                        }
+                    } else {
+                        navController.navigate(Screen.Result.route) {
+                            popUpTo(Screen.Processing.route) {
+                                inclusive = true
+                            }
                         }
                     }
                 }
             )
         }
         
-        composable(Screen.Result.route) {
+        // Result screen with summary ID parameter
+        composable("${Screen.Result.route}/{summaryId}") { backStackEntry ->
+            val summaryId = backStackEntry.arguments?.getString("summaryId")
             AdaptiveResultScreen(
                 onNavigateBack = {
                     navController.navigate(Screen.Main.route) {
@@ -330,7 +243,8 @@ private fun AdaptiveNavHost(
                 onNavigateToHistory = {
                     navController.navigate(Screen.History.route)
                 },
-                adaptiveInfo = adaptiveInfo
+                adaptiveInfo = adaptiveInfo,
+                summaryId = summaryId
             )
         }
         
@@ -341,7 +255,7 @@ private fun AdaptiveNavHost(
                 },
                 onSummaryClick = { summaryId ->
                     // Navigate to result with summary ID
-                    navController.navigate(Screen.Result.route)
+                    navController.navigate("${Screen.Result.route}/$summaryId")
                 },
                 adaptiveInfo = adaptiveInfo
             )

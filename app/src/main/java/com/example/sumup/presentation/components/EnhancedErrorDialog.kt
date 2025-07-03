@@ -295,6 +295,24 @@ fun getEnhancedErrorInfo(error: AppError): EnhancedErrorInfo = when (error) {
         canRetry = false,
         severity = ErrorSeverity.MEDIUM
     )
+    is AppError.ApiKeyError -> EnhancedErrorInfo(
+        title = "API Key Required",
+        message = "Add your Gemini API key in settings to use real AI summaries.",
+        illustration = "🔑",
+        icon = Icons.Default.Key,
+        actionText = "Add Key",
+        canRetry = false,
+        severity = ErrorSeverity.HIGH
+    )
+    is AppError.InvalidApiKeyError -> EnhancedErrorInfo(
+        title = "Invalid API Key",
+        message = "The API key you provided is not valid. Please check and try again.",
+        illustration = "❌",
+        icon = Icons.Default.VpnKey,
+        actionText = "Fix Key",
+        canRetry = false,
+        severity = ErrorSeverity.HIGH
+    )
     is AppError.UnknownError -> EnhancedErrorInfo(
         title = "Unexpected Error",
         message = error.originalMessage.ifEmpty { "Something unexpected happened. Please try again." },

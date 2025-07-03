@@ -1,10 +1,11 @@
 package com.example.sumup.di
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.preference.PreferenceManager
 import com.example.sumup.utils.clipboard.ClipboardManager
 import com.example.sumup.utils.clipboard.ClipboardManagerImpl
 import com.example.sumup.utils.drafts.DraftManager
-import com.example.sumup.utils.InputValidator
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -32,6 +33,24 @@ abstract class UtilsModule {
         
         @Provides
         @Singleton
-        fun provideInputValidator(): InputValidator = InputValidator()
+        fun provideInputValidator(): com.example.sumup.utils.InputValidator = com.example.sumup.utils.InputValidator
+        
+        @Provides
+        @Singleton
+        fun provideSharedPreferences(
+            @ApplicationContext context: Context
+        ): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        
+        @Provides
+        @Singleton
+        fun provideApiKeyMigration(
+            @ApplicationContext context: Context,
+            sharedPreferences: SharedPreferences,
+            enhancedApiKeyManager: com.example.sumup.utils.EnhancedApiKeyManager
+        ): com.example.sumup.utils.migration.ApiKeyMigration = com.example.sumup.utils.migration.ApiKeyMigration(
+            context, 
+            enhancedApiKeyManager,
+            sharedPreferences
+        )
     }
 }

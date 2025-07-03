@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - Processing Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .processing-content {
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 320px;
+        }
+
+        /* Animated AI Icon */
+        .ai-icon-container {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .ai-icon-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.6;
+            }
+        }
+
+        .ai-icon {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-icon .material-icons {
+            font-size: 64px;
+            color: #6366f1;
+            animation: rotate-reverse 20s linear infinite;
+        }
+
+        @keyframes rotate-reverse {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(-360deg); }
+        }
+
+        /* Progress Message */
+        .progress-message {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Loading Dots */
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #6366f1;
+            border-radius: 50%;
+            animation: dot-bounce 1.4s ease-in-out infinite;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0; }
+
+        @keyframes dot-bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        /* Timeout Messages */
+        .timeout-message {
+            margin-top: 32px;
+            padding: 16px;
+            background: #fef3c7;
+            border-radius: 12px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .timeout-message.visible {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .timeout-icon {
+            color: #f59e0b;
+        }
+
+        .timeout-text {
+            flex: 1;
+            font-size: 14px;
+            color: #92400e;
+            text-align: left;
+        }
+
+        /* Cancel Button */
+        .cancel-button {
+            margin-top: 48px;
+            background: transparent;
+            border: none;
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .cancel-button:hover {
+            background: #f3f4f6;
+            color: #1a1a1a;
+        }
+
+        /* Try Shorter Text Button */
+        .action-button {
+            margin-top: 16px;
+            background: transparent;
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Confirmation Dialog */
+        .confirmation-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .confirmation-overlay.active {
+            display: flex;
+        }
+
+        .confirmation-dialog {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .dialog-content {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dialog-button.stay {
+            background: transparent;
+            color: #666;
+        }
+
+        .dialog-button.leave {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <div class="processing-content">
+                <!-- Animated AI Icon -->
+                <div class="ai-icon-container">
+                    <div class="ai-icon-bg"></div>
+                    <div class="ai-icon">
+                        <span class="material-icons">auto_awesome</span>
+                    </div>
+                </div>
+
+                <!-- Progress Message -->
+                <div class="progress-message">
+                    <span id="progressMessage">Reading your text</span>
+                    <div class="loading-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressPercent">0%</div>
+                </div>
+
+                <!-- Timeout Message -->
+                <div class="timeout-message" id="timeoutMessage">
+                    <span class="material-icons timeout-icon">timer</span>
+                    <span class="timeout-text" id="timeoutText">This is taking longer than usual...</span>
+                </div>
+
+                <!-- Action Button (appears after timeout) -->
+                <button class="action-button" id="actionButton" style="display: none;">
+                    Try Shorter Text
+                </button>
+
+                <!-- Cancel Button -->
+                <button class="cancel-button" onclick="showCancelConfirmation()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Confirmation Dialog -->
+        <div class="confirmation-overlay" id="confirmDialog">
+            <div class="confirmation-dialog">
+                <h2 class="dialog-title">Cancel Processing?</h2>
+                <p class="dialog-content">Processing is in progress. Are you sure you want to cancel?</p>
+                <div class="dialog-actions">
+                    <button class="dialog-button stay" onclick="hideConfirmation()">Continue</button>
+                    <button class="dialog-button leave" onclick="cancelProcessing()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let progress = 0;
+        let currentStage = 0;
+        let timeoutLevel = 0;
+        let processingInterval;
+        let timeoutInterval;
+
+        const stages = [
+            { message: "Reading your text", duration: 2000, endProgress: 30 },
+            { message: "Understanding context", duration: 2500, endProgress: 50 },
+            { message: "Creating summary", duration: 3000, endProgress: 85 },
+            { message: "Almost ready", duration: 1500, endProgress: 95 },
+            { message: "Done!", duration: 500, endProgress: 100 }
+        ];
+
+        // Start processing simulation
+        function startProcessing() {
+            processStage();
+            startTimeoutMonitor();
+        }
+
+        function processStage() {
+            if (currentStage >= stages.length) {
+                // Complete
+                setTimeout(() => {
+                    alert('Summary completed! Would navigate to result screen...');
+                }, 200);
+                return;
+            }
+
+            const stage = stages[currentStage];
+            document.getElementById('progressMessage').textContent = stage.message;
+            
+            // Animate progress
+            const startProgress = progress;
+            const endProgress = stage.endProgress;
+            const duration = stage.duration;
+            const steps = 30;
+            const stepDuration = duration / steps;
+            const stepProgress = (endProgress - startProgress) / steps;
+            
+            let currentStep = 0;
+            processingInterval = setInterval(() => {
+                if (currentStep >= steps) {
+                    clearInterval(processingInterval);
+                    currentStage++;
+                    processStage();
+                    return;
+                }
+                
+                progress += stepProgress;
+                updateProgress(progress);
+                currentStep++;
+            }, stepDuration);
+        }
+
+        function updateProgress(value) {
+            document.getElementById('progressFill').style.width = value + '%';
+            document.getElementById('progressPercent').textContent = Math.floor(value) + '%';
+        }
+
+        function startTimeoutMonitor() {
+            // Show timeout messages at intervals
+            setTimeout(() => {
+                showTimeoutMessage(1, "This is taking longer than usual...");
+            }, 5000);
+
+            setTimeout(() => {
+                showTimeoutMessage(2, "Almost there... Large texts take more time");
+            }, 10000);
+
+            setTimeout(() => {
+                showTimeoutMessage(3, "Still processing. You can try with shorter text");
+                document.getElementById('actionButton').style.display = 'block';
+            }, 15000);
+        }
+
+        function showTimeoutMessage(level, text) {
+            timeoutLevel = level;
+            document.getElementById('timeoutText').textContent = text;
+            document.getElementById('timeoutMessage').classList.add('visible');
+        }
+
+        function showCancelConfirmation() {
+            if (progress > 50) {
+                document.getElementById('confirmDialog').classList.add('active');
+            } else {
+                cancelProcessing();
+            }
+        }
+
+        function hideConfirmation() {
+            document.getElementById('confirmDialog').classList.remove('active');
+        }
+
+        function cancelProcessing() {
+            clearInterval(processingInterval);
+            alert('Processing cancelled. Would navigate back to main screen...');
+        }
+
+        // Start processing on load
+        window.onload = () => {
+            setTimeout(startProcessing, 500);
+        };
+
+        // Handle back button
+        window.addEventListener('popstate', (e) => {
+            e.preventDefault();
+            showCancelConfirmation();
+        });
+    </script>
+</body>
+</html>

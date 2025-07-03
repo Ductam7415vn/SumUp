@@ -15,37 +15,56 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.runtime.CompositionLocalProvider
+import com.example.sumup.ui.theme.*
 
-// Custom brand colors
-private val BrandGreen = Color(0xFF4CAF50)
-private val BrandGreenDark = Color(0xFF388E3C)
-private val BrandBlue = Color(0xFF2196F3)
+// Custom brand colors - Modern palette
+private val BrandPurple = Color(0xFF5B5FDE)
+private val BrandPurpleDark = Color(0xFF4B4FCE)
+private val BrandBlue = Color(0xFF6366F1)
+private val BrandPink = Color(0xFFFF6B6B)
 
 // Fallback color schemes when dynamic color is not available
 private val DarkColorScheme = darkColorScheme(
-    primary = BrandGreen,
+    primary = BrandPurple,
     onPrimary = Color.White,
-    primaryContainer = BrandGreenDark,
+    primaryContainer = BrandPurpleDark,
     onPrimaryContainer = Color.White,
-    secondary = BrandBlue,
+    secondary = BrandPink,
     onSecondary = Color.White,
+    tertiary = BrandBlue,
+    onTertiary = Color.White,
+    error = Color(0xFFCF6679),
+    onError = Color.Black,
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
     onBackground = Color.White,
-    onSurface = Color.White
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF2A2A2A),
+    onSurfaceVariant = Color(0xFFCAC4D0)
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = BrandBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE3F2FD),
+    primaryContainer = Color(0xFFE8E9FF),
     onPrimaryContainer = Color.Black,
-    secondary = BrandGreen,
+    secondary = BrandPink,
     onSecondary = Color.White,
-    background = Color.White,
+    tertiary = BrandPurple,
+    onTertiary = Color.White,
+    error = Color(0xFFBA1A1A),
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFF8F9FE),
     surface = Color.White,
-    onBackground = Color.Black,
-    onSurface = Color.Black
+    surfaceVariant = Color(0xFFF3F4F6),
+    onBackground = Color(0xFF1A1D29),
+    onSurface = Color(0xFF1A1D29),
+    onSurfaceVariant = Color(0xFF6B7280)
 )
 
 @Composable
@@ -55,6 +74,11 @@ fun SumUpTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val extendedColorScheme = if (darkTheme) {
+        DarkExtendedColorScheme
+    } else {
+        LightExtendedColorScheme
+    }
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -73,14 +97,25 @@ fun SumUpTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.surface.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            // Make status bar transparent for edge-to-edge
+            window.statusBarColor = Color.Transparent.toArgb()
+            // Make navigation bar transparent too
+            window.navigationBarColor = Color.Transparent.toArgb()
+            
+            // Set system bar icon colors based on theme
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalExtendedColorScheme provides extendedColorScheme
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

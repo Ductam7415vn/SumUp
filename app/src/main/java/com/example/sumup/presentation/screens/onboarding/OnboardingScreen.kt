@@ -1,10 +1,13 @@
 package com.example.sumup.presentation.screens.onboarding
 
 import androidx.compose.animation.*
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sumup.presentation.preview.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -31,19 +34,25 @@ import androidx.core.graphics.ColorUtils
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.domain.model.OnboardingPage
+import com.example.sumup.domain.model.OnboardingAction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
     onOnboardingComplete: () -> Unit,
+    onNavigateToSettings: (() -> Unit)? = null,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(pageCount = { uiState.pages.size })
     val hapticFeedback = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     // Sync pager state with viewmodel
     LaunchedEffect(uiState.currentPage) {
@@ -78,7 +87,27 @@ fun OnboardingScreen(
         ) { pageIndex ->
             OnboardingPageContent(
                 page = uiState.pages[pageIndex],
-                isActive = pageIndex == uiState.currentPage
+                isActive = pageIndex == uiState.currentPage,
+                onActionClick = { action ->
+                    when (action) {
+                        OnboardingAction.REQUEST_API_KEY -> {
+                            // Open Gemini API key website
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://makersuite.google.com/app/apikey"))
+                            context.startActivity(intent)
+                            // Also navigate to settings after a delay
+                            scope.launch {
+                                delay(500)
+                                onNavigateToSettings?.invoke()
+                            }
+                        }
+                        OnboardingAction.GRANT_PERMISSIONS -> {
+                            // Handle permissions if needed
+                        }
+                        OnboardingAction.SHOW_FEATURES -> {
+                            // Show features or continue
+                        }
+                    }
+                }
             )
         }
         
@@ -189,7 +218,8 @@ fun OnboardingScreen(
 private fun OnboardingPageContent(
     page: OnboardingPage,
     isActive: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onActionClick: (OnboardingAction) -> Unit = {}
 ) {
     val backgroundColor = Color(android.graphics.Color.parseColor(page.backgroundColor))
     val textColor = Color(android.graphics.Color.parseColor(page.textColor))
@@ -264,6 +294,35 @@ private fun OnboardingPageContent(
                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.4,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
+            }
+            
+            // Action button if page has an action
+            if (page.action != null && page.actionButtonText != null && isActive) {
+                Spacer(modifier = Modifier.height(32.dp))
+                AnimatedVisibility(
+                    visible = isActive,
+                    enter = fadeIn(animationSpec = tween(600, delayMillis = 600)) + 
+                           slideInVertically(animationSpec = tween(600, delayMillis = 600)),
+                    exit = fadeOut(animationSpec = tween(300))
+                ) {
+                    OutlinedButton(
+                        onClick = { onActionClick(page.action) },
+                        modifier = Modifier.padding(horizontal = 48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = textColor
+                        ),
+                        border = BorderStroke(
+                            width = 2.dp,
+                            color = textColor.copy(alpha = 0.8f)
+                        )
+                    ) {
+                        Text(
+                            text = page.actionButtonText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
     }
@@ -415,5 +474,36 @@ private fun EnhancedActionButton(
                 }
             }
         }
+    }
+}
+
+// Preview Composables
+@ThemePreview
+@Composable
+fun OnboardingScreenPreview() {
+    PreviewWrapper {
+        OnboardingScreen(
+            onOnboardingComplete = {}
+        )
+    }
+}
+
+@Preview(name = "Onboarding - Welcome Page", showBackground = true)
+@Composable
+fun OnboardingWelcomePreview() {
+    PreviewWrapper {
+        OnboardingScreen(
+            onOnboardingComplete = {}
+        )
+    }
+}
+
+@AllDevicePreview
+@Composable
+fun OnboardingScreenDevicePreview() {
+    PreviewWrapper {
+        OnboardingScreen(
+            onOnboardingComplete = {}
+        )
     }
 }

@@ -184,7 +184,7 @@ private fun MainInputPane(
                 MainUiState.InputType.PDF -> {
                     PdfUploadSection(
                         selectedPdfName = uiState.selectedPdfName,
-                        onPdfSelected = viewModel::selectPdf,
+                        onPdfSelected = { uri, _ -> viewModel.selectPdf(android.net.Uri.parse(uri)) },
                         onClear = viewModel::clearPdf,
                         uploadState = uiState.fileUploadState,
                         modifier = Modifier.fillMaxWidth()
@@ -364,7 +364,7 @@ private fun MainSinglePane(
                 MainUiState.InputType.PDF -> {
                     PdfUploadSection(
                         selectedPdfName = uiState.selectedPdfName,
-                        onPdfSelected = viewModel::selectPdf,
+                        onPdfSelected = { uri, _ -> viewModel.selectPdf(android.net.Uri.parse(uri)) },
                         onClear = viewModel::clearPdf,
                         uploadState = uiState.fileUploadState,
                         modifier = Modifier.fillMaxWidth()

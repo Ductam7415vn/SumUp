@@ -32,4 +32,13 @@ interface SummaryDao {
 
     @Query("UPDATE summaries SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavoriteStatus(id: String, isFavorite: Boolean)
+    
+    @Query("SELECT COUNT(*) FROM summaries WHERE date(createdAt/1000, 'unixepoch') = date('now')")
+    fun getTodayCount(): Flow<Int>
+    
+    @Query("SELECT COUNT(*) FROM summaries WHERE date(createdAt/1000, 'unixepoch') >= date('now', '-7 days')")
+    fun getWeekCount(): Flow<Int>
+    
+    @Query("SELECT COUNT(*) FROM summaries")
+    fun getTotalCount(): Flow<Int>
 }
