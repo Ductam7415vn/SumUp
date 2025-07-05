@@ -4,8 +4,8 @@
 
 ---
 
-# ỨNG DỤNG TÓM TẮT VĂN BẢN THÔNG MINH SUMUP
-## SỬ DỤNG TRÍ TUỆ NHÂN TẠO GOOGLE GEMINI
+# ỨNG DỤNG TÓM TẮT VĂN BẢN THÔNG MINH SUMUP v1.0.3
+## SỬ DỤNG TRÍ TUỆ NHÂN TẠO GOOGLE GEMINI VỚI AI QUALITY METRICS
 
 ---
 
@@ -66,3 +66,10 @@
 - **UI/UX**: User Interface/User Experience - Giao diện/Trải nghiệm người dùng
 - **MVVM**: Model-View-ViewModel - Mô hình kiến trúc phần mềm
 - **SDK**: Software Development Kit - Bộ công cụ phát triển phần mềm
+- **CI/CD**: Continuous Integration/Continuous Deployment - Tích hợp/Triển khai liên tục
+- **KPI**: Key Performance Indicator - Chỉ số hiệu suất chính
+- **APK**: Android Package Kit - Gói cài đặt Android
+- **OKR**: Objectives and Key Results - Mục tiêu và kết quả chính
+- **DI**: Dependency Injection - Tiêm phụ thuộc
+- **DAO**: Data Access Object - Đối tượng truy cập dữ liệu
+- **DTO**: Data Transfer Object - Đối tượng truyền dữ liệu
