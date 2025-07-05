@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Gradient background circle -->
+    <path
+        android:pathData="M54,54m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="30"
+                android:startY="30"
+                android:endX="78"
+                android:endY="78">
+                <item android:offset="0" android:color="#FF6B4EFF"/>
+                <item android:offset="1" android:color="#FF4E9FFF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Connecting lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M54,32 Q42,48 36,64"/>
+    
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M54,32 Q66,48 72,64"/>
+    
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M36,64 Q54,70 72,64"/>
+    
+    <!-- Center accent -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.2"
+        android:pathData="M54,54m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0"/>
+    
+    <!-- Top dot (input - larger) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"/>
+    
+    <!-- Left dot (process - medium) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.9"
+        android:pathData="M36,64m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
+    
+    <!-- Right dot (output - smaller) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.8"
+        android:pathData="M72,64m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+    
+</vector>

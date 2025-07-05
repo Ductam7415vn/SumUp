@@ -14,8 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import com.example.sumup.presentation.components.rememberSwipeHapticFeedback
+import com.example.sumup.presentation.components.animations.AnimatedFavoriteIcon
+import com.example.sumup.utils.haptic.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,10 +39,12 @@ fun SwipeableHistoryItem(
     onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hapticFeedback = LocalHapticFeedback.current
+    val hapticManager = rememberHapticFeedback()
+    val swipeHaptic = rememberSwipeHapticFeedback()
     
     val deleteAction = SwipeAction(
         onSwipe = {
+            swipeHaptic()
             onDelete()
         },
         icon = {
@@ -56,6 +59,7 @@ fun SwipeableHistoryItem(
     
     val shareAction = SwipeAction(
         onSwipe = {
+            swipeHaptic()
             onShare()
         },
         icon = {
@@ -79,7 +83,7 @@ fun SwipeableHistoryItem(
             isSelectionMode = isSelectionMode,
             onClick = onClick,
             onLongClick = {
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                hapticManager.performHapticFeedback(com.example.sumup.utils.haptic.HapticFeedbackType.LONG_PRESS)
                 onLongClick()
             },
             onToggleFavorite = onToggleFavorite
@@ -97,6 +101,7 @@ private fun HistoryItemCard(
     onLongClick: () -> Unit,
     onToggleFavorite: () -> Unit
 ) {
+    val hapticManager = rememberHapticFeedback()
     val backgroundColor by animateColorAsState(
         targetValue = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
@@ -189,13 +194,11 @@ private fun HistoryItemCard(
                         if (!isSelectionMode) {
                             IconButton(
                                 onClick = onToggleFavorite,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(28.dp)
                             ) {
-                                Icon(
-                                    if (summary.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                    contentDescription = if (summary.isFavorite) "Remove from favorites" else "Add to favorites",
-                                    tint = if (summary.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(16.dp)
+                                AnimatedFavoriteIcon(
+                                    isFavorite = summary.isFavorite,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }

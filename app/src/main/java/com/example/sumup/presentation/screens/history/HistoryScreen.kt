@@ -1,6 +1,8 @@
 package com.example.sumup.presentation.screens.history
 
 import android.content.Intent
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sumup.presentation.preview.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -22,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.presentation.screens.history.components.*
+import com.example.sumup.presentation.components.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,7 +32,8 @@ import java.util.*
 @Composable
 fun HistoryScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToResult: (String) -> Unit = {},
+    onSummaryClick: (String) -> Unit = {},
+    adaptiveInfo: com.example.sumup.presentation.utils.AdaptiveLayoutInfo? = null,
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,57 +129,92 @@ fun HistoryScreen(
                 )
             }
             
-            // Content
-            if (uiState.isEmpty) {
-                EmptyState(
-                    searchQuery = searchQuery,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    uiState.groupedSummaries.forEach { (timeframe, summaries) ->
-                        stickyHeader {
-                            SectionHeader(
-                                title = timeframe,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.background)
-                            )
-                        }
-                        
-                        items(
-                            items = summaries,
-                            key = { it.id }
-                        ) { summary ->
-                            SwipeableHistoryItem(
-                                summary = summary,
-                                isSelected = summary.id in uiState.selectedItems,
-                                isSelectionMode = uiState.isSelectionMode,
-                                onClick = {
-                                    if (uiState.isSelectionMode) {
-                                        viewModel.toggleItemSelection(summary.id)
-                                    } else {
-                                        onNavigateToResult(summary.id)
-                                    }
-                                },
-                                onLongClick = {
-                                    if (!uiState.isSelectionMode) {
-                                        viewModel.enterSelectionMode(summary.id)
-                                    }
-                                },
-                                onShare = { shareSummary(context, summary) },
-                                onDelete = { viewModel.deleteSummary(summary.id) },
-                                onToggleFavorite = { viewModel.toggleFavorite(summary.id) }
-                            )
+            // Content with enhanced loading state
+            EnhancedLoadingState(
+                isLoading = uiState.isLoading,
+                hasData = !uiState.isEmpty,
+                modifier = Modifier.weight(1f),
+                shimmerContent = {
+                    // Show shimmer when loading for first time
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(6) {
+                            ShimmerHistoryItem()
                         }
                     }
+                },
+                actualContent = {
+                    if (uiState.isEmpty) {
+                        if (searchQuery.isNotEmpty()) {
+                            EmptyStateComponent(
+                                type = EmptyStateType.SEARCH_NO_RESULTS,
+                                modifier = Modifier.fillMaxSize(),
+                                actionText = "Clear Search",
+                                onActionClick = { viewModel.updateSearchQuery("") }
+                            )
+                        } else {
+                            EmptyStateComponent(
+                                type = EmptyStateType.HISTORY_EMPTY,
+                                modifier = Modifier.fillMaxSize(),
+                                actionText = "Start Summarizing",
+                                onActionClick = onNavigateBack
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 16.dp)
+                        ) {
+                            uiState.groupedSummaries.forEach { (timeframe, summaries) ->
+                                stickyHeader {
+                                    SectionHeader(
+                                        title = timeframe,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.background)
+                                    )
+                                }
+                                
+                                items(
+                                    items = summaries,
+                                    key = { it.id }
+                                ) { summary ->
+                                    SwipeableHistoryItem(
+                                        summary = summary,
+                                        isSelected = summary.id in uiState.selectedItems,
+                                        isSelectionMode = uiState.isSelectionMode,
+                                        onClick = {
+                                            if (uiState.isSelectionMode) {
+                                                viewModel.toggleItemSelection(summary.id)
+                                            } else {
+                                                onSummaryClick(summary.id)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            if (!uiState.isSelectionMode) {
+                                                viewModel.enterSelectionMode(summary.id)
+                                            }
+                                        },
+                                        onShare = { shareSummary(context, summary) },
+                                        onDelete = { viewModel.deleteSummary(summary.id) },
+                                        onToggleFavorite = { viewModel.toggleFavorite(summary.id) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                loadingContent = {
+                    // Show subtle loading overlay when refreshing data
+                    LoadingOverlay(
+                        isVisible = uiState.isLoading,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
-            }
+            )
         }
         
         // Clear all dialog
@@ -209,44 +248,6 @@ fun HistoryScreen(
     }
 }
 
-@Composable
-private fun EmptyState(
-    searchQuery: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(32.dp)
-        ) {
-            Icon(
-                Icons.Outlined.History,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = if (searchQuery.isNotEmpty()) "No results found" else "No history yet",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (searchQuery.isNotEmpty()) 
-                    "Try a different search term" 
-                else 
-                    "Your summaries will appear here",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
 
 private fun shareSummary(context: android.content.Context, summary: Summary) {
     val shareText = buildString {
@@ -269,4 +270,49 @@ private fun shareSummary(context: android.content.Context, summary: Summary) {
     }
     
     context.startActivity(Intent.createChooser(shareIntent, "Share summary"))
+}
+
+// Preview Composables
+@ThemePreview
+@Composable
+fun HistoryScreenPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@Preview(name = "History Screen - Empty", showBackground = true)
+@Composable
+fun HistoryScreenEmptyPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@Preview(name = "History Screen - With Items", showBackground = true)
+@Composable
+fun HistoryScreenWithItemsPreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
+}
+
+@AllDevicePreview
+@Composable
+fun HistoryScreenDevicePreview() {
+    PreviewWrapper {
+        HistoryScreen(
+            onNavigateBack = {},
+            onSummaryClick = {}
+        )
+    }
 }

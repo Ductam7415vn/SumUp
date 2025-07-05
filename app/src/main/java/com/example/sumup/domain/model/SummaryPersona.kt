@@ -16,32 +16,26 @@ enum class SummaryPersona(
     
     STUDY(
         displayName = "Study",
-        description = "Key concepts and learning points",
+        description = "Study notes with key concepts",
         apiStyle = "educational"
     ),
     
-    BUSINESS(
-        displayName = "Business", 
-        description = "Action items and insights",
+    PROFESSIONAL(
+        displayName = "Professional", 
+        description = "Business-focused with action items",
         apiStyle = "actionable"
     ),
     
-    LEGAL(
-        displayName = "Legal",
-        description = "Key terms and implications", 
+    ACADEMIC(
+        displayName = "Academic",
+        description = "Scholarly with citations preserved", 
         apiStyle = "precise"
     ),
     
-    TECHNICAL(
-        displayName = "Technical",
-        description = "Technical details and specifications",
-        apiStyle = "detailed"
-    ),
-    
-    QUICK(
-        displayName = "Quick Read",
-        description = "Ultra-concise key points only",
-        apiStyle = "minimal"
+    SIMPLE(
+        displayName = "Simple",
+        description = "Easy to understand, plain language",
+        apiStyle = "simplified"
     );
     
     companion object {

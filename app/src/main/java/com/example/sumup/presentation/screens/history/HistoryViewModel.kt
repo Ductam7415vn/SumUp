@@ -130,6 +130,18 @@ class HistoryViewModel @Inject constructor(
         }
     }
     
+    fun refreshHistory() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            // Force reload from repository
+            loadSummaries()
+        }
+    }
+    
+    suspend fun getDatabaseSize(): String {
+        return summaryRepository.getDatabaseSize()
+    }
+    
     private fun getTimeframeLabel(timestamp: Long): String {
         val now = System.currentTimeMillis()
         val today = getStartOfDay(now)

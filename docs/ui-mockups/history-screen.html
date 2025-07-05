@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - History Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .top-bar.selection-mode {
+            background: #6366f1;
+        }
+
+        .top-bar.selection-mode * {
+            color: white;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .back-button:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .top-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .icon-button:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        /* Search Bar */
+        .search-container {
+            padding: 8px 16px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .search-container.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 8px 12px;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .search-close:hover {
+            background: #e5e7eb;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Summary Count */
+        .summary-count {
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 120px;
+            height: 120px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .empty-icon .material-icons {
+            font-size: 64px;
+            color: #9ca3af;
+        }
+
+        .empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .empty-button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* History List */
+        .history-list {
+            display: none;
+        }
+
+        .history-list.active {
+            display: block;
+        }
+
+        /* Section Header */
+        .section-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* History Item */
+        .history-item {
+            background: white;
+            margin: 0 16px 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .history-item.selected {
+            background: #eef2ff;
+            border: 2px solid #6366f1;
+            margin: 0 14px 8px;
+        }
+
+        .swipe-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .swipe-container.swiped .swipe-actions {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .swipe-container.swiped .item-content {
+            transform: translateX(-120px);
+        }
+
+        .swipe-action {
+            width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .swipe-action.share {
+            background: #3b82f6;
+        }
+
+        .swipe-action.delete {
+            background: #ef4444;
+        }
+
+        .swipe-action .material-icons {
+            color: white;
+            font-size: 24px;
+        }
+
+        .item-content {
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: transform 0.3s ease;
+            background: white;
+            position: relative;
+        }
+
+        .item-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e5e7eb;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .selection-mode .item-checkbox {
+            display: flex;
+        }
+
+        .item-checkbox.checked {
+            background: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .item-checkbox.checked .material-icons {
+            color: white;
+            font-size: 16px;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .selection-mode .item-icon {
+            display: none;
+        }
+
+        .item-icon .material-icons {
+            color: #6366f1;
+            font-size: 24px;
+        }
+
+        .item-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .item-preview {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .meta-item .material-icons {
+            font-size: 14px;
+        }
+
+        .item-favorite {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: #fbbf24;
+        }
+
+        /* Dialogs */
+        .dialog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .dialog-overlay.active {
+            display: flex;
+        }
+
+        .dialog {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .dialog-content {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dialog-button.cancel {
+            background: transparent;
+            color: #666;
+        }
+
+        .dialog-button.delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="screen">
+            <!-- Top Bar -->
+            <div class="top-bar" id="topBar">
+                <div class="top-bar-left">
+                    <button class="back-button" onclick="handleBack()">
+                        <span class="material-icons" id="backIcon">arrow_back</span>
+                    </button>
+                    <h1 class="top-title" id="topTitle">History</h1>
+                </div>
+                <div class="top-actions" id="topActions">
+                    <button class="icon-button" onclick="toggleSearch()">
+                        <span class="material-icons">search</span>
+                    </button>
+                    <button class="icon-button" onclick="showClearAllDialog()">
+                        <span class="material-icons">delete_sweep</span>
+                    </button>
+                </div>
+                <div class="top-actions" id="selectionActions" style="display: none;">
+                    <button class="icon-button" onclick="selectAll()">
+                        <span class="material-icons">select_all</span>
+                    </button>
+                    <button class="icon-button" onclick="deleteSelected()">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-container" id="searchContainer">
+                <div class="search-bar">
+                    <span class="material-icons" style="color: #666;">search</span>
+                    <input type="text" class="search-input" placeholder="Search summaries..." id="searchInput">
+                    <button class="search-close" onclick="closeSearch()">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Summary Count -->
+                <div class="summary-count" id="summaryCount">12 summaries</div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <span class="material-icons">history</span>
+                    </div>
+                    <h2 class="empty-title">No History Yet</h2>
+                    <p class="empty-text">Your summaries will appear here after you create them</p>
+                    <button class="empty-button" onclick="goBack()">Start Summarizing</button>
+                </div>
+
+                <!-- History List -->
+                <div class="history-list active" id="historyList">
+                    <!-- Today Section -->
+                    <div class="section-header">Today</div>
+                    
+                    <div class="history-item" data-id="1">
+                        <div class="swipe-container">
+                            <div class="swipe-actions">
+                                <div class="swipe-action share" onclick="shareItem(1)">
+                                    <span class="material-icons">share</span>
+                                </div>
+                                <div class="swipe-action delete" onclick="deleteItem(1)">
+                                    <span class="material-icons">delete</span>
+                                </div>
+                            </div>
+                            <div class="item-content" onclick="handleItemClick(1)">
+                                <div class="item-checkbox" onclick="event.stopPropagation(); toggleSelect(1)">
+                                    <span class="material-icons" style="display: none;">check</span>
+                                </div>
+                                <div class="item-icon">
+                                    <span class="material-icons">article</span>
+                                </div>
+                                <div class="item-details">
+                                    <h3 class="item-title">AI in Healthcare Research</h3>
+                                    <p class="item-preview">This comprehensive analysis explores the transformative impact of artificial intelligence on modern healthcare systems...</p>
+                                    <div class="item-meta">
+                                        <span class="meta-item">
+                                            <span class="material-icons">schedule</span>
+                                            2:30 PM
+                                        </span>
+                                        <span class="meta-item">
+                                            <span class="material-icons">compress</span>
+                                            75% reduced
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="material-icons item-favorite">star</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-item" data-id="2">
+                        <div class="swipe-container">
+                            <div class="swipe-actions">
+                                <div class="swipe-action share" onclick="shareItem(2)">
+                                    <span class="material-icons">share</span>
+                                </div>
+                                <div class="swipe-action delete" onclick="deleteItem(2)">
+                                    <span class="material-icons">delete</span>
+                                </div>
+                            </div>
+                            <div class="item-content" onclick="handleItemClick(2)">
+                                <div class="item-checkbox" onclick="event.stopPropagation(); toggleSelect(2)">
+                                    <span class="material-icons" style="display: none;">check</span>
+                                </div>
+                                <div class="item-icon">
+                                    <span class="material-icons">picture_as_pdf</span>
+                                </div>
+                                <div class="item-details">
+                                    <h3 class="item-title">Climate Change Report 2024</h3>
+                                    <p class="item-preview">Global temperature trends show unprecedented changes in weather patterns affecting agricultural systems worldwide...</p>
+                                    <div class="item-meta">
+                                        <span class="meta-item">
+                                            <span class="material-icons">schedule</span>
+                                            11:45 AM
+                                        </span>
+                                        <span class="meta-item">
+                                            <span class="material-icons">compress</span>
+                                            82% reduced
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yesterday Section -->
+                    <div class="section-header">Yesterday</div>
+                    
+                    <div class="history-item" data-id="3">
+                        <div class="swipe-container">
+                            <div class="swipe-actions">
+                                <div class="swipe-action share" onclick="shareItem(3)">
+                                    <span class="material-icons">share</span>
+                                </div>
+                                <div class="swipe-action delete" onclick="deleteItem(3)">
+                                    <span class="material-icons">delete</span>
+                                </div>
+                            </div>
+                            <div class="item-content" onclick="handleItemClick(3)">
+                                <div class="item-checkbox" onclick="event.stopPropagation(); toggleSelect(3)">
+                                    <span class="material-icons" style="display: none;">check</span>
+                                </div>
+                                <div class="item-icon">
+                                    <span class="material-icons">camera_alt</span>
+                                </div>
+                                <div class="item-details">
+                                    <h3 class="item-title">Meeting Notes - Product Launch</h3>
+                                    <p class="item-preview">Key decisions made during the quarterly product planning meeting including timeline adjustments and resource allocation...</p>
+                                    <div class="item-meta">
+                                        <span class="meta-item">
+                                            <span class="material-icons">schedule</span>
+                                            4:15 PM
+                                        </span>
+                                        <span class="meta-item">
+                                            <span class="material-icons">compress</span>
+                                            68% reduced
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- This Week Section -->
+                    <div class="section-header">This Week</div>
+                    
+                    <div class="history-item" data-id="4">
+                        <div class="swipe-container">
+                            <div class="swipe-actions">
+                                <div class="swipe-action share" onclick="shareItem(4)">
+                                    <span class="material-icons">share</span>
+                                </div>
+                                <div class="swipe-action delete" onclick="deleteItem(4)">
+                                    <span class="material-icons">delete</span>
+                                </div>
+                            </div>
+                            <div class="item-content" onclick="handleItemClick(4)">
+                                <div class="item-checkbox" onclick="event.stopPropagation(); toggleSelect(4)">
+                                    <span class="material-icons" style="display: none;">check</span>
+                                </div>
+                                <div class="item-icon">
+                                    <span class="material-icons">article</span>
+                                </div>
+                                <div class="item-details">
+                                    <h3 class="item-title">Blockchain Technology Overview</h3>
+                                    <p class="item-preview">Distributed ledger technology fundamentals and applications in financial services, supply chain management...</p>
+                                    <div class="item-meta">
+                                        <span class="meta-item">
+                                            <span class="material-icons">schedule</span>
+                                            Monday
+                                        </span>
+                                        <span class="meta-item">
+                                            <span class="material-icons">compress</span>
+                                            71% reduced
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clear All Dialog -->
+        <div class="dialog-overlay" id="clearAllDialog">
+            <div class="dialog">
+                <h2 class="dialog-title">Clear All History?</h2>
+                <p class="dialog-content">This will permanently delete all 12 summaries. This action cannot be undone.</p>
+                <div class="dialog-actions">
+                    <button class="dialog-button cancel" onclick="closeClearAllDialog()">Cancel</button>
+                    <button class="dialog-button delete" onclick="clearAllHistory()">Clear All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectionMode = false;
+        let selectedItems = new Set();
+        let currentSwipeItem = null;
+
+        // Handle back button
+        function handleBack() {
+            if (selectionMode) {
+                exitSelectionMode();
+            } else {
+                goBack();
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        // Search functionality
+        function toggleSearch() {
+            const searchContainer = document.getElementById('searchContainer');
+            searchContainer.classList.toggle('active');
+            if (searchContainer.classList.contains('active')) {
+                document.getElementById('searchInput').focus();
+            }
+        }
+
+        function closeSearch() {
+            document.getElementById('searchContainer').classList.remove('active');
+            document.getElementById('searchInput').value = '';
+        }
+
+        // Selection mode
+        function enterSelectionMode(itemId) {
+            selectionMode = true;
+            document.getElementById('topBar').classList.add('selection-mode');
+            document.body.classList.add('selection-mode');
+            document.getElementById('topActions').style.display = 'none';
+            document.getElementById('selectionActions').style.display = 'flex';
+            document.getElementById('backIcon').textContent = 'close';
+            
+            if (itemId) {
+                toggleSelect(itemId);
+            }
+            updateSelectionTitle();
+        }
+
+        function exitSelectionMode() {
+            selectionMode = false;
+            document.getElementById('topBar').classList.remove('selection-mode');
+            document.body.classList.remove('selection-mode');
+            document.getElementById('topActions').style.display = 'flex';
+            document.getElementById('selectionActions').style.display = 'none';
+            document.getElementById('backIcon').textContent = 'arrow_back';
+            document.getElementById('topTitle').textContent = 'History';
+            
+            // Clear all selections
+            selectedItems.clear();
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.remove('selected');
+                const checkbox = item.querySelector('.item-checkbox');
+                checkbox.classList.remove('checked');
+                checkbox.querySelector('.material-icons').style.display = 'none';
+            });
+        }
+
+        function toggleSelect(itemId) {
+            const item = document.querySelector(`[data-id="${itemId}"]`);
+            const checkbox = item.querySelector('.item-checkbox');
+            
+            if (selectedItems.has(itemId)) {
+                selectedItems.delete(itemId);
+                item.classList.remove('selected');
+                checkbox.classList.remove('checked');
+                checkbox.querySelector('.material-icons').style.display = 'none';
+            } else {
+                selectedItems.add(itemId);
+                item.classList.add('selected');
+                checkbox.classList.add('checked');
+                checkbox.querySelector('.material-icons').style.display = 'block';
+            }
+            
+            updateSelectionTitle();
+        }
+
+        function updateSelectionTitle() {
+            document.getElementById('topTitle').textContent = `${selectedItems.size} selected`;
+        }
+
+        function selectAll() {
+            const items = document.querySelectorAll('.history-item');
+            items.forEach(item => {
+                const itemId = parseInt(item.dataset.id);
+                if (!selectedItems.has(itemId)) {
+                    selectedItems.add(itemId);
+                    item.classList.add('selected');
+                    const checkbox = item.querySelector('.item-checkbox');
+                    checkbox.classList.add('checked');
+                    checkbox.querySelector('.material-icons').style.display = 'block';
+                }
+            });
+            updateSelectionTitle();
+        }
+
+        function deleteSelected() {
+            if (confirm(`Delete ${selectedItems.size} summaries?`)) {
+                selectedItems.forEach(id => {
+                    const item = document.querySelector(`[data-id="${id}"]`);
+                    if (item) item.remove();
+                });
+                exitSelectionMode();
+                updateSummaryCount();
+            }
+        }
+
+        // Item actions
+        function handleItemClick(itemId) {
+            if (selectionMode) {
+                toggleSelect(itemId);
+            } else {
+                // Long press simulation
+                let pressTimer;
+                const item = event.currentTarget;
+                
+                item.addEventListener('mousedown', () => {
+                    pressTimer = setTimeout(() => {
+                        enterSelectionMode(itemId);
+                    }, 500);
+                });
+                
+                item.addEventListener('mouseup', () => {
+                    clearTimeout(pressTimer);
+                    if (!selectionMode) {
+                        alert(`Opening summary ${itemId}...`);
+                    }
+                });
+            }
+        }
+
+        // Swipe actions
+        function setupSwipeActions() {
+            const items = document.querySelectorAll('.history-item');
+            items.forEach(item => {
+                const container = item.querySelector('.swipe-container');
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+
+                container.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    isDragging = true;
+                });
+
+                container.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentX = e.touches[0].clientX;
+                    const deltaX = startX - currentX;
+                    
+                    if (deltaX > 50) {
+                        container.classList.add('swiped');
+                        currentSwipeItem = container;
+                    } else if (deltaX < -50) {
+                        container.classList.remove('swiped');
+                    }
+                });
+
+                container.addEventListener('touchend', () => {
+                    isDragging = false;
+                });
+
+                // Click simulation for desktop
+                container.addEventListener('click', (e) => {
+                    if (e.clientX < 50 && currentSwipeItem === container) {
+                        container.classList.remove('swiped');
+                        currentSwipeItem = null;
+                    } else if (!selectionMode && e.target.closest('.item-content')) {
+                        // Reset other swiped items
+                        document.querySelectorAll('.swipe-container').forEach(c => {
+                            if (c !== container) c.classList.remove('swiped');
+                        });
+                        container.classList.toggle('swiped');
+                        currentSwipeItem = container.classList.contains('swiped') ? container : null;
+                    }
+                });
+            });
+        }
+
+        function shareItem(itemId) {
+            alert(`Sharing summary ${itemId}...`);
+            event.stopPropagation();
+        }
+
+        function deleteItem(itemId) {
+            if (confirm('Delete this summary?')) {
+                const item = document.querySelector(`[data-id="${itemId}"]`);
+                item.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    item.remove();
+                    updateSummaryCount();
+                }, 300);
+            }
+            event.stopPropagation();
+        }
+
+        // Clear all
+        function showClearAllDialog() {
+            document.getElementById('clearAllDialog').classList.add('active');
+        }
+
+        function closeClearAllDialog() {
+            document.getElementById('clearAllDialog').classList.remove('active');
+        }
+
+        function clearAllHistory() {
+            document.getElementById('historyList').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'flex';
+            document.getElementById('summaryCount').style.display = 'none';
+            closeClearAllDialog();
+        }
+
+        function updateSummaryCount() {
+            const count = document.querySelectorAll('.history-item').length;
+            document.getElementById('summaryCount').textContent = `${count} summaries`;
+            
+            if (count === 0) {
+                document.getElementById('historyList').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'flex';
+                document.getElementById('summaryCount').style.display = 'none';
+            }
+        }
+
+        // Initialize
+        setupSwipeActions();
+
+        // Add slide out animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    opacity: 0;
+                    transform: translateX(-100%);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

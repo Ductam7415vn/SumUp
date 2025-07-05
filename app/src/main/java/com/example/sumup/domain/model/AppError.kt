@@ -9,5 +9,7 @@ sealed class AppError(val message: String) {
     object InvalidInputError : AppError("Invalid text format")
     object StorageFullError : AppError("Storage limit reached")
     object ModelLoadingError : AppError("AI model loading")
+    object ApiKeyError : AppError("API key required")
+    object InvalidApiKeyError : AppError("Invalid API key")
     data class UnknownError(val originalMessage: String) : AppError(originalMessage)
 }

@@ -10,5 +10,6 @@ data class OcrUiState(
     val error: AppError? = null,
     val showPermissionRationale: Boolean = false,
     val ocrState: OcrState = OcrState.Searching,
-    val confidence: Float = 0f
+    val confidence: Float = 0f,
+    val navigateToMain: Boolean = false
 )

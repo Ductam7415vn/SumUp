@@ -20,6 +20,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val DEFAULT_SUMMARY_LENGTH_KEY = floatPreferencesKey("default_summary_length")
         val LANGUAGE_KEY = stringPreferencesKey("language")
         val AUTO_DELETE_DAYS_KEY = intPreferencesKey("auto_delete_days")
+        val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
+        val SUMMARY_VIEW_MODE_KEY = stringPreferencesKey("summary_view_mode")
     }
 
     override val theme: Flow<String> = dataStore.data
@@ -36,6 +38,12 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override val autoDeleteDays: Flow<Int> = dataStore.data
         .map { preferences -> preferences[AUTO_DELETE_DAYS_KEY] ?: 0 }
+        
+    override val isOnboardingCompleted: Flow<Boolean> = dataStore.data
+        .map { preferences -> preferences[ONBOARDING_COMPLETED_KEY] ?: false }
+        
+    override val summaryViewMode: Flow<String> = dataStore.data
+        .map { preferences -> preferences[SUMMARY_VIEW_MODE_KEY] ?: "STANDARD" }
     override suspend fun updateTheme(theme: String) {
         dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
@@ -66,6 +74,12 @@ class SettingsRepositoryImpl @Inject constructor(
         }
     }
     
+    override suspend fun updateSummaryViewMode(mode: String) {
+        dataStore.edit { preferences ->
+            preferences[SUMMARY_VIEW_MODE_KEY] = mode
+        }
+    }
+    
     override fun getThemeMode(): Flow<ThemeMode> = theme.map { themeString ->
         when (themeString) {
             "light" -> ThemeMode.LIGHT
@@ -89,9 +103,43 @@ class SettingsRepositoryImpl @Inject constructor(
         updateDynamicColors(enabled)
     }
     
+    override suspend fun clearAllData() {
+        // Clear user data but keep preferences
+        // In a real app, this would clear history database, cache, etc.
+    }
+    
+    override suspend fun exportData(): String {
+        // Export user settings and data as JSON
+        // This is a placeholder implementation
+        return """
+        {
+            "theme": "system",
+            "language": "en",
+            "summaryLength": 0.5,
+            "exportDate": "${System.currentTimeMillis()}"
+        }
+        """.trimIndent()
+    }
+    
+    override fun getStorageUsage(): Flow<Long> {
+        // Return approximate storage usage in bytes
+        // This is a placeholder - real implementation would check actual storage
+        return kotlinx.coroutines.flow.flowOf(1024L * 500) // 500KB placeholder
+    }
+    
+    override fun getAppVersion(): String {
+        return "1.0.0" // In real app, get from BuildConfig
+    }
+    
     override suspend fun resetToDefaults() {
         dataStore.edit { preferences ->
             preferences.clear()
+        }
+    }
+    
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ONBOARDING_COMPLETED_KEY] = completed
         }
     }
 }

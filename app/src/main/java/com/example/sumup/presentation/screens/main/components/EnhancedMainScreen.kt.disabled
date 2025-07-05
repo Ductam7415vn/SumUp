@@ -1,0 +1,327 @@
+package com.example.sumup.presentation.screens.main.components
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.sumup.domain.usecase.EnhancedFeatureDiscoveryUseCase
+import com.example.sumup.presentation.components.tooltip.*
+import com.example.sumup.presentation.screens.main.MainViewModel
+import com.example.sumup.presentation.screens.main.MainUiState
+
+/**
+ * Enhanced Main Screen with integrated tooltip system
+ */
+@Composable
+fun EnhancedMainScreenContent(
+    uiState: MainUiState,
+    viewModel: MainViewModel = hiltViewModel(),
+    enhancedFeatureDiscovery: EnhancedFeatureDiscoveryUseCase,
+    onNavigateToOcr: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    
+    // Initialize tooltip controller
+    val tooltipController = rememberTooltipSequenceController(
+        enhancedFeatureDiscovery = enhancedFeatureDiscovery,
+        scope = scope
+    )
+    
+    // Show welcome tooltip on first launch
+    LaunchedEffect(Unit) {
+        if (uiState.totalCount == 0 && !uiState.showDraftRecoveryDialog) {
+            delay(1000) // Small delay for better UX
+            tooltipController.showOnboardingSequence()
+        }
+    }
+    
+    Box(modifier = modifier.fillMaxSize()) {
+        // Main content
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Top Bar with tracked tooltip targets
+            TrackTooltipTarget(
+                tipId = "settings_button",
+                controller = tooltipController
+            ) {
+                MainTopBar(
+                    onSettingsClick = {
+                        viewModel.trackFeatureDiscoveryAction("settings_clicked")
+                        onNavigateToSettings()
+                    },
+                    onHistoryClick = {
+                        viewModel.trackFeatureDiscoveryAction("history_clicked")
+                        onNavigateToHistory()
+                    }
+                )
+            }
+            
+            // Main content area
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Input type selector
+                InputTypeSelector(
+                    selectedType = uiState.inputType,
+                    onTypeSelected = { type ->
+                        viewModel.setInputType(type)
+                        viewModel.trackFeatureDiscoveryAction(
+                            "input_type_changed",
+                            type.name
+                        )
+                    }
+                )
+                
+                // Input area based on type
+                when (uiState.inputType) {
+                    MainUiState.InputType.TEXT -> {
+                        TrackTooltipTarget(
+                            tipId = "text_input",
+                            controller = tooltipController
+                        ) {
+                            EnhancedTextInputSection(
+                                inputText = uiState.inputText,
+                                onTextChange = viewModel::updateInputText,
+                                onFocused = viewModel::onTextFieldFocused,
+                                isLoading = uiState.isLoading,
+                                error = uiState.error
+                            )
+                        }
+                    }
+                    MainUiState.InputType.PDF -> {
+                        TrackTooltipTarget(
+                            tipId = "pdf_upload",
+                            controller = tooltipController
+                        ) {
+                            EnhancedPdfUploadSection(
+                                selectedPdfUri = uiState.selectedPdfUri,
+                                selectedPdfName = uiState.selectedPdfName,
+                                onPdfSelected = { uri, name ->
+                                    viewModel.selectPdf(uri.toString(), name)
+                                },
+                                onPdfButtonClick = viewModel::onPdfButtonClicked,
+                                isLoading = uiState.isLoading
+                            )
+                        }
+                    }
+                    MainUiState.InputType.OCR -> {
+                        TrackTooltipTarget(
+                            tipId = "ocr_button",
+                            controller = tooltipController
+                        ) {
+                            OcrSection(
+                                onOcrClick = {
+                                    viewModel.onOcrButtonClicked()
+                                    onNavigateToOcr()
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                // Summary length selector
+                TrackTooltipTarget(
+                    tipId = "summary_length",
+                    controller = tooltipController
+                ) {
+                    SummaryLengthSelector(
+                        selectedLength = uiState.summaryLength,
+                        onLengthSelected = viewModel::setSummaryLength,
+                        onSelectorClick = viewModel::onLengthSelectorClicked
+                    )
+                }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // Summarize button
+                TrackTooltipTarget(
+                    tipId = "summarize_button",
+                    controller = tooltipController
+                ) {
+                    SummarizeButton(
+                        enabled = viewModel.canSummarize && !uiState.isLoading,
+                        isLoading = uiState.isLoading,
+                        onClick = {
+                            viewModel.summarize()
+                            viewModel.trackFeatureDiscoveryAction("summarize_clicked")
+                        }
+                    )
+                }
+                
+                // Stats and tips
+                StatsAndTipsSection(
+                    todayCount = uiState.todayCount,
+                    weekCount = uiState.weekCount,
+                    totalCount = uiState.totalCount,
+                    onShowTips = {
+                        tooltipController.showAdvancedTipsSequence()
+                    }
+                )
+            }
+        }
+        
+        // Enhanced Tooltip Display
+        val currentTip = tooltipController.currentTip.value
+        val targetBounds = tooltipController.targetBounds.value
+        val currentSequence = tooltipController.currentSequence.collectAsState().value
+        val currentIndex = tooltipController.currentIndex.collectAsState().value
+        
+        if (tooltipController.isVisible.value && currentTip != null) {
+            EnhancedTooltipComponent(
+                tip = currentTip,
+                targetBounds = targetBounds,
+                sequence = currentSequence,
+                currentIndex = currentIndex,
+                onDismiss = { tooltipController.dismiss() },
+                onNext = { tooltipController.showNext() },
+                onPrevious = { tooltipController.showPrevious() },
+                onSkip = { tooltipController.skipAll() },
+                onAction = { action ->
+                    tooltipController.handleAction(action)
+                    viewModel.trackFeatureDiscoveryAction("tooltip_action", action)
+                }
+            )
+        }
+    }
+    
+    // Dialogs
+    if (uiState.showDraftRecoveryDialog) {
+        DraftRecoveryDialog(
+            draftText = uiState.recoverableDraftText,
+            onRecover = viewModel::recoverDraft,
+            onDismiss = viewModel::dismissDraftRecovery
+        )
+    }
+    
+    if (uiState.showClearDialog) {
+        ClearConfirmationDialog(
+            onConfirm = viewModel::clearText,
+            onDismiss = viewModel::dismissClearDialog
+        )
+    }
+    
+    if (uiState.showInfoDialog) {
+        InfoDialog(
+            onDismiss = viewModel::dismissInfoDialog
+        )
+    }
+    
+    // Show smart suggestions after certain actions
+    LaunchedEffect(uiState.summaryCount) {
+        when (uiState.summaryCount) {
+            1 -> tooltipController.showTooltip(EnhancedFeatureTips.pdfUploadTip)
+            3 -> tooltipController.showTooltip(EnhancedFeatureTips.advancedPersonaTip)
+            5 -> tooltipController.showTooltip(EnhancedFeatureTips.keyboardShortcutsTip)
+            10 -> tooltipController.showTooltip(EnhancedFeatureTips.batchProcessingTip)
+        }
+    }
+}
+
+@Composable
+private fun EnhancedTextInputSection(
+    inputText: String,
+    onTextChange: (String) -> Unit,
+    onFocused: () -> Unit,
+    isLoading: Boolean,
+    error: AppError?,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = inputText,
+        onValueChange = onTextChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 120.dp)
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    onFocused()
+                }
+            },
+        label = { Text("Enter text to summarize") },
+        placeholder = { Text("Paste or type your text here...") },
+        enabled = !isLoading,
+        isError = error != null,
+        supportingText = {
+            Text("${inputText.length} characters")
+        }
+    )
+}
+
+@Composable
+private fun EnhancedPdfUploadSection(
+    selectedPdfUri: String?,
+    selectedPdfName: String?,
+    onPdfSelected: (Uri, String) -> Unit,
+    onPdfButtonClick: () -> Unit,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = {
+            onPdfButtonClick()
+            // Launch file picker
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                Icons.Default.PictureAsPdf,
+                contentDescription = "Upload PDF",
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = selectedPdfName ?: "Click to upload PDF",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatsAndTipsSection(
+    todayCount: Int,
+    weekCount: Int,
+    totalCount: Int,
+    onShowTips: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        // Stats
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Today", style = MaterialTheme.typography.labelMedium)
+            Text(todayCount.toString(), style = MaterialTheme.typography.titleMedium)
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("This Week", style = MaterialTheme.typography.labelMedium)
+            Text(weekCount.toString(), style = MaterialTheme.typography.titleMedium)
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Total", style = MaterialTheme.typography.labelMedium)
+            Text(totalCount.toString(), style = MaterialTheme.typography.titleMedium)
+        }
+        
+        // Tips button
+        IconButton(onClick = onShowTips) {
+            Icon(Icons.Default.Lightbulb, contentDescription = "Show tips")
+        }
+    }
+}

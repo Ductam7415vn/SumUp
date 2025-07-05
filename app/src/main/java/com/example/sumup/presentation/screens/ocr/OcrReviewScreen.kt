@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.sumup.presentation.components.EmptyStateComponent
+import com.example.sumup.presentation.components.EmptyStateType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,47 +206,80 @@ fun OcrReviewDialog(
         onDismissRequest = onDismiss,
         title = { Text("Review Scanned Text") },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = editedText,
-                    onValueChange = { editedText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Scanned Text") },
-                    minLines = 3,
-                    maxLines = 5
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Assessment,
-                        contentDescription = "Confidence",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+            if (detectedText.isBlank()) {
+                // Show empty state for no text detected
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    EmptyStateComponent(
+                        type = EmptyStateType.OCR_NO_TEXT,
+                        modifier = Modifier.padding(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Confidence: ${(confidence * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            } else {
+                Column {
+                    OutlinedTextField(
+                        value = editedText,
+                        onValueChange = { editedText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Scanned Text") },
+                        minLines = 3,
+                        maxLines = 5
                     )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Assessment,
+                            contentDescription = "Confidence",
+                            modifier = Modifier.size(16.dp),
+                            tint = when {
+                                confidence > 0.8f -> MaterialTheme.colorScheme.primary
+                                confidence > 0.5f -> MaterialTheme.colorScheme.secondary
+                                else -> MaterialTheme.colorScheme.error
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Confidence: ${(confidence * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    // Low confidence warning
+                    if (confidence < 0.5f) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text(
+                                text = "Low confidence detected. Consider retaking the photo for better results.",
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(8.dp),
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
                 }
             }
         },
         confirmButton = {
-            Button(
-                onClick = { onContinue(editedText) },
-                enabled = editedText.isNotEmpty()
-            ) {
-                Text("Use This Text")
+            if (detectedText.isNotBlank()) {
+                Button(
+                    onClick = { onContinue(editedText) },
+                    enabled = editedText.isNotEmpty()
+                ) {
+                    Text("Use This Text")
+                }
             }
         },
         dismissButton = {
             TextButton(onClick = onRetake) {
-                Text("Retake Photo")
+                Text(if (detectedText.isBlank()) "Try Again" else "Retake Photo")
             }
         }
     )

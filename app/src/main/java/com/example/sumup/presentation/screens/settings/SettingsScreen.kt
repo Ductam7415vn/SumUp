@@ -1,357 +1,906 @@
 package com.example.sumup.presentation.screens.settings
 
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
+import androidx.compose.animation.*
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.sumup.presentation.preview.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.sumup.presentation.components.*
+import com.example.sumup.presentation.screens.settings.components.*
+import com.example.sumup.presentation.screens.settings.components.EnhancedApiKeyDialog
+import com.example.sumup.presentation.screens.settings.components.ClearHistoryDialog
+import com.example.sumup.domain.model.Achievement
+import com.example.sumup.domain.model.AchievementType
+import com.example.sumup.domain.model.SummaryViewPreference
+import com.example.sumup.utils.haptic.*
+import com.example.sumup.presentation.components.EnhancedLoadingState
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    adaptiveInfo: com.example.sumup.presentation.utils.AdaptiveLayoutInfo? = null,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
-    val isDynamicColorEnabled by viewModel.isDynamicColorEnabled.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
     
-    val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchExpanded by remember { mutableStateOf(false) }
     
-    var showThemeDialog by remember { mutableStateOf(false) }
+    // Dialog states
+    var showExportImportDialog by remember { mutableStateOf(false) }
+    var showAchievementsDialog by remember { mutableStateOf(false) }
+    var showRotationRemindersDialog by remember { mutableStateOf(false) }
+    var exportImportMode by remember { mutableStateOf(ExportImportMode.EXPORT) }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = "Settings",
-                        fontWeight = FontWeight.SemiBold
+    // Calculate scroll offset for parallax effect
+    val scrollOffset = listState.firstVisibleItemScrollOffset.toFloat()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                )
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        LazyColumn(
+    ) {
+        // Background effects
+        AnimatedBackgroundEffect(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = 0.3f }
+        )
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                ModernSettingsTopBar(
+                    onNavigateBack = onNavigateBack,
+                    scrollOffset = scrollOffset,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    userName = uiState.userEmail?.substringBefore("@") ?: "User"
+                )
+            }
+        ) { paddingValues ->
+        EnhancedLoadingState(
+            isLoading = uiState.error != null, // Simple loading state check
+            hasData = true,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
-            // Appearance Section
-            item {
-                SettingsSection(title = "Appearance") {
-                    SettingItem(
-                        icon = Icons.Outlined.FavoriteBorder,
-                        title = "Theme",
-                        subtitle = currentTheme.displayName,
-                        onClick = { showThemeDialog = true }
-                    )
-                    
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        SettingItem(
-                            icon = Icons.Outlined.Star,
-                            title = "Dynamic Colors",
-                            subtitle = "Use Material You colors from wallpaper",
-                            showToggle = true,
-                            checked = isDynamicColorEnabled,
-                            onCheckedChange = viewModel::setDynamicColorEnabled
-                        )
+            shimmerContent = {
+                // Show shimmer while loading settings
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Settings sections shimmer
+                    items(4) {
+                        ShimmerSettingsSection(itemCount = 2)
                     }
                 }
+            },
+            actualContent = {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+            // Profile Header
+            item {
+                ProfileHeaderSection(
+                    userProfile = UserProfile(
+                        name = "SumUp User",
+                        email = uiState.userEmail ?: "",
+                        totalSummaries = uiState.totalSummaries,
+                        totalTimeSaved = uiState.totalTimeSaved
+                    ),
+                    onEditProfile = { viewModel.showEditProfileDialog() },
+                    scrollOffset = scrollOffset,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            // Appearance Section
+            item {
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "Appearance",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
+                        title = "Theme",
+                        subtitle = uiState.themeMode.displayName,
+                        icon = Icons.Default.Palette,
+                        onClick = { viewModel.showThemeDialog() }
+                    )
+                    
+                    AnimatedToggleSettingItem(
+                        title = "Dynamic Colors",
+                        subtitle = if (uiState.isDynamicColorEnabled) "Match system colors" else "Use default theme",
+                        icon = Icons.Default.ColorLens,
+                        checked = uiState.isDynamicColorEnabled,
+                        onCheckedChange = { viewModel.setDynamicColorEnabled(it) }
+                    )
+                    }
+                }, index = 0)
+            }
+            
+            // API Configuration Section
+            item {
+                AnimatedSettingsItem(content = {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // API Key Management
+                        ApiKeyManagementCard(
+                            apiKeys = uiState.apiKeys,
+                            activeKeyId = uiState.activeApiKeyId,
+                            rotationReminders = uiState.keyRotationReminders,
+                            onAddKey = viewModel::addApiKey,
+                            onDeleteKey = viewModel::deleteApiKey,
+                            onSetActiveKey = viewModel::setActiveApiKey,
+                            onExport = { /* Handle export - needs password dialog */ },
+                            onImport = { /* TODO: Implement file picker */ }
+                        )
+                        
+                        // Show rotation warning badge if needed
+                        if (uiState.showRotationWarning) {
+                            Card(
+                                onClick = { showRotationRemindersDialog = true },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                        Column {
+                                            Text(
+                                                text = "API Keys Need Rotation",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = "${uiState.keyRotationReminders.count { it.isOverdue }} keys are overdue",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
+                                    }
+                                    Icon(
+                                        Icons.Default.ChevronRight,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Usage Analytics Dashboard
+                        uiState.apiUsageStats?.let { stats ->
+                            android.util.Log.d("SettingsScreen", "Rendering ApiUsageDashboard with stats: requestsToday=${stats.requestsToday}, totalKeys=${stats.totalKeys}")
+                            ApiUsageDashboard(
+                                usageStats = stats,
+                                onRefresh = viewModel::refreshUsageStats
+                            )
+                        } ?: run {
+                            android.util.Log.d("SettingsScreen", "ApiUsageDashboard not shown - apiUsageStats is null")
+                        }
+                    }
+                }, index = 1)
             }
             
             // Summarization Section
             item {
-                SettingsSection(title = "Summarization") {
-                    SettingItem(
-                        icon = Icons.Outlined.Settings,
-                        title = "Default Summary Length",
-                        subtitle = "Standard",
-                        onClick = { /* TODO: Add length selection */ }
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                    title = "Summarization",
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    EnhancedSettingItem(
+                        title = "Preferred Summary View",
+                        subtitle = uiState.summaryViewPreference.displayName,
+                        icon = Icons.Default.ViewCompact,
+                        onClick = { viewModel.showSummaryViewDialog() }
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Person,
+                    EnhancedSettingItem(
                         title = "Language",
-                        subtitle = "English",
-                        onClick = { /* TODO: Add language selection */ }
+                        subtitle = when (uiState.language) {
+                            "en" -> "English"
+                            "vi" -> "Tiếng Việt"
+                            "es" -> "Español"
+                            "fr" -> "Français"
+                            else -> uiState.language
+                        },
+                        icon = Icons.Default.Language,
+                        onClick = { viewModel.showLanguageDialog() }
                     )
-                }
+                    }
+                }, index = 2)
             }
             
-            // Data & Storage Section
+            // History Section
             item {
-                SettingsSection(title = "Data & Storage") {
-                    SettingItem(
-                        icon = Icons.Outlined.Info,
-                        title = "Storage Used",
-                        subtitle = "${uiState.summaryCount} summaries • ${uiState.storageUsed}",
-                        onClick = {}
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "History",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
+                        title = "Clear History",
+                        subtitle = if (uiState.totalSummaries > 0) {
+                            "${uiState.totalSummaries} summaries saved"
+                        } else {
+                            "No summaries to clear"
+                        },
+                        icon = Icons.Default.Delete,
+                        onClick = if (uiState.totalSummaries > 0) {
+                            { viewModel.showClearHistoryDialog() }
+                        } else null,
+                        enabled = uiState.totalSummaries > 0
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Delete,
-                        title = "Clear All Data",
-                        subtitle = "Delete all summaries and reset settings",
-                        onClick = viewModel::showClearDataDialog,
-                        tintColor = MaterialTheme.colorScheme.error
-                    )
-                }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            onClick = {
+                                exportImportMode = ExportImportMode.EXPORT
+                                showExportImportDialog = true
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Upload,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Export",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = "Save settings",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        Card(
+                            onClick = {
+                                exportImportMode = ExportImportMode.IMPORT
+                                showExportImportDialog = true
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Download,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Import",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                Text(
+                                    text = "Restore settings",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    }
+                }, index = 3)
             }
             
             // About Section
             item {
-                SettingsSection(title = "About") {
-                    SettingItem(
-                        icon = Icons.Outlined.Info,
+                AnimatedSettingsItem(content = {
+                    AnimatedPreferenceCard(
+                        title = "About",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                    EnhancedSettingItem(
                         title = "Version",
-                        subtitle = "1.0.0 (Build 1)",
-                        onClick = {}
+                        subtitle = uiState.appVersion,
+                        icon = Icons.Default.Info,
+                        onClick = null
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Email,
+                    EnhancedSettingItem(
                         title = "Send Feedback",
-                        subtitle = "Report issues or suggest features",
-                        onClick = {
-                            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:feedback@sumup.app")
-                                putExtra(Intent.EXTRA_SUBJECT, "SumUp Feedback")
-                            }
-                            context.startActivity(emailIntent)
-                        }
+                        subtitle = "Help us improve SumUp",
+                        icon = Icons.Default.Feedback,
+                        onClick = { /* TODO: Implement feedback */ }
                     )
                     
-                    SettingItem(
-                        icon = Icons.Outlined.Lock,
+                    EnhancedSettingItem(
                         title = "Privacy Policy",
-                        subtitle = "How we protect your data",
-                        onClick = {
-                            val browserIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://sumup.app/privacy")
-                            )
-                            context.startActivity(browserIntent)
-                        }
+                        subtitle = "Learn how we protect your data",
+                        icon = Icons.Default.Security,
+                        onClick = { /* TODO: Open privacy policy */ }
                     )
-                    
-                    SettingItem(
-                        icon = Icons.Outlined.Article,
-                        title = "Terms of Service",
-                        subtitle = "Terms and conditions",
-                        onClick = {
-                            val browserIntent = Intent(
-                                Intent.ACTION_VIEW,
-                                Uri.parse("https://sumup.app/terms")
-                            )
-                            context.startActivity(browserIntent)
-                        }
+                    }
+                }, index = 4)
+            }
+            
+            // Achievements Section
+            item {
+                AnimatedSettingsItem(content = {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        SettingsAchievementsCard(
+                            totalPoints = uiState.achievementPoints,
+                            unlockedCount = uiState.unlockedAchievements,
+                            totalCount = uiState.totalAchievements,
+                            onClick = { showAchievementsDialog = true }
+                        )
+                    }
+                }, index = 5)
+            }
+            
+            // Additional visual effects
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                ) {
+                    AnimatedWaveEffect(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
+                }
+            }
+        )
         }
         
-        // Theme selection dialog
-        if (showThemeDialog) {
-            ThemeSelectionDialog(
-                currentTheme = currentTheme,
-                onThemeSelected = { theme ->
-                    viewModel.setThemeMode(theme)
-                    showThemeDialog = false
-                },
-                onDismiss = { showThemeDialog = false }
-            )
-        }
+        // Edit Profile Dialog
+        EditProfileDialog(
+            visible = uiState.showEditProfileDialog,
+            currentProfile = UserProfile(
+                name = uiState.userEmail?.substringBefore("@") ?: "User",
+                email = uiState.userEmail ?: "",
+                totalSummaries = uiState.totalSummaries,
+                totalTimeSaved = uiState.totalTimeSaved
+            ),
+            onDismiss = { viewModel.hideEditProfileDialog() },
+            onSave = { profile ->
+                // TODO: Save profile changes
+                viewModel.hideEditProfileDialog()
+            }
+        )
         
-        // Clear data confirmation dialog
-        if (uiState.showClearDataDialog) {
-            AlertDialog(
-                onDismissRequest = viewModel::dismissClearDataDialog,
-                title = { Text("Clear All Data?") },
-                text = { 
-                    Text("This will delete all ${uiState.summaryCount} summaries and reset all settings to defaults. This action cannot be undone.")
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = viewModel::clearAllData,
-                        enabled = !uiState.isClearing,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        if (uiState.isClearing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Clear All")
+        // Enhanced Dialogs
+        AnimatedSelectionDialog(
+            visible = uiState.showThemeDialog,
+            onDismiss = { viewModel.hideThemeDialog() },
+            title = "Choose Theme",
+            options = listOf(
+                ThemeMode.SYSTEM.name to "System",
+                ThemeMode.LIGHT.name to "Light",
+                ThemeMode.DARK.name to "Dark"
+            ),
+            selectedOption = uiState.themeMode.name,
+            onOptionSelected = { selectedMode ->
+                viewModel.setThemeMode(ThemeMode.valueOf(selectedMode))
+            }
+        )
+        
+        // Custom Summary View Preference Dialog
+        if (uiState.showSummaryViewDialog) {
+            BlurDialog(
+                visible = true,
+                onDismiss = { viewModel.hideSummaryViewDialog() },
+                title = "Preferred Summary View"
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SummaryViewPreference.values().forEach { preference ->
+                        Card(
+                            onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.setSummaryViewPreference(preference)
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (preference == uiState.summaryViewPreference) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surface
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = preference.displayName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (preference == uiState.summaryViewPreference) {
+                                            FontWeight.Bold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
+                                    )
+                                    if (preference == uiState.summaryViewPreference) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = preference.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
-                },
-                dismissButton = {
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
                     TextButton(
-                        onClick = viewModel::dismissClearDataDialog,
-                        enabled = !uiState.isClearing
+                        onClick = { viewModel.hideSummaryViewDialog() },
+                        modifier = Modifier.align(Alignment.End)
                     ) {
                         Text("Cancel")
                     }
                 }
-            )
-        }
-        
-        // Success/Error handling
-        LaunchedEffect(uiState.clearDataSuccess) {
-            if (uiState.clearDataSuccess) {
-                snackbarHostState.showSnackbar("All data cleared successfully")
-                viewModel.dismissSuccess()
             }
         }
         
-        LaunchedEffect(uiState.error) {
-            uiState.error?.let { error ->
-                snackbarHostState.showSnackbar(error)
-                viewModel.dismissError()
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        AnimatedSelectionDialog(
+            visible = uiState.showLanguageDialog,
+            onDismiss = { viewModel.hideLanguageDialog() },
+            title = "Choose Language",
+            options = listOf(
+                "en" to "English",
+                "vi" to "Tiếng Việt",
+                "es" to "Español",
+                "fr" to "Français"
+            ),
+            selectedOption = uiState.language,
+            onOptionSelected = { viewModel.setLanguage(it) }
         )
-        content()
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun SettingItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    showToggle: Boolean = false,
-    checked: Boolean = false,
-    onCheckedChange: (Boolean) -> Unit = {},
-    onClick: () -> Unit = {},
-    tintColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !showToggle) { onClick() }
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tintColor,
-                modifier = Modifier.size(24.dp)
+        
+        if (uiState.showClearHistoryDialog) {
+            ClearHistoryDialog(
+                summaryCount = uiState.summaryCountToDelete,
+                onConfirm = { viewModel.clearHistory() },
+                onDismiss = { viewModel.hideClearHistoryDialog() },
+                isClearing = uiState.isClearing
             )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            if (showToggle) {
-                Switch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange
-                )
-            } else {
-                Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
+        
+        if (uiState.clearHistorySuccess) {
+            SuccessDialog(
+                message = "History cleared successfully",
+                onDismiss = { viewModel.dismissSuccess() }
+            )
+        }
+        
+        uiState.error?.let { error ->
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissError() },
+                title = { Text("Error") },
+                text = { Text(error) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissError() }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+        
+        // Export/Import Dialog with Password
+        ExportImportPasswordDialog(
+            visible = showExportImportDialog,
+            mode = exportImportMode,
+            onDismiss = { 
+                showExportImportDialog = false
+                viewModel.clearExportData()
+            },
+            onExport = { password ->
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.exportApiKeys(password)
+            },
+            onImport = { fileContent, password ->
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.importApiKeys(fileContent, password)
+            },
+            exportData = uiState.exportData,
+            isProcessing = uiState.isExporting || uiState.isImporting,
+            error = uiState.exportImportError
+        )
+        
+        // Achievements Dialog
+        AchievementsDialog(
+            visible = showAchievementsDialog,
+            achievements = uiState.achievements,
+            onDismiss = { showAchievementsDialog = false }
+        )
+        
+        // Key Rotation Reminder Dialog
+        KeyRotationReminderDialog(
+            visible = showRotationRemindersDialog,
+            reminders = uiState.keyRotationReminders,
+            onDismiss = { showRotationRemindersDialog = false },
+            onRotateKey = { keyId ->
+                showRotationRemindersDialog = false
+                // TODO: Navigate to key rotation flow
+                viewModel.showApiKeyDialog()
+            },
+            onSnoozeReminder = { keyId, days ->
+                viewModel.snoozeRotationReminder(keyId, days)
+            }
+        )
+        
+        // Enhanced API Key Dialog
+        EnhancedApiKeyDialog(
+            visible = uiState.showApiKeyDialog,
+            currentKey = uiState.apiKeyInput,
+            isValidating = uiState.isValidatingApiKey,
+            errorMessage = uiState.apiKeyError,
+            hasExistingKey = uiState.hasValidApiKey,
+            onKeyChange = { viewModel.updateApiKeyInput(it) },
+            onValidate = { viewModel.validateApiKey() },
+            onClear = { viewModel.clearApiKey() },
+            onDismiss = { viewModel.hideApiKeyDialog() }
+        )
+        
+        // API Key Validation Success
+        if (uiState.apiKeyValidationSuccess) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissApiKeySuccess() },
+                icon = {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = { Text("API Key Validated") },
+                text = { Text("Your Gemini API key has been successfully validated and saved.") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissApiKeySuccess() }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
+        
+        // Floating bubbles effect
+        FloatingBubbles(
+            bubbleCount = 5,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = 0.2f }
+        )
     }
 }
 
+// Enhanced Clear Data Dialog
+
 @Composable
-fun ThemeSelectionDialog(
-    currentTheme: ThemeMode,
-    onThemeSelected: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit
+fun ClearDataConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    isClearing: Boolean
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Choose Theme") },
+        title = { Text("Clear All Data?") },
         text = {
-            Column {
-                ThemeMode.entries.forEach { theme ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onThemeSelected(theme) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = theme == currentTheme,
-                            onClick = { onThemeSelected(theme) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = theme.displayName,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+            Text("This will permanently delete all your summaries and reset settings to defaults. This action cannot be undone.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isClearing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                if (isClearing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onError
+                    )
+                } else {
+                    Text("Clear All")
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isClearing
+            ) {
                 Text("Cancel")
             }
         }
     )
+}
+
+@Composable
+fun SuccessDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Success") },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ApiKeyDialog(
+    visible: Boolean,
+    currentKey: String,
+    isValidating: Boolean,
+    errorMessage: String?,
+    hasExistingKey: Boolean,
+    onKeyChange: (String) -> Unit,
+    onValidate: () -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (visible) {
+        var showKey by remember { mutableStateOf(false) }
+        
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    Icons.Outlined.VpnKey,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Gemini API Key") },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Enter your Gemini API key to enable AI-powered summarization.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    OutlinedTextField(
+                        value = currentKey,
+                        onValueChange = onKeyChange,
+                        label = { Text("API Key") },
+                        placeholder = { Text("Enter your Gemini API key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = if (showKey) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showKey = !showKey }) {
+                                Icon(
+                                    imageVector = if (showKey) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = if (showKey) "Hide key" else "Show key"
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { onValidate() }
+                        ),
+                        isError = errorMessage != null,
+                        supportingText = errorMessage?.let { { Text(it) } },
+                        enabled = !isValidating
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val context = LocalContext.current
+                        AssistChip(
+                            onClick = { 
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://makersuite.google.com/app/apikey"))
+                                context.startActivity(intent)
+                            },
+                            label = { Text("Get API Key") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.OpenInNew,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        
+                        if (hasExistingKey) {
+                            AssistChip(
+                                onClick = onClear,
+                                label = { Text("Clear Key") },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = onValidate,
+                    enabled = currentKey.isNotBlank() && !isValidating
+                ) {
+                    if (isValidating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Validate")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !isValidating
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+// Preview Composables
+@ThemePreview
+@Composable
+fun SettingsScreenPreview() {
+    PreviewWrapper {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview(name = "Settings - Dark Mode", showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun SettingsScreenDarkPreview() {
+    PreviewWrapper(darkTheme = true) {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
+}
+
+@AllDevicePreview
+@Composable
+fun SettingsScreenDevicePreview() {
+    PreviewWrapper {
+        SettingsScreen(
+            onNavigateBack = {},
+        )
+    }
 }

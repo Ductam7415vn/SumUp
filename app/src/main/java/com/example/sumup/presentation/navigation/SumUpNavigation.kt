@@ -1,22 +1,29 @@
 package com.example.sumup.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.sumup.presentation.screens.history.HistoryScreen
 import com.example.sumup.presentation.screens.main.MainScreen
-import com.example.sumup.presentation.screens.ocr.OcrScreen
+import com.example.sumup.presentation.screens.main.AdaptiveMainScreen
+import com.example.sumup.presentation.screens.ocr.ImprovedOcrScreen
+import com.example.sumup.presentation.screens.onboarding.OnboardingScreen
 import com.example.sumup.presentation.screens.processing.ProcessingScreen
 import com.example.sumup.presentation.screens.result.ResultScreen
+import com.example.sumup.presentation.screens.result.AdaptiveResultScreen
 import com.example.sumup.presentation.screens.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
+    object Onboarding : Screen("onboarding")
     object Main : Screen("main")
     object Ocr : Screen("ocr")
     object Processing : Screen("processing")
-    object Result : Screen("result")
+    object Result : Screen("result?summaryId={summaryId}") {
+        fun createRoute(summaryId: String? = null) = if (summaryId != null) "result?summaryId=$summaryId" else "result"
+    }
     object Settings : Screen("settings")
     object History : Screen("history")
 }
@@ -29,7 +36,17 @@ fun SumUpNavigation(
         navController = navController,
         startDestination = Screen.Main.route
     ) {
-        composable(Screen.Main.route) {
+        composable(Screen.Main.route) { backStackEntry ->
+            // Check for scanned text from OCR screen
+            val scannedText = backStackEntry.savedStateHandle.get<String>("scanned_text")
+            
+            LaunchedEffect(scannedText) {
+                if (!scannedText.isNullOrEmpty()) {
+                    // Clear the saved state to prevent re-processing
+                    backStackEntry.savedStateHandle.remove<String>("scanned_text")
+                }
+            }
+            
             MainScreen(
                 onNavigateToOcr = {
                     navController.navigate(Screen.Ocr.route)
@@ -42,7 +59,13 @@ fun SumUpNavigation(
                 },
                 onNavigateToProcessing = {
                     navController.navigate(Screen.Processing.route)
-                }
+                },
+                onNavigateToResult = { summaryId ->
+                    navController.navigate(Screen.Result.createRoute(summaryId)) {
+                        popUpTo(Screen.Main.route)
+                    }
+                },
+                scannedText = scannedText
             )
         }
         
@@ -51,16 +74,34 @@ fun SumUpNavigation(
                 onCancel = {
                     navController.popBackStack()
                 },
-                onComplete = {
-                    navController.navigate(Screen.Result.route) {
-                        popUpTo(Screen.Main.route)
+                onComplete = { summaryId ->
+                    if (summaryId != null) {
+                        navController.navigate(Screen.Result.createRoute(summaryId)) {
+                            popUpTo(Screen.Main.route)
+                        }
+                    } else {
+                        // Fallback - navigate to result without ID (will load latest)
+                        navController.navigate(Screen.Result.createRoute()) {
+                            popUpTo(Screen.Main.route)
+                        }
                     }
                 }
             )
         }
         
-        composable(Screen.Result.route) {
-            ResultScreen(
+        composable(
+            route = Screen.Result.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("summaryId") { 
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val summaryId = backStackEntry.arguments?.getString("summaryId")
+            AdaptiveResultScreen(
+                summaryId = summaryId,
                 onNavigateBack = {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Main.route) { inclusive = true }
@@ -73,16 +114,23 @@ fun SumUpNavigation(
         }
         
         composable(Screen.Ocr.route) {
-            OcrScreen(
+            ImprovedOcrScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
                 onTextScanned = { scannedText ->
                     // Pass scanned text back to main screen
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("scanned_text", scannedText)
-                    navController.popBackStack()
+                    try {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("scanned_text", scannedText)
+                        navController.popBackStack()
+                    } catch (e: Exception) {
+                        // Fallback if navigation state is invalid
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Main.route) { inclusive = true }
+                        }
+                    }
                 }
             )
         }

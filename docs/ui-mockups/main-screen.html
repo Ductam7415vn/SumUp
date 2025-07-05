@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp - AI Text Summarizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #5B5FDE;
+            --primary-dark: #4B4FCE;
+            --primary-light: #E8E9FF;
+            --secondary: #FF6B6B;
+            --success: #26D0A8;
+            --warning: #FFB84D;
+            --error: #FF5757;
+            --text-primary: #1A1D29;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F9FAFB;
+            --bg-tertiary: #F3F4F6;
+            --border: #E5E7EB;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: #1a1a1a;
+            border-radius: 44px;
+            padding: 12px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -5px;
+            right: -5px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-50%);
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-secondary);
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-primary);
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        .status-bar .time {
+            font-weight: 600;
+        }
+
+        .status-bar .icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+        }
+
+        .signal-bar {
+            width: 3px;
+            background: var(--text-primary);
+            border-radius: 1px;
+        }
+
+        .signal-bar:nth-child(1) { height: 4px; }
+        .signal-bar:nth-child(2) { height: 6px; }
+        .signal-bar:nth-child(3) { height: 8px; }
+        .signal-bar:nth-child(4) { height: 10px; }
+
+        .wifi-icon {
+            width: 15px;
+            height: 15px;
+            position: relative;
+        }
+
+        .wifi-icon::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 3px solid var(--text-primary);
+            border-bottom: none;
+            border-radius: 15px 15px 0 0;
+            transform: rotate(45deg);
+        }
+
+        .battery-icon {
+            width: 20px;
+            height: 10px;
+            border: 1px solid var(--text-primary);
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .battery-icon::before {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: 2px;
+            width: 2px;
+            height: 4px;
+            background: var(--text-primary);
+            border-radius: 0 1px 1px 0;
+        }
+
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            left: 1px;
+            top: 1px;
+            width: 90%;
+            height: 6px;
+            background: var(--text-primary);
+            border-radius: 1px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background: var(--bg-primary);
+            padding: 12px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(91, 95, 222, 0.3);
+        }
+
+        .app-title-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .app-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .icon-button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .icon-button:active {
+            transform: scale(0.95);
+        }
+
+        .icon-button .material-icons {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+
+        .icon-button.has-badge::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            background: var(--secondary);
+            border-radius: 50%;
+        }
+
+        /* Input Type Selector */
+        .input-type-selector {
+            background: var(--bg-tertiary);
+            border-radius: 14px;
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+            position: relative;
+        }
+
+        .type-button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .type-button.active {
+            color: var(--primary);
+        }
+
+        .type-selector-slider {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 6px);
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .type-selector-slider.pdf {
+            transform: translateX(calc(100% + 4px));
+        }
+
+        .type-button .material-icons {
+            font-size: 16px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Text Input Section */
+        .text-input-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-label .material-icons {
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .input-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-button {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .tool-button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .tool-button .material-icons {
+            font-size: 16px;
+        }
+
+        .text-input-container {
+            flex: 1;
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .text-input-container:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .text-input-container.focused {
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .text-input {
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            padding: 20px;
+            border: none;
+            border-radius: 16px;
+            background: transparent;
+            font-size: 15px;
+            line-height: 1.7;
+            resize: none;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+
+        .text-input:focus {
+            outline: none;
+        }
+
+        .text-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            border-radius: 0 0 16px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .char-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .char-counter {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .char-counter.warning {
+            color: var(--warning);
+        }
+
+        .char-counter.error {
+            color: var(--error);
+        }
+
+        .word-counter {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* PDF Upload Section */
+        .pdf-upload-section {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            background: white;
+            border-radius: 20px;
+            border: 2px dashed var(--border);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .pdf-upload-section.active {
+            display: flex;
+        }
+
+        .pdf-upload-section:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .upload-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, white 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .upload-icon .material-icons {
+            font-size: 48px;
+            color: var(--primary);
+        }
+
+        .upload-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .upload-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(91, 95, 222, 0.3);
+        }
+
+        .upload-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(91, 95, 222, 0.4);
+        }
+
+        .upload-button:active {
+            transform: translateY(0);
+        }
+
+        /* FAB */
+        .fab {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--secondary) 0%, #ff5252 100%);
+            border-radius: 16px;
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .fab:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(255, 107, 107, 0.5);
+        }
+
+        .fab:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .fab .material-icons {
+            font-size: 28px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            background: white;
+            padding: 8px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .material-icons {
+            font-size: 24px;
+            color: var(--text-tertiary);
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active .material-icons {
+            color: var(--primary);
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+        }
+
+        .nav-item.active span {
+            color: var(--primary);
+        }
+
+        /* Action Section */
+        .action-section {
+            padding: 0 20px 20px;
+        }
+
+        .action-buttons-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .summarize-button {
+            flex: 1;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #6366f1 0%, #5558e3 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summarize-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .summarize-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .summarize-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.5);
+        }
+
+        .summarize-button:active {
+            transform: translateY(-1px);
+        }
+
+        .summarize-button:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+            box-shadow: none;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .summarize-button .material-icons {
+            font-size: 24px;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .summarize-button.loading .material-icons {
+            display: none;
+        }
+
+        .summarize-button.loading .loading-spinner {
+            display: block;
+        }
+
+        /* Dialogs */
+        .dialog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+        }
+
+        .dialog-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .dialog {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .dialog-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .dialog-icon .material-icons {
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .dialog-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .dialog-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dialog-button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dialog-button.cancel {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .dialog-button.cancel:hover {
+            background: var(--bg-secondary);
+        }
+
+        .dialog-button.confirm {
+            background: var(--primary);
+            color: white;
+        }
+
+        .dialog-button.confirm:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+
+            .screen {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="phone-container">
+    <div class="screen">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="time">9:41 AM</span>
+            <div class="icons">
+                <div class="signal-bars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <div class="wifi-icon"></div>
+                <div class="battery-icon"></div>
+            </div>
+        </div>
+
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="header-content">
+                <div class="app-header">
+                    <div class="app-logo">S</div>
+                    <div class="app-title-section">
+                        <h1 class="app-title">SumUp</h1>
+                        <span class="app-subtitle">AI-Powered Summarizer</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-button has-badge">
+                        <span class="material-icons">notifications</span>
+                    </button>
+                    <button class="icon-button">
+                        <span class="material-icons">person</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Type Selector -->
+            <div class="input-type-selector">
+                <div class="type-selector-slider" id="selectorSlider"></div>
+                <button class="type-button active" data-type="text">
+                    <span class="material-icons">article</span>
+                    Text
+                </button>
+                <button class="type-button" data-type="pdf">
+                    <span class="material-icons">description</span>
+                    PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">156</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">2.3k</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+
+            <!-- Text Input Section -->
+            <div class="text-input-section" id="textSection">
+                <div class="input-header">
+                    <label class="input-label">
+                        <span class="material-icons">edit</span>
+                        Your Text
+                    </label>
+                    <div class="input-tools">
+                        <button class="tool-button" onclick="pasteFromClipboard()">
+                            <span class="material-icons">paste</span>
+                            Paste
+                        </button>
+                        <button class="tool-button" onclick="showInfoDialog()">
+                            <span class="material-icons">help</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-input-container" id="inputContainer">
+                        <textarea
+                                class="text-input"
+                                id="textInput"
+                                placeholder="Start typing or paste your text here..."
+                                oninput="updateCharCount()"
+                                onfocus="handleFocus()"
+                                onblur="handleBlur()"
+                        ></textarea>
+                    <div class="input-footer">
+                        <div class="char-info">
+                            <div class="char-counter" id="charCounter">0 / 5,000</div>
+                            <div class="word-counter" id="wordCounter">0 words</div>
+                        </div>
+                        <button class="tool-button" onclick="clearText()">
+                            <span class="material-icons">clear</span>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Upload Section -->
+            <div class="pdf-upload-section" id="pdfSection" onclick="triggerFileUpload()">
+                <div class="upload-icon">
+                    <span class="material-icons">upload</span>
+                </div>
+                <h3 class="upload-text">Drop your PDF here</h3>
+                <p class="upload-subtext">or click to browse<br>Max file size: 10MB</p>
+                <button class="upload-button">Choose File</button>
+            </div>
+        </div>
+
+        <!-- Action Section -->
+        <div class="action-section">
+            <div class="action-buttons-container">
+                <button class="summarize-button" id="summarizeBtn" disabled onclick="handleSummarize()">
+                    <span class="material-icons">favorite</span>
+                    <span class="loading-spinner"></span>
+                    <span>Generate Summary</span>
+                </button>
+                <button class="fab">
+                    <span class="material-icons">camera</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active">
+                <span class="material-icons">home</span>
+                <span>Home</span>
+            </button>
+            <button class="nav-item">
+                <span class="material-icons">history</span>
+                <span>History</span>
+            </button>
+            <button class="nav-item">
+                <span class="material-icons">settings</span>
+                <span>Settings</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Dialog -->
+    <div class="dialog-overlay" id="infoDialog">
+        <div class="dialog">
+            <div class="dialog-icon">
+                <span class="material-icons">info</span>
+            </div>
+            <h2 class="dialog-title">How to Use SumUp</h2>
+            <p class="dialog-content">
+                Simply paste or type your text (50-5,000 characters) and let our AI create a concise summary. Perfect for articles, documents, and long-form content.
+            </p>
+            <div class="dialog-actions">
+                <button class="dialog-button confirm" onclick="hideInfoDialog()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Confirmation Dialog -->
+    <div class="dialog-overlay" id="clearDialog">
+        <div class="dialog">
+            <div class="dialog-icon">
+                <span class="material-icons">delete</span>
+            </div>
+            <h2 class="dialog-title">Clear all text?</h2>
+            <p class="dialog-content">
+                This will remove all your current text. This action cannot be undone.
+            </p>
+            <div class="dialog-actions">
+                <button class="dialog-button cancel" onclick="hideClearDialog()">Cancel</button>
+                <button class="dialog-button confirm" onclick="confirmClear()">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Elements
+    const typeButtons = document.querySelectorAll('.type-button');
+    const textSection = document.getElementById('textSection');
+    const pdfSection = document.getElementById('pdfSection');
+    const textInput = document.getElementById('textInput');
+    const charCounter = document.getElementById('charCounter');
+    const wordCounter = document.getElementById('wordCounter');
+    const summarizeBtn = document.getElementById('summarizeBtn');
+    const inputContainer = document.getElementById('inputContainer');
+    const selectorSlider = document.getElementById('selectorSlider');
+
+    // Input type switching with animated slider
+    typeButtons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+            typeButtons.forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+
+            // Move slider
+            selectorSlider.className = 'type-selector-slider';
+            if (index === 1) selectorSlider.classList.add('pdf');
+
+            const type = button.dataset.type;
+            if (type === 'text') {
+                textSection.style.display = 'flex';
+                pdfSection.classList.remove('active');
+                textInput.placeholder = 'Start typing or paste your text here...';
+            } else if (type === 'pdf') {
+                textSection.style.display = 'none';
+                pdfSection.classList.add('active');
+            }
+        });
+    });
+
+    // Character and word counter
+    function updateCharCount() {
+        const text = textInput.value;
+        const charCount = text.length;
+        const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+
+        charCounter.textContent = `${charCount.toLocaleString()} / 5,000`;
+        wordCounter.textContent = `${wordCount} word${wordCount !== 1 ? 's' : ''}`;
+
+        // Update counter color
+        charCounter.classList.remove('warning', 'error');
+        if (charCount > 4500) {
+            charCounter.classList.add('warning');
+        }
+        if (charCount > 5000) {
+            charCounter.classList.add('error');
+        }
+
+        // Enable/disable summarize button
+        summarizeBtn.disabled = charCount < 50 || charCount > 5000;
+    }
+
+    // Focus/blur handling
+    function handleFocus() {
+        inputContainer.classList.add('focused');
+    }
+
+    function handleBlur() {
+        inputContainer.classList.remove('focused');
+    }
+
+    // Paste from clipboard
+    async function pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            textInput.value = text;
+            updateCharCount();
+            // Show a small animation or feedback
+            textInput.focus();
+        } catch (err) {
+            console.error('Failed to read clipboard');
+        }
+    }
+
+    // Clear text
+    function clearText() {
+        if (textInput.value.length > 0) {
+            showClearDialog();
+        }
+    }
+
+    function confirmClear() {
+        textInput.value = '';
+        updateCharCount();
+        hideClearDialog();
+    }
+
+    // Dialog functions
+    function showInfoDialog() {
+        document.getElementById('infoDialog').classList.add('active');
+    }
+
+    function hideInfoDialog() {
+        document.getElementById('infoDialog').classList.remove('active');
+    }
+
+    function showClearDialog() {
+        document.getElementById('clearDialog').classList.add('active');
+    }
+
+    function hideClearDialog() {
+        document.getElementById('clearDialog').classList.remove('active');
+    }
+
+    // Summarize handling
+    function handleSummarize() {
+        if (!summarizeBtn.disabled) {
+            summarizeBtn.classList.add('loading');
+            // Simulate processing
+            setTimeout(() => {
+                summarizeBtn.classList.remove('loading');
+                alert('Summary generated! (Would navigate to results screen)');
+            }, 2000);
+        }
+    }
+
+    // File upload trigger
+    function triggerFileUpload() {
+        alert('Opening file picker... (Would trigger file upload)');
+    }
+
+    // FAB click
+    document.querySelector('.fab').addEventListener('click', () => {
+        alert('Opening camera for document scanning... (Would open camera view)');
+    });
+
+    // Bottom navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
