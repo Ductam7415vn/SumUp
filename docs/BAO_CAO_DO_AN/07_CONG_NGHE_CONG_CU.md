@@ -87,8 +87,8 @@ android {
         applicationId = "com.example.sumup"
         minSdk = 24      // Android 7.0 (Nougat)
         targetSdk = 35   // Android 15
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.3"
     }
     
     buildFeatures {
@@ -116,7 +116,7 @@ android {
 ### 7.4.1. Compose Configuration
 ```gradle
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
+    val composeBom = platform("androidx.compose:compose-bom:2024.09.00")
     implementation(composeBom)
     
     implementation("androidx.compose.ui:ui")
@@ -130,6 +130,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    
+    // Adaptive UI - NEW in v1.0.3
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.0.0")
 }
 ```
 
@@ -381,11 +384,71 @@ System.setProperty("org.apache.pdfbox.baseParser.pushBackSize", "2048576")
 PDFBoxResourceLoader.init(context)
 ```
 
-## 7.11. Development Tools
+## 7.11. Firebase Platform (NEW in v1.0.3)
 
-### 7.11.1. Build Tools
-- **Gradle**: 8.9.2
-- **Android Gradle Plugin**: 8.7.2
+### 7.11.1. Firebase Services
+```gradle
+dependencies {
+    // Firebase BOM for version management
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+    
+    // Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    
+    // Crash Reporting
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    
+    // Performance Monitoring
+    implementation("com.google.firebase:firebase-perf-ktx")
+    
+    // Remote Config
+    implementation("com.google.firebase:firebase-config-ktx")
+}
+```
+
+**Firebase Features Implementation**:
+1. **Analytics**: Comprehensive user behavior tracking
+   - Custom events for all major actions
+   - User properties for segmentation
+   - Conversion tracking for key metrics
+   
+2. **Crashlytics**: Real-time crash reporting
+   - Automatic crash detection
+   - Custom error logging
+   - User identification for debugging
+   
+3. **Performance Monitoring**: App performance insights
+   - Network request monitoring
+   - App startup time tracking
+   - Custom trace for slow operations
+   
+4. **Remote Config**: Dynamic configuration
+   - Feature flags
+   - A/B testing support
+   - API key distribution (secure)
+
+### 7.11.2. Firebase Security
+```kotlin
+// Certificate Pinning for Google APIs
+@Provides
+@Singleton
+fun provideOkHttpClient(): OkHttpClient {
+    val certificatePinner = CertificatePinner.Builder()
+        .add("*.googleapis.com", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+        .add("*.google.com", "sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=")
+        .build()
+    
+    return OkHttpClient.Builder()
+        .certificatePinner(certificatePinner)
+        .build()
+}
+```
+
+## 7.12. Development Tools
+
+### 7.12.1. Build Tools
+- **Gradle**: 8.11.1  
+- **Android Gradle Plugin**: 8.11.1
 - **KSP**: 2.0.21-1.0.25
 
 ### 7.11.2. Code Quality Tools
@@ -580,6 +643,12 @@ dependencies {
     
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
+    
+    // Shimmer Effect - NEW in v1.0.3
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.0.5")
+    
+    // Security - NEW in v1.0.3
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
 ```
 

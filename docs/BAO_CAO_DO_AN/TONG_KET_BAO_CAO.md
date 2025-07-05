@@ -2,11 +2,12 @@
 
 ## 📊 Thống kê báo cáo
 
-### Cấu trúc báo cáo
+### Cấu trúc báo cáo (Updated v1.0.3)
 - **Tổng số chương**: 12 chương chính + Phụ lục
-- **Tổng số trang** (ước tính): ~200 trang A4
+- **Tổng số trang** (ước tính): ~250 trang A4 (tăng 50 trang cho v1.0.3)
 - **Ngôn ngữ**: Tiếng Việt
 - **Chuẩn báo cáo**: Theo cấu trúc luận văn thạc sĩ
+- **Phiên bản**: Cập nhật với SumUp v1.0.3
 
 ### Nội dung đã hoàn thành
 

@@ -24,7 +24,7 @@ SumUp sử dụng **Room Database** - một abstraction layer trên SQLite, đư
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                          SUMMARIES                               │
+│                          SUMMARIES                              │
 ├─────────────────────────────────────────────────────────────────┤
 │ PK │ id                  │ TEXT      │ UUID                     │
 │    │ original_text       │ TEXT      │ NOT NULL                 │
