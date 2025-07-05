@@ -71,6 +71,34 @@ SumUp sử dụng **Room Database** - một abstraction layer trên SQLite, đư
 │    │ value               │ TEXT      │ NOT NULL                 │
 │    │ updated_at          │ INTEGER   │ NOT NULL                 │
 └─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI_QUALITY_METRICS (NEW v1.0.3)              │
+├─────────────────────────────────────────────────────────────────┤
+│ PK │ id                  │ TEXT      │ UUID                     │
+│ FK │ summary_id          │ TEXT      │ REFERENCES summaries(id) │
+│    │ coherence_score     │ REAL      │ NOT NULL                 │
+│    │ readability_level   │ TEXT      │ NOT NULL                 │
+│    │ information_density │ REAL      │ NOT NULL                 │
+│    │ clarity_score       │ REAL      │ NOT NULL                 │
+│    │ overall_confidence  │ REAL      │ NOT NULL                 │
+│    │ metrics_json        │ TEXT      │ NOT NULL                 │
+│    │ created_at          │ INTEGER   │ NOT NULL                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    API_USAGE_LOGS (NEW v1.0.3)                  │
+├─────────────────────────────────────────────────────────────────┤
+│ PK │ id                  │ INTEGER   │ AUTOINCREMENT            │
+│    │ timestamp           │ INTEGER   │ NOT NULL                 │
+│    │ endpoint            │ TEXT      │ NOT NULL                 │
+│    │ request_tokens      │ INTEGER   │ NOT NULL                 │
+│    │ response_tokens     │ INTEGER   │ NOT NULL                 │
+│    │ model               │ TEXT      │ NOT NULL                 │
+│    │ success             │ INTEGER   │ NOT NULL                 │
+│    │ error_message       │ TEXT      │ NULL                     │
+│    │ processing_time_ms  │ INTEGER   │ NOT NULL                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.2.2. Quan hệ giữa các bảng
@@ -211,6 +239,84 @@ data class SummaryEntity(
     @ColumnInfo(name = "tags")
     val tags: String? = null // JSON array string
 ) : Parcelable
+
+// NEW v1.0.3
+@Entity(
+    tableName = "ai_quality_metrics",
+    foreignKeys = [
+        ForeignKey(
+            entity = SummaryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["summary_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["summary_id"])]
+)
+data class AiQualityMetricsEntity(
+    @PrimaryKey
+    @ColumnInfo(name = "id")
+    val id: String = UUID.randomUUID().toString(),
+    
+    @ColumnInfo(name = "summary_id")
+    val summaryId: String,
+    
+    @ColumnInfo(name = "coherence_score")
+    val coherenceScore: Float,
+    
+    @ColumnInfo(name = "readability_level")
+    val readabilityLevel: String,
+    
+    @ColumnInfo(name = "information_density")
+    val informationDensity: Float,
+    
+    @ColumnInfo(name = "clarity_score")
+    val clarityScore: Float,
+    
+    @ColumnInfo(name = "overall_confidence")
+    val overallConfidence: Float,
+    
+    @ColumnInfo(name = "metrics_json")
+    val metricsJson: String, // Full metrics as JSON
+    
+    @ColumnInfo(name = "created_at")
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+// NEW v1.0.3
+@Entity(
+    tableName = "api_usage_logs",
+    indices = [Index(value = ["timestamp"])]
+)
+data class ApiUsageLogEntity(
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
+    val id: Int = 0,
+    
+    @ColumnInfo(name = "timestamp")
+    val timestamp: Long,
+    
+    @ColumnInfo(name = "endpoint")
+    val endpoint: String,
+    
+    @ColumnInfo(name = "request_tokens")
+    val requestTokens: Int,
+    
+    @ColumnInfo(name = "response_tokens")
+    val responseTokens: Int,
+    
+    @ColumnInfo(name = "model")
+    val model: String,
+    
+    @ColumnInfo(name = "success")
+    val success: Boolean,
+    
+    @ColumnInfo(name = "error_message")
+    val errorMessage: String? = null,
+    
+    @ColumnInfo(name = "processing_time_ms")
+    val processingTimeMs: Long
+)
 ```
 
 ### 5.4.2. Type Converters
@@ -302,6 +408,51 @@ interface SummaryDao {
     @Query("SELECT AVG(processing_time_ms) FROM summaries WHERE processing_time_ms IS NOT NULL")
     suspend fun getAverageProcessingTime(): Double?
 }
+
+// NEW v1.0.3
+@Dao
+interface AiQualityMetricsDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(metrics: AiQualityMetricsEntity)
+    
+    @Query("SELECT * FROM ai_quality_metrics WHERE summary_id = :summaryId")
+    suspend fun getMetricsBySummaryId(summaryId: String): AiQualityMetricsEntity?
+    
+    @Query("SELECT AVG(coherence_score) FROM ai_quality_metrics")
+    suspend fun getAverageCoherenceScore(): Float?
+    
+    @Query("SELECT AVG(overall_confidence) FROM ai_quality_metrics")
+    suspend fun getAverageConfidenceScore(): Float?
+    
+    @Delete
+    suspend fun delete(metrics: AiQualityMetricsEntity)
+}
+
+// NEW v1.0.3
+@Dao
+interface ApiUsageLogDao {
+    @Insert
+    suspend fun insert(log: ApiUsageLogEntity)
+    
+    @Query("SELECT * FROM api_usage_logs ORDER BY timestamp DESC LIMIT :limit")
+    fun getRecentLogs(limit: Int = 100): Flow<List<ApiUsageLogEntity>>
+    
+    @Query("""
+        SELECT SUM(request_tokens + response_tokens) as total 
+        FROM api_usage_logs 
+        WHERE timestamp >= :startTime
+    """)
+    suspend fun getTotalTokensSince(startTime: Long): Long?
+    
+    @Query("""
+        SELECT COUNT(*) FROM api_usage_logs 
+        WHERE timestamp >= :startTime AND success = 1
+    """)
+    suspend fun getSuccessfulRequestsSince(startTime: Long): Int
+    
+    @Query("DELETE FROM api_usage_logs WHERE timestamp < :timestamp")
+    suspend fun deleteOldLogs(timestamp: Long)
+}
 ```
 
 ## 5.5. Database Migrations
@@ -368,7 +519,8 @@ object DatabaseModule {
         )
         .addMigrations(
             DatabaseMigrations.MIGRATION_1_2,
-            DatabaseMigrations.MIGRATION_2_3
+            DatabaseMigrations.MIGRATION_2_3,
+            DatabaseMigrations.MIGRATION_3_4 // NEW v1.0.3
         )
         .addCallback(DatabaseCallback())
         .fallbackToDestructiveMigration() // Only for development
@@ -378,6 +530,64 @@ object DatabaseModule {
     @Provides
     fun provideSummaryDao(database: SumUpDatabase): SummaryDao {
         return database.summaryDao()
+    }
+    
+    // NEW v1.0.3
+    @Provides
+    fun provideAiQualityMetricsDao(database: SumUpDatabase): AiQualityMetricsDao {
+        return database.aiQualityMetricsDao()
+    }
+    
+    // NEW v1.0.3
+    @Provides
+    fun provideApiUsageLogDao(database: SumUpDatabase): ApiUsageLogDao {
+        return database.apiUsageLogDao()
+    }
+}
+
+// NEW v1.0.3 Migration
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // Add AI Quality Metrics table
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS ai_quality_metrics (
+                id TEXT PRIMARY KEY NOT NULL,
+                summary_id TEXT NOT NULL,
+                coherence_score REAL NOT NULL,
+                readability_level TEXT NOT NULL,
+                information_density REAL NOT NULL,
+                clarity_score REAL NOT NULL,
+                overall_confidence REAL NOT NULL,
+                metrics_json TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY(summary_id) REFERENCES summaries(id) ON DELETE CASCADE
+            )
+        """)
+        
+        database.execSQL("""
+            CREATE INDEX index_ai_quality_metrics_summary_id 
+            ON ai_quality_metrics(summary_id)
+        """)
+        
+        // Add API Usage Logs table
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS api_usage_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                timestamp INTEGER NOT NULL,
+                endpoint TEXT NOT NULL,
+                request_tokens INTEGER NOT NULL,
+                response_tokens INTEGER NOT NULL,
+                model TEXT NOT NULL,
+                success INTEGER NOT NULL,
+                error_message TEXT,
+                processing_time_ms INTEGER NOT NULL
+            )
+        """)
+        
+        database.execSQL("""
+            CREATE INDEX index_api_usage_logs_timestamp 
+            ON api_usage_logs(timestamp)
+        """)
     }
 }
 ```
@@ -582,19 +792,32 @@ class SummaryDaoTest {
 Chương này đã trình bày chi tiết thiết kế cơ sở dữ liệu cho ứng dụng SumUp:
 
 1. **Room Database** được chọn làm giải pháp lưu trữ local
-2. **4 bảng chính**: Summaries, Summary_metadata, Drafts, User_preferences
+2. **6 bảng chính (v1.0.3 updated)**: 
+   - Summaries (core data)
+   - Summary_metadata (extensible metadata)
+   - Drafts (auto-save functionality)
+   - User_preferences (settings)
+   - **AI_quality_metrics (NEW v1.0.3)** - Lưu trữ 20+ metrics phân tích chất lượng
+   - **API_usage_logs (NEW v1.0.3)** - Theo dõi API usage cho dashboard
 3. **Full-text search** được implement cho tìm kiếm nhanh
-4. **Migration strategy** đảm bảo smooth updates
+4. **Migration strategy** đảm bảo smooth updates (đã có Migration 3→4 cho v1.0.3)
 5. **Performance optimization** với indexes và maintenance
 6. **Security measures** bảo vệ dữ liệu người dùng
 7. **Backup/Recovery** cho data safety
 8. **Comprehensive testing** đảm bảo reliability
 
+Với v1.0.3, database layer đã được nâng cấp đáng kể:
+- **AI Quality Tracking**: Lưu trữ chi tiết metrics cho mỗi summary
+- **Usage Analytics**: Theo dõi API usage patterns
+- **Enhanced Performance**: Optimized indexes cho new tables
+- **Future-proof**: Sẵn sàng cho analytics và ML features
+
 Thiết kế này đảm bảo:
-- **Scalability**: Có thể lưu trữ hàng nghìn summaries
+- **Scalability**: Có thể lưu trữ hàng nghìn summaries với metrics
 - **Performance**: Query nhanh với proper indexing
-- **Reliability**: Data integrity và backup
+- **Reliability**: Data integrity và cascading deletes
 - **Security**: Encryption ready khi cần
 - **Maintainability**: Clear structure và migrations
+- **Analytics Ready**: Foundation cho business intelligence
 
-Database layer này là foundation vững chắc cho các features của ứng dụng được trình bày trong các chương tiếp theo.
+Database layer này là foundation vững chắc cho các features của ứng dụng, đặc biệt là các tính năng AI quality và analytics mới trong v1.0.3.

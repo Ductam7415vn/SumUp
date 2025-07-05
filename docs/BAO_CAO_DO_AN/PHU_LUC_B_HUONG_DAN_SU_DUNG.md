@@ -32,11 +32,13 @@ Khi mở ứng dụng lần đầu tiên, bạn sẽ thấy màn hình Onboardin
 Sau khi hoàn thành onboarding, bạn sẽ thấy màn hình chính với các thành phần:
 
 1. **Thanh tiêu đề**: Logo SumUp, nút Lịch sử, nút Cài đặt
-2. **Bộ đếm ký tự**: Hiển thị số ký tự hiện tại/tối đa (30,000)
-3. **Vùng nhập văn bản**: Ô nhập liệu lớn
-4. **Thanh công cụ**: Nút PDF, Camera, Xóa
-5. **Chọn phong cách**: 5 tùy chọn persona
-6. **Nút tóm tắt**: FAB ở góc dưới phải
+2. **Welcome Card** (NEW v1.0.3): Hiển thị cho người dùng mới với tính năng nổi bật
+3. **Interactive Tooltips** (NEW v1.0.3): Hướng dẫn từng bước khi sử dụng lần đầu
+4. **Bộ đếm ký tự**: Hiển thị số ký tự hiện tại/tối đa (30,000)
+5. **Vùng nhập văn bản**: Ô nhập liệu lớn
+6. **Thanh công cụ**: Nút PDF, Camera, Xóa
+7. **Chọn phong cách**: 6 tùy chọn persona (thêm Quick Brief v1.0.3)
+8. **Nút tóm tắt**: FAB ở góc dưới phải
 
 ## B.2. Các chức năng chính
 
@@ -64,6 +66,7 @@ Sau khi hoàn thành onboarding, bạn sẽ thấy màn hình chính với các 
 | 💼 **Chuyên nghiệp** | Formal, có structure | Báo cáo công việc |
 | 📚 **Học thuật** | Giữ thuật ngữ, citations | Research, papers |
 | 🎨 **Sáng tạo** | Sinh động, có images | Content creation |
+| ⚡ **Quick Brief** (NEW v1.0.3) | Siêu ngắn gọn, chỉ ý chính | Email, chat nhanh |
 
 ### B.2.2. Xử lý file PDF
 
@@ -135,6 +138,11 @@ Sau khi nhấn **Tóm tắt**, bạn sẽ thấy:
      - Số từ gốc → số từ tóm tắt
      - Tỷ lệ nén (%)
      - Thời gian xử lý
+   - **AI Quality Metrics** (NEW v1.0.3):
+     - Coherence Score: 85%
+     - Readability: Intermediate
+     - Confidence: 92%
+     - Nhấn "View Details" để xem 20+ metrics
    - **Nội dung tóm tắt**:
      - Hiển thị theo format của persona
      - Có thể scroll nếu dài
@@ -143,6 +151,7 @@ Sau khi nhấn **Tóm tắt**, bạn sẽ thấy:
      - 📤 Chia sẻ  
      - ⭐ Lưu yêu thích
      - 🔄 Tóm tắt lại
+     - 📊 View Insights (NEW v1.0.3)
 
 3. **Thay đổi phong cách**:
    - Dropdown chọn persona khác
@@ -301,13 +310,35 @@ Sau khi nhấn **Tóm tắt**, bạn sẽ thấy:
 - Thử persona khác
 - Report bug
 
-## B.6. FAQs
+## B.6. Tính năng mới v1.0.3
+
+### B.6.1. Welcome Card & Tooltips
+- **Welcome Card**: Giới thiệu 4 tính năng chính cho new users
+- **Interactive Tooltips**: Hướng dẫn từng bước với dynamic positioning
+- **Dismiss Options**: "Got it" hoặc "Don't show again"
+
+### B.6.2. AI Quality Insights
+- **20+ Metrics**: Đánh giá toàn diện chất lượng tóm tắt
+- **Visual Dashboard**: Biểu đồ radar cho các metrics
+- **Recommendations**: Gợi ý cải thiện dựa trên metrics
+
+### B.6.3. Enhanced Security
+- **API Key Encryption**: Bảo mật với Android Security Crypto
+- **Certificate Pinning**: Bảo vệ connection với Google APIs
+- **Auto-clear**: Tự động xóa sensitive data
+
+### B.6.4. Firebase Integration
+- **Analytics**: Track user behavior và feature usage
+- **Crashlytics**: Auto report crashes với stack traces
+- **Performance**: Monitor app performance metrics
+
+## B.7. FAQs
 
 **Q: Có mất phí không?**
 A: App hoàn toàn miễn phí với 60 lượt/phút
 
 **Q: Data có được lưu trên server?**
-A: Không, chỉ lưu local trên thiết bị
+A: Không, chỉ lưu local trên thiết bị. v1.0.3 thêm encryption cho security
 
 **Q: Có thể dùng offline không?**
 A: Cần Internet cho AI, nhưng có thể xem lịch sử offline
@@ -316,9 +347,15 @@ A: Cần Internet cho AI, nhưng có thể xem lịch sử offline
 A: Tiếng Việt và tiếng Anh
 
 **Q: File PDF tối đa bao nhiêu trang?**
-A: 50 trang hoặc 10MB
+A: 50 trang hoặc 10MB (v1.0.3 tối ưu memory cho PDF lớn)
 
-## B.7. Video Tutorials
+**Q: AI Quality Metrics là gì?** (NEW)
+A: Hệ thống 20+ chỉ số đánh giá chất lượng tóm tắt theo nhiều khía cạnh
+
+**Q: Làm sao xem API usage?** (NEW)
+A: Vào Settings → API Usage Dashboard
+
+## B.8. Video Tutorials
 
 Xem video hướng dẫn chi tiết tại:
 - YouTube: [Channel URL]

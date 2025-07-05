@@ -656,10 +656,260 @@ fun EmptyState(
 }
 ```
 
-## 6.13. Tóm tắt chương
+## 6.13. UI Components mới trong v1.0.3
 
-Chương này đã trình bày chi tiết thiết kế giao diện người dùng của SumUp:
+### 6.13.1. Welcome Card Component
+```kotlin
+@Composable
+fun WelcomeCard(
+    onDismiss: () -> Unit,
+    onQuickAction: (QuickAction) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(8.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Gradient header background
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary
+                            )
+                        )
+                    )
+            )
+            
+            // Welcome content
+            Text(
+                "Welcome to SumUp! 👋",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            
+            // Quick action chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                QuickActionChip("Try Sample", Icons.Default.Description)
+                QuickActionChip("Upload PDF", Icons.Default.PictureAsPdf)
+                QuickActionChip("Scan Text", Icons.Default.CameraAlt)
+            }
+        }
+    }
+}
+```
 
+### 6.13.2. Enhanced Tooltip System
+```kotlin
+@Composable
+fun ImprovedFeatureTooltip(
+    tip: EnhancedFeatureTip,
+    targetBounds: Rect,
+    onDismiss: () -> Unit
+) {
+    val tooltipColors = when (tip.priority) {
+        TooltipPriority.HIGH -> MaterialTheme.colorScheme.primaryContainer
+        TooltipPriority.MEDIUM -> MaterialTheme.colorScheme.secondaryContainer
+        TooltipPriority.LOW -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    
+    Popup(
+        offset = DynamicPositioningEngine.calculate(targetBounds),
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = tooltipColors),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(12.dp)
+        ) {
+            // Animated entrance
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn(),
+                exit = scaleOut() + fadeOut()
+            ) {
+                TooltipContent(tip)
+            }
+        }
+    }
+}
+```
+
+### 6.13.3. API Usage Dashboard
+```kotlin
+@Composable
+fun ApiUsageDashboard(
+    usage: ApiUsageData,
+    onRefresh: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header với gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                            )
+                        )
+                    )
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "API Usage Statistics",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    IconButton(onClick = onRefresh) {
+                        Icon(Icons.Default.Refresh, "Refresh")
+                    }
+                }
+            }
+            
+            // Usage metrics với animated progress
+            UsageMetricRow(
+                label = "Today",
+                current = usage.dailyUsage,
+                limit = usage.dailyLimit,
+                animationSpec = tween(durationMillis = 1000)
+            )
+            
+            // Visual chart
+            LineChart(
+                data = usage.last7DaysUsage,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                lineColor = MaterialTheme.colorScheme.primary,
+                backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+            )
+        }
+    }
+}
+```
+
+### 6.13.4. Logo System Design
+```kotlin
+// Logo variations với adaptive colors
+@Composable
+fun SumUpLogo(
+    variant: LogoVariant = LogoVariant.GEOMETRIC,
+    size: Dp = 48.dp,
+    useDynamicColors: Boolean = true
+) {
+    val colors = if (useDynamicColors && Build.VERSION.SDK_INT >= 31) {
+        dynamicLightColorScheme(LocalContext.current)
+    } else {
+        MaterialTheme.colorScheme
+    }
+    
+    when (variant) {
+        LogoVariant.GEOMETRIC -> LogoOption1Geometric(size, colors)
+        LogoVariant.ABSTRACT -> LogoOption2Abstract(size, colors)
+        LogoVariant.TYPOGRAPHY -> LogoOption3Typography(size, colors)
+    }
+}
+```
+
+### 6.13.5. Enhanced Dialog Design
+```kotlin
+@Composable
+fun EnhancedApiKeyDialog(
+    currentKey: String?,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                // Icon với background màu
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.VpnKey,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                
+                // Visual status indicator
+                ApiKeyStatusIndicator(
+                    hasKey = !currentKey.isNullOrEmpty(),
+                    isValid = currentKey?.isValidApiKey() == true
+                )
+                
+                // Input field với copy/paste support
+                OutlinedTextField(
+                    value = apiKeyState,
+                    onValueChange = { apiKeyState = it },
+                    label = { Text("API Key") },
+                    visualTransformation = if (showKey) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        Row {
+                            IconButton(onClick = { showKey = !showKey }) {
+                                Icon(
+                                    if (showKey) Icons.Default.VisibilityOff 
+                                    else Icons.Default.Visibility,
+                                    contentDescription = "Toggle visibility"
+                                )
+                            }
+                            IconButton(onClick = { pasteFromClipboard() }) {
+                                Icon(Icons.Default.ContentPaste, "Paste")
+                            }
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+```
+
+## 6.14. Tóm tắt chương
+
+Chương này đã trình bày chi tiết thiết kế giao diện người dùng của SumUp, bao gồm cả các cải tiến trong v1.0.3:
+
+### Thiết kế cơ bản:
 1. **Design Philosophy**: Material Design 3, Minimalism, User-Centered
 2. **Visual Design**: Color system, Typography, Spacing
 3. **Component Library**: Buttons, Cards, Inputs với detailed specs
@@ -670,11 +920,19 @@ Chương này đã trình bày chi tiết thiết kế giao diện người dùn
 8. **Dark Mode**: Full support với proper adjustments
 9. **Error Handling**: Beautiful error và empty states
 
-Thiết kế này đảm bảo:
-- **Consistency**: Unified design language
-- **Usability**: Intuitive và easy to learn
-- **Accessibility**: Inclusive cho all users
-- **Flexibility**: Adapts to different devices
-- **Delight**: Pleasant micro-interactions
+### Cải tiến UI/UX v1.0.3:
+10. **Welcome Card**: Onboarding component với quick actions
+11. **Enhanced Tooltips**: Dynamic positioning, priority-based styling
+12. **API Usage Dashboard**: Beautiful data visualization
+13. **Logo System**: 3 variants với adaptive colors
+14. **Enhanced Dialogs**: Modern design với visual indicators
 
-Giao diện được thiết kế để tạo trải nghiệm tốt nhất cho người dùng Việt Nam, với focus vào simplicity và efficiency.
+### Design Achievements:
+- **Consistency**: Unified design language across all screens
+- **Usability**: Intuitive với first-time user guidance
+- **Accessibility**: Inclusive cho all users
+- **Flexibility**: Adapts to different devices và themes
+- **Delight**: Pleasant micro-interactions và animations
+- **Production Quality**: Enterprise-grade UI components
+
+Giao diện v1.0.3 không chỉ đẹp mắt mà còn thông minh, với feature discovery system giúp người dùng khám phá tính năng mới, dashboard trực quan cho API usage, và enhanced security UI cho API key management. Tất cả được thiết kế để tạo trải nghiệm tốt nhất cho người dùng Việt Nam và quốc tế.

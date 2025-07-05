@@ -23,8 +23,11 @@
 
 **Bước 1**: Tải file APK
 ```
-sumup-v1.0.0-release.apk (8.2 MB)
+sumup-v1.0.3-release.apk (9.8 MB)
 ```
+- **Phiên bản**: v1.0.3 (Production-ready với AI Quality Metrics)
+- **Kích thước**: 9.8 MB (tăng từ 8.2 MB do Firebase và Security libs)
+- **Tính năng mới**: AI Quality Metrics, Firebase Analytics, Enhanced Security
 
 **Bước 2**: Cho phép cài đặt từ nguồn không xác định
 1. Vào **Cài đặt** → **Bảo mật**
@@ -136,7 +139,40 @@ export GEMINI_API_KEY="AIzaSyAbc123def456ghi789jkl"
 3. Kết nối device qua USB
 4. Run app và chọn device
 
-### A.3.4. Troubleshooting cài đặt
+### A.3.4. Setup Firebase (NEW v1.0.3)
+
+**Bước 1**: Tạo Firebase Project
+1. Truy cập https://console.firebase.google.com
+2. Create New Project → Đặt tên "SumUp"
+3. Enable Google Analytics
+4. Chọn Default account for Firebase
+
+**Bước 2**: Add Android App
+1. Click "Add app" → Android icon
+2. Package name: `com.example.sumup`
+3. App nickname: "SumUp"
+4. Download `google-services.json`
+5. Copy vào `app/` directory
+
+**Bước 3**: Enable Firebase Services
+1. **Analytics**: Tự động enabled
+2. **Crashlytics**: 
+   - Build → Crashlytics → Enable
+   - Run app để verify
+3. **Performance Monitoring**:
+   - Build → Performance → Enable
+4. **Remote Config** (optional):
+   - Build → Remote Config → Enable
+   - Dùng cho API key fallback
+
+**Bước 4**: Verify Integration
+```bash
+# Build và run app
+./gradlew assembleDebug
+# Check Firebase console cho first events
+```
+
+### A.3.5. Troubleshooting cài đặt
 
 **Issue 1**: Gradle sync failed
 ```bash
@@ -261,12 +297,16 @@ du -h app-release.apk
 
 ### A.6.2. First Run Checklist
 - [ ] Onboarding screens display correctly
+- [ ] Welcome card appears for new users (v1.0.3)
+- [ ] Interactive tooltips show in sequence (v1.0.3)
 - [ ] Can input text and see character counter
 - [ ] Summarize button works
-- [ ] Results display properly
+- [ ] Results display properly with AI quality metrics (v1.0.3)
 - [ ] Can navigate all screens
 - [ ] Theme switching works
+- [ ] API usage dashboard accessible (v1.0.3)
 - [ ] No crashes on rotation
+- [ ] Firebase events tracking properly (v1.0.3)
 
 ## A.7. Uninstall
 
