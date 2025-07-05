@@ -65,6 +65,7 @@ import com.example.sumup.presentation.components.ApiStatusBanner
 import com.example.sumup.presentation.components.ImprovedCharacterLimitIndicator
 import com.example.sumup.presentation.components.CharacterLimitWarningDialog
 import com.example.sumup.presentation.components.RateLimitWarningBanner
+import com.example.sumup.presentation.components.SumUpLogo
 import com.example.sumup.utils.haptic.HapticFeedbackType
 import com.example.sumup.utils.haptic.rememberHapticFeedback
 import com.example.sumup.ui.theme.extendedColorScheme
@@ -87,6 +88,7 @@ fun MainScreen(
     onNavigateToProcessing: () -> Unit = {},
     onNavigateToResult: (String) -> Unit = {},
     onOpenDrawer: (() -> Unit)? = null,
+    scannedText: String? = null,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val hapticManager = rememberHapticFeedback()
@@ -97,6 +99,13 @@ fun MainScreen(
     // Check for feature discovery on first composition
     LaunchedEffect(Unit) {
         viewModel.checkAndShowFeatureDiscovery()
+    }
+    
+    // Handle scanned text from OCR
+    LaunchedEffect(scannedText) {
+        if (!scannedText.isNullOrEmpty()) {
+            viewModel.setScannedText(scannedText)
+        }
     }
 
     ContextualErrorHandler(
@@ -114,21 +123,11 @@ fun MainScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                color = MaterialTheme.colorScheme.background
-            )
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFFF8F9FE),
-                            Color(0xFFE8E9FF).copy(alpha = 0.3f)
-                        )
-                    )
-                )
         ) {
                 // Modern minimal top bar
                 ModernTopBar(
@@ -188,6 +187,14 @@ fun MainScreen(
                         .padding(horizontal = Spacing.screenPadding),
                     verticalArrangement = Arrangement.spacedBy(Spacing.contentSpacing)
                 ) {
+                    // Welcome Card for first-time users
+                    if (uiState.showWelcomeCard) {
+                        WelcomeCard(
+                            onDismiss = { viewModel.dismissWelcomeCard() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    
                     // Quick Stats
                     QuickStatsRow(
                         todayCount = uiState.todayCount,
@@ -224,6 +231,7 @@ fun MainScreen(
                                 ImprovedPdfUploadSection(
                                     selectedPdfUri = uiState.selectedPdfUri,
                                     selectedPdfName = uiState.selectedPdfName,
+                                    serviceInfo = uiState.serviceInfo,
                                     onPdfSelected = { uri, name, pageCount -> 
                                         viewModel.selectPdfWithPreview(android.net.Uri.parse(uri))
                                     },
@@ -388,6 +396,9 @@ fun MainScreen(
 
             // Feature Discovery Tooltips
             if (uiState.showFeatureDiscovery && uiState.currentFeatureTip != null) {
+                val allTips = listOf("summarize_button", "pdf_upload", "summary_length", "ocr_button")
+                val currentIndex = allTips.indexOf(uiState.currentFeatureTip).coerceAtLeast(0)
+                
                 val tip = when (uiState.currentFeatureTip) {
                     "summarize_button" -> com.example.sumup.presentation.components.AppFeatureTips.summarizeButton
                     "pdf_upload" -> com.example.sumup.presentation.components.AppFeatureTips.pdfUpload
@@ -397,15 +408,17 @@ fun MainScreen(
                 }
                 
                 tip?.let {
-                    com.example.sumup.presentation.components.FeatureDiscoveryTooltip(
+                    ImprovedFeatureDiscoveryTooltip(
                         isVisible = true,
                         title = it.title,
                         description = it.description,
+                        currentIndex = currentIndex,
+                        totalTips = allTips.size,
                         targetOffsetX = it.targetOffsetX,
                         targetOffsetY = it.targetOffsetY,
-                        onDismiss = { viewModel.dismissFeatureTip() },
+                        onDismiss = { viewModel.skipAllTooltips() },
                         onNextTip = { viewModel.dismissFeatureTip() },
-                        showNextButton = true
+                        onSkipAll = { viewModel.skipAllTooltips() }
                     )
                 }
             }
@@ -430,7 +443,6 @@ fun MainScreen(
 private fun ModernTopBar(
     onMenuClick: (() -> Unit)? = null,
     onHelpClick: () -> Unit,
-    title: String = "Text Summarizer",
     todayCount: Int = 0,
     scrollState: ScrollState? = null
 ) {
@@ -471,18 +483,26 @@ private fun ModernTopBar(
                 Spacer(modifier = Modifier.width(Dimensions.minTouchTarget))
             }
             
-            // Context-based Title
+            // Context-based Title with Logo
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = title,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-0.3).sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SumUpLogo(
+                        size = 24.dp
+                    )
+                    Text(
+                        text = "SumUp",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = (-0.3).sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
             
             // Contextual Action (Help/Tips)
@@ -554,14 +574,14 @@ private fun InputTypeSelectorAnimated(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF8F9FE)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             ),
             border = BorderStroke(
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF5B5FDE).copy(alpha = 0.2f),
-                        Color(0xFF6366F1).copy(alpha = 0.3f)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     )
                 )
             ),
@@ -663,9 +683,9 @@ private fun QuickStatsRow(
     totalCount: Int
 ) {
     val stats = listOf(
-        Triple(todayCount.toString(), "Today", Color(0xFF5B5FDE)),
-        Triple(weekCount.toString(), "This Week", Color(0xFF5B5FDE)),
-        Triple(formatCount(totalCount), "Total", Color(0xFF5B5FDE))
+        Triple(todayCount.toString(), "Today", MaterialTheme.colorScheme.primary),
+        Triple(weekCount.toString(), "This Week", MaterialTheme.colorScheme.primary),
+        Triple(formatCount(totalCount), "Total", MaterialTheme.colorScheme.primary)
     )
     
     Row(
@@ -703,7 +723,7 @@ private fun QuickStatCard(
             .scale(scale),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isHovered) 12.dp else 4.dp
@@ -993,8 +1013,8 @@ private fun ModernPdfUploadSection(
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFFE8E9FF),
-                                Color.White
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.surface
                             )
                         ),
                         shape = RoundedCornerShape(24.dp)
@@ -1002,7 +1022,7 @@ private fun ModernPdfUploadSection(
                     .shadow(
                         elevation = 8.dp,
                         shape = RoundedCornerShape(24.dp),
-                        spotColor = Color(0xFF5B5FDE).copy(alpha = 0.1f)
+                        spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                     ),
                 contentAlignment = Alignment.Center
             ) {

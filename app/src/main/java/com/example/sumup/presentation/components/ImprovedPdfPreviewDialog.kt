@@ -15,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -110,6 +112,7 @@ fun ImprovedPdfPreviewDialog(
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .verticalScroll(rememberScrollState())
                         .padding(Spacing.screenPadding),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.spacingMd)
                 ) {
@@ -144,6 +147,7 @@ fun ImprovedPdfPreviewDialog(
                         exit = shrinkVertically() + fadeOut()
                     ) {
                         Column(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(Dimensions.spacingMd)
                         ) {
                             Row(
@@ -157,18 +161,36 @@ fun ImprovedPdfPreviewDialog(
                                     fontWeight = FontWeight.Medium
                                 )
                                 
-                                TextButton(
-                                    onClick = {
-                                        selectedPages = if (selectedPages.size == pageCount) {
-                                            emptySet()
-                                        } else {
-                                            (1..pageCount).toSet()
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingXs)
+                                ) {
+                                    // Quick selection buttons
+                                    if (pageCount > 10) {
+                                        TextButton(
+                                            onClick = {
+                                                selectedPages = (1..10).toSet()
+                                                hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
+                                            }
+                                        ) {
+                                            Text("First 10", style = MaterialTheme.typography.labelMedium)
                                         }
                                     }
-                                ) {
-                                    Text(
-                                        if (selectedPages.size == pageCount) "Deselect All" else "Select All"
-                                    )
+                                    
+                                    TextButton(
+                                        onClick = {
+                                            selectedPages = if (selectedPages.size == pageCount) {
+                                                emptySet()
+                                            } else {
+                                                (1..pageCount).toSet()
+                                            }
+                                            hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
+                                        }
+                                    ) {
+                                        Text(
+                                            if (selectedPages.size == pageCount) "Deselect All" else "Select All",
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
                                 }
                             }
                             
@@ -187,12 +209,14 @@ fun ImprovedPdfPreviewDialog(
                         }
                     }
                     
-                    // Tips
-                    InfoCard(
-                        icon = Icons.Default.Lightbulb,
-                        title = "Pro Tip",
-                        message = "For best results, select pages with primarily text content. Images and charts may affect summary quality."
-                    )
+                    // Tips - Only show when not selecting pages to save space
+                    if (!showPageSelection) {
+                        InfoCard(
+                            icon = Icons.Default.Lightbulb,
+                            title = "Pro Tip",
+                            message = "For best results, select pages with primarily text content. Images and charts may affect summary quality."
+                        )
+                    }
                 }
                 
                 Divider()
@@ -481,16 +505,23 @@ private fun PageSelectionGrid(
     selectedPages: Set<Int>,
     onPageToggle: (Int) -> Unit
 ) {
+    // Use LazyVerticalGrid for better performance and proper scrolling
+    val gridColumns = 4
+    
     LazyVerticalGrid(
-        columns = GridCells.Fixed(4),
+        columns = GridCells.Fixed(gridColumns),
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp),
-        contentPadding = PaddingValues(Dimensions.paddingXs),
+            .heightIn(max = 400.dp), // Maximum height with scrolling
+        verticalArrangement = Arrangement.spacedBy(Dimensions.spacingSm),
         horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingSm),
-        verticalArrangement = Arrangement.spacedBy(Dimensions.spacingSm)
+        contentPadding = PaddingValues(vertical = Dimensions.paddingXs)
     ) {
-        items(pages) { page ->
+        items(
+            count = pages.size,
+            key = { index -> pages[index].pageNumber }
+        ) { index ->
+            val page = pages[index]
             PageThumbnail(
                 page = page,
                 isSelected = page.pageNumber in selectedPages,
@@ -515,7 +546,7 @@ private fun PageThumbnail(
     Card(
         onClick = onClick,
         modifier = Modifier
-            .aspectRatio(0.7f)
+            .aspectRatio(0.7f) // Original aspect ratio
             .scale(scale),
         shape = RoundedCornerShape(Dimensions.radiusSm),
         colors = CardDefaults.cardColors(

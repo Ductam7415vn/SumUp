@@ -257,15 +257,15 @@ fun ProcessingScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Simple loading indicator instead of progress bar
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .testTag(SharedElementKeys.PROCESSING_PROGRESS),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 4.dp
-                    )
-                    
+//                    // Simple loading indicator instead of progress bar
+//                    CircularProgressIndicator(
+//                        modifier = Modifier
+//                            .size(48.dp)
+//                            .testTag(SharedElementKeys.PROCESSING_PROGRESS),
+//                        color = MaterialTheme.colorScheme.primary,
+//                        strokeWidth = 4.dp
+//                    )
+//
                     // Error state
                     AnimatedVisibility(
                         visible = showError && errorMessage != null,

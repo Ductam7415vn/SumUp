@@ -13,7 +13,9 @@ import kotlin.math.min
  */
 class EnhancedGeminiApiService(
     private val retrofit: retrofit2.Retrofit,
-    private val apiKey: String
+    private val apiKey: String,
+    private val apiKeyManager: com.example.sumup.utils.EnhancedApiKeyManager? = null,
+    private val apiUsageTracker: com.example.sumup.utils.ApiUsageTracker? = null
 ) : GeminiApiService {
     
     private val geminiApi = retrofit.create(GeminiApiService::class.java)
@@ -80,7 +82,29 @@ class EnhancedGeminiApiService(
             android.util.Log.d("EnhancedGeminiAPI", "Response candidates: ${response.candidates.size}")
             
             // Parse and validate response
-            parseAndValidateResponse(response, processingTime, request)
+            val result = parseAndValidateResponse(response, processingTime, request)
+            
+            // Track API usage using both trackers
+            android.util.Log.d("EnhancedGeminiAPI", "Tracking API usage...")
+            
+            // Use simple tracker first
+            if (apiUsageTracker != null) {
+                android.util.Log.d("EnhancedGeminiAPI", "Using ApiUsageTracker")
+                apiUsageTracker.trackUsage()
+                android.util.Log.d("EnhancedGeminiAPI", "ApiUsageTracker.trackUsage() completed")
+            }
+            
+            // Also update the enhanced key manager if available
+            if (apiKeyManager != null) {
+                android.util.Log.d("EnhancedGeminiAPI", "Using EnhancedApiKeyManager")
+                val activeKeyId = apiKeyManager.activeKeyId.value
+                if (activeKeyId != null) {
+                    apiKeyManager.updateKeyUsage(activeKeyId)
+                    android.util.Log.d("EnhancedGeminiAPI", "EnhancedApiKeyManager.updateKeyUsage() completed")
+                }
+            }
+            
+            result
             
         } catch (e: Exception) {
             android.util.Log.e("EnhancedGeminiAPI", "=== API CALL FAILED ===")

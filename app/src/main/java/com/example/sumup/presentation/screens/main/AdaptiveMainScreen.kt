@@ -11,7 +11,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.sumup.presentation.screens.main.components.*
+import com.example.sumup.presentation.screens.main.components.MainTopBar
+import com.example.sumup.presentation.screens.main.components.TextInputSection
+import com.example.sumup.presentation.screens.main.components.PdfUploadSection
+import com.example.sumup.presentation.screens.main.components.InputTypeSelector
+import com.example.sumup.presentation.screens.main.components.SummaryLengthSelector
+import com.example.sumup.presentation.screens.main.components.DraftRecoveryDialog
+import com.example.sumup.presentation.screens.main.components.ClearConfirmationDialog
+import com.example.sumup.presentation.screens.main.components.InfoDialog
+import com.example.sumup.presentation.screens.main.components.MainScreenDialogs
+import com.example.sumup.presentation.screens.main.components.BottomActionBar
 import com.example.sumup.presentation.components.*
 import com.example.sumup.presentation.utils.AdaptiveLayoutInfo
 import com.example.sumup.presentation.utils.DeviceType

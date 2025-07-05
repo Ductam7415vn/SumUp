@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Variant 4: Minimalist Circle Style -->
+    
+    <!-- Circle Background -->
+    <path
+        android:fillColor="#5B3FFF"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+    
+    <!-- Inner gradient overlay -->
+    <path
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="40"
+                android:gradientRadius="50">
+                <item android:offset="0" android:color="#20FFFFFF"/>
+                <item android:offset="1" android:color="#00FFFFFF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    
+    <!-- Top rectangle (white) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,38 L58,38 Q60,38 60,40 L60,43 Q60,45 58,45 L40,45 Q38,45 38,43 L38,40 Q38,38 40,38"/>
+    
+    <!-- Middle connector (white with transparency) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.85"
+        android:pathData="M48,48 L56,48 Q57,48 57,49 L57,51 Q57,52 56,52 L48,52 Q47,52 47,51 L47,49 Q47,48 48,48"/>
+    
+    <!-- Bottom rectangle (white) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,56 L68,56 Q70,56 70,58 L70,61 Q70,63 68,63 L50,63 Q48,63 48,61 L48,58 Q48,56 50,56"/>
+    
+    <!-- Floating elements for depth -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M35,68 m-2,0 a2,2 0,1 1,4 0 a2,2 0,1 1,-4 0"/>
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.2"
+        android:pathData="M70,35 m-1.5,0 a1.5,1.5 0,1 1,3 0 a1.5,1.5 0,1 1,-3 0"/>
+    
+    <!-- Bottom accent line -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,70 L64,70 Q65,70 65,71 L65,71 Q65,72 64,72 L44,72 Q43,72 43,71 L43,71 Q43,70 44,70"/>
+    
+</vector>

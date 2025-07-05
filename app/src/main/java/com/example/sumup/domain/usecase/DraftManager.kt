@@ -17,6 +17,7 @@ class DraftManager @Inject constructor(
         private const val KEY_DRAFT_TEXT = "draft_text"
         private const val KEY_DRAFT_TYPE = "draft_type"
         private const val KEY_DRAFT_TIMESTAMP = "draft_timestamp"
+        private const val KEY_HAS_SEEN_WELCOME = "has_seen_welcome_card"
     }
     
     suspend fun saveDraft(text: String, type: InputType) {
@@ -51,5 +52,15 @@ class DraftManager @Inject constructor(
     fun hasDraft(): Boolean {
         return prefs.contains(KEY_DRAFT_TEXT) && 
                prefs.getString(KEY_DRAFT_TEXT, "")?.isNotEmpty() == true
+    }
+    
+    suspend fun getHasSeenWelcomeCard(): Boolean {
+        return prefs.getBoolean(KEY_HAS_SEEN_WELCOME, false)
+    }
+    
+    suspend fun setHasSeenWelcomeCard(seen: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_HAS_SEEN_WELCOME, seen)
+            .apply()
     }
 }

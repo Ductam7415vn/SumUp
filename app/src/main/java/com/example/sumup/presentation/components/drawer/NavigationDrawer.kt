@@ -3,16 +3,23 @@ package com.example.sumup.presentation.components.drawer
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.ShortText
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,38 +82,52 @@ fun NavigationDrawer(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            DrawerContent(
-                currentRoute = currentRoute,
-                summaryHistory = summaryHistory,
-                userEmail = userEmail,
-                totalSummaries = totalSummaries,
-                storageUsed = storageUsed,
-                onNavigateToHome = {
-                    onNavigateToHome()
-                    scope.launch { drawerState.close() }
-                },
-                onNavigateToHistory = {
-                    onNavigateToHistory()
-                    scope.launch { drawerState.close() }
-                },
-                onNavigateToSettings = {
-                    onNavigateToSettings()
-                    scope.launch { drawerState.close() }
-                },
-                onNavigateToSummary = { summary ->
-                    onNavigateToSummary(summary)
-                    scope.launch { drawerState.close() }
-                },
-                onStartNewSummary = { inputType ->
-                    onStartNewSummary(inputType)
-                    scope.launch { drawerState.close() }
-                },
-                hapticManager = hapticManager
-            )
+            ModalDrawerSheet(
+                drawerContainerColor = MaterialTheme.colorScheme.surface,
+                drawerContentColor = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.fillMaxWidth(0.85f),
+                windowInsets = WindowInsets(0) // Remove default insets to overlay status bar
+            ) {
+                // Add background that extends under status bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    DrawerContent(
+                    currentRoute = currentRoute,
+                    summaryHistory = summaryHistory,
+                    userEmail = userEmail,
+                    totalSummaries = totalSummaries,
+                    storageUsed = storageUsed,
+                    onNavigateToHome = {
+                        onNavigateToHome()
+                        scope.launch { drawerState.close() }
+                    },
+                    onNavigateToHistory = {
+                        onNavigateToHistory()
+                        scope.launch { drawerState.close() }
+                    },
+                    onNavigateToSettings = {
+                        onNavigateToSettings()
+                        scope.launch { drawerState.close() }
+                    },
+                    onNavigateToSummary = { summary ->
+                        onNavigateToSummary(summary)
+                        scope.launch { drawerState.close() }
+                    },
+                    onStartNewSummary = { inputType ->
+                        onStartNewSummary(inputType)
+                        scope.launch { drawerState.close() }
+                    },
+                    hapticManager = hapticManager
+                )
+                }
+            }
         },
         content = content,
         gesturesEnabled = true,
-        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)
+        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f)
     )
 }
 
@@ -127,17 +148,30 @@ private fun DrawerContent(
     var searchQuery by remember { mutableStateOf("") }
     var expandedGroups by remember { mutableStateOf(setOf("Today", "Yesterday")) }
     
-    Surface(
+    Column(
         modifier = Modifier
-            .fillMaxHeight()
-            .width(320.dp)
-            .clip(RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp))
-            .systemBarsPadding(), // Add padding for status bar
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 16.dp
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
     ) {
+        // Status bar spacer with gradient
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+        )
+        
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // Header
@@ -283,12 +317,12 @@ private fun DrawerHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
+            .height(200.dp)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primaryContainer
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        MaterialTheme.colorScheme.surface
                     )
                 )
             )
@@ -303,22 +337,36 @@ private fun DrawerHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Avatar
-                Surface(
+                // Avatar with gradient border
+                Box(
                     modifier = Modifier.size(48.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer
                     ) {
-                        Text(
-                            text = userEmail.firstOrNull()?.uppercase() ?: "G",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                        )
+                                    )
+                                )
+                        ) {
+                            Text(
+                                text = userEmail.firstOrNull()?.uppercase() ?: "G",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
                 
@@ -327,13 +375,13 @@ private fun DrawerHeader(
                         text = "SumUp Pro",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = userEmail,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -366,16 +414,18 @@ private fun StatCard(
     label: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Surface(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
-        ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                )
                 .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -383,12 +433,12 @@ private fun StatCard(
                 text = value,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -403,25 +453,49 @@ private fun QuickActionsSection(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Primary Action
-        Button(
+        // Primary Action with gradient
+        Surface(
             onClick = { 
                 hapticManager?.performHapticFeedback(HapticFeedbackType.CLICK)
                 onStartNewSummary(MainUiState.InputType.TEXT)
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            shadowElevation = 4.dp
         ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("New Summary", fontWeight = FontWeight.Medium)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "New Summary",
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
         }
         
         // Secondary Actions
@@ -566,7 +640,12 @@ private fun HistoryItem(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isHovered) 4.dp else 0.dp
+            defaultElevation = 2.dp,
+            hoveredElevation = 4.dp
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
     ) {
         Row(
@@ -617,7 +696,7 @@ private fun HistoryItem(
                 imageVector = when {
                     summary.originalText.length > 1000 -> Icons.Default.Description
                     summary.originalText.length > 500 -> Icons.Default.TextFields
-                    else -> Icons.Default.ShortText
+                    else -> Icons.AutoMirrored.Default.ShortText
                 },
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),

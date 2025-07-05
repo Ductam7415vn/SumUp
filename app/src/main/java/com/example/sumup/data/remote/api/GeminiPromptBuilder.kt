@@ -57,41 +57,54 @@ object GeminiPromptBuilder {
     private fun getStylePrompt(style: String): String = when (style) {
         "educational" -> """
             EDUCATIONAL STYLE REQUIREMENTS:
-            - PRIMARY GOAL: Transform content into teachable moments
-            - LEARNING FOCUS: Identify the core lesson or principle being taught
-            - SIMPLIFICATION: Break complex concepts into digestible parts
-            - EXAMPLES: Extract or infer practical applications
-            - STRUCTURE: Use "What, Why, How" framework when applicable
-            - DEFINITIONS: Clarify technical terms in plain language
-            - TAKEAWAY: End with clear learning outcomes
+            - PRIMARY GOAL: Transform content into effective study materials
+            - LEARNING FOCUS: Extract key concepts, definitions, and principles
+            - STRUCTURE: Organize information in a logical learning sequence
+            - MEMORY AIDS: Create memorable bullet points and summaries
+            - EXAMPLES: Include concrete examples from the text
+            - REVIEW POINTS: Highlight what to remember for exams/tests
+            - STUDY TIPS: Suggest how to apply or remember the information
             
-            TONE: Patient, encouraging, explanatory (like a skilled teacher)
+            TONE: Clear, instructive, encouraging (like a helpful tutor)
         """.trimIndent()
 
         "actionable" -> """
-            ACTIONABLE STYLE REQUIREMENTS:
-            - PRIMARY GOAL: Convert information into executable tasks
-            - ACTION FOCUS: Extract specific "to-do" items from the content
-            - PRIORITIZATION: Order by impact and urgency (if determinable)
-            - SPECIFICITY: Include WHO, WHAT, WHEN details where available
-            - DECISION POINTS: Highlight choices that need to be made
-            - OUTCOMES: Link actions to expected results
-            - NEXT STEPS: Always end with immediate next action
+            PROFESSIONAL STYLE REQUIREMENTS:
+            - PRIMARY GOAL: Create executive-ready summaries for business use
+            - BUSINESS FOCUS: Extract actionable insights and recommendations
+            - STRUCTURE: Lead with key findings, follow with supporting details
+            - METRICS: Highlight any numbers, percentages, or KPIs
+            - DECISIONS: Identify decision points and recommendations
+            - NEXT STEPS: Clear action items with ownership when possible
+            - TIME SENSITIVITY: Note any deadlines or urgent matters
             
-            TONE: Direct, motivating, results-oriented (like a project manager)
+            TONE: Professional, concise, action-oriented (like a business consultant)
         """.trimIndent()
 
         "precise" -> """
-            PRECISE STYLE REQUIREMENTS:
-            - PRIMARY GOAL: Capture exact details without interpretation
-            - ACCURACY FOCUS: Preserve numbers, dates, specifications exactly
-            - TERMINOLOGY: Use the exact technical terms from source
-            - DATA POINTS: Include all metrics, measurements, percentages
-            - FACTUAL ONLY: No inference or estimation allowed
-            - STRUCTURE: Organize by categories or importance of facts
-            - VERIFICATION: Double-check accuracy of extracted information
+            ACADEMIC STYLE REQUIREMENTS:
+            - PRIMARY GOAL: Maintain scholarly rigor and accuracy
+            - CITATION FOCUS: Preserve all references, sources, and attributions
+            - TERMINOLOGY: Keep all technical and academic terms intact
+            - METHODOLOGY: Note research methods or approaches mentioned
+            - FINDINGS: Clearly separate findings from interpretations
+            - CRITICAL ANALYSIS: Include any critiques or limitations mentioned
+            - CONTEXT: Maintain theoretical framework and academic context
             
-            TONE: Clinical, objective, fact-based (like a technical auditor)
+            TONE: Formal, objective, scholarly (like an academic reviewer)
+        """.trimIndent()
+
+        "simplified" -> """
+            SIMPLE LANGUAGE STYLE REQUIREMENTS:
+            - PRIMARY GOAL: Make complex content accessible to everyone
+            - SIMPLIFICATION: Use everyday words instead of jargon
+            - EXPLANATIONS: Define any unavoidable technical terms
+            - SHORT SENTENCES: Keep sentences under 20 words when possible
+            - EXAMPLES: Use relatable analogies and comparisons
+            - STRUCTURE: One main idea per paragraph or bullet point
+            - CLARITY: If grandma can't understand it, simplify more
+            
+            TONE: Friendly, clear, conversational (like explaining to a friend)
         """.trimIndent()
 
         else -> """

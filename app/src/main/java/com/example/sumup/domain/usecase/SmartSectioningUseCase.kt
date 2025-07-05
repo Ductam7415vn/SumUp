@@ -6,11 +6,8 @@ import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.SummaryMetrics
 import com.example.sumup.domain.model.SummaryPersona
 import com.example.sumup.domain.repository.SummaryRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import javax.inject.Inject
 import kotlin.math.ceil
 
@@ -39,7 +36,7 @@ class SmartSectioningUseCase @Inject constructor(
         text: String,
         persona: SummaryPersona = SummaryPersona.GENERAL,
         language: String = "auto"
-    ): Flow<SectioningResult> = flow {
+    ): Flow<SectioningResult> = channelFlow {
         try {
             // Check if sectioning is needed
             if (text.length < SECTION_THRESHOLD) {
@@ -47,7 +44,7 @@ class SmartSectioningUseCase @Inject constructor(
                 val summaryResult = summarizeTextUseCase(text, persona)
                 summaryResult.fold(
                     onSuccess = { summary ->
-                        emit(SectioningResult.Success(
+                        send(SectioningResult.Success(
                             SectionedSummary(
                                 sections = listOf(
                                     DocumentSection(
@@ -65,30 +62,26 @@ class SmartSectioningUseCase @Inject constructor(
                         ))
                     },
                     onFailure = { error ->
-                        emit(SectioningResult.Error(error.message ?: "Failed to summarize"))
+                        send(SectioningResult.Error(error.message ?: "Failed to summarize"))
                     }
                 )
-                return@flow
+                return@channelFlow
             }
 
             // Smart sectioning needed
             val sections = createSmartSections(text)
-            emit(SectioningResult.Progress(0, sections.size))
+            send(SectioningResult.Progress(0, sections.size))
 
-            // Process sections in parallel for better performance
-            val sectionSummaries = coroutineScope {
-                sections.mapIndexed { index, section ->
-                    async {
-                        emit(SectioningResult.Progress(index + 1, sections.size))
-                        val summaryResult = summarizeTextUseCase(
-                            section.content,
-                            persona
-                        )
-                        summaryResult.getOrNull()?.let { summary ->
-                            section.copy(summary = summary)
-                        } ?: section
-                    }
-                }.awaitAll()
+            // Process sections sequentially to avoid concurrent emissions
+            val sectionSummaries = sections.mapIndexed { index, section ->
+                send(SectioningResult.Progress(index + 1, sections.size))
+                val summaryResult = summarizeTextUseCase(
+                    section.content,
+                    persona
+                )
+                summaryResult.getOrNull()?.let { summary ->
+                    section.copy(summary = summary)
+                } ?: section
             }
 
             // Generate overall summary from section summaries
@@ -107,7 +100,7 @@ class SmartSectioningUseCase @Inject constructor(
 
             overallSummaryResult.fold(
                 onSuccess = { overallSummary ->
-                    emit(SectioningResult.Success(
+                    send(SectioningResult.Success(
                         SectionedSummary(
                             sections = sectionSummaries,
                             overallSummary = overallSummary,
@@ -117,12 +110,12 @@ class SmartSectioningUseCase @Inject constructor(
                     ))
                 },
                 onFailure = { error ->
-                    emit(SectioningResult.Error(error.message ?: "Failed to generate overall summary"))
+                    send(SectioningResult.Error(error.message ?: "Failed to generate overall summary"))
                 }
             )
 
         } catch (e: Exception) {
-            emit(SectioningResult.Error(e.message ?: "Unknown error during sectioning"))
+            send(SectioningResult.Error(e.message ?: "Unknown error during sectioning"))
         }
     }
 

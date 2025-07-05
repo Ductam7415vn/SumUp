@@ -46,8 +46,12 @@ data class MainUiState(
     // Feature discovery
     val showFeatureDiscovery: Boolean = false,
     val currentFeatureTip: String? = null,
+    // Enhanced Feature discovery
+    val showEnhancedTooltips: Boolean = false,
     // API usage stats
-    val apiUsageStats: com.example.sumup.domain.model.ApiUsageStats? = null
+    val apiUsageStats: com.example.sumup.domain.model.ApiUsageStats? = null,
+    // Welcome card
+    val showWelcomeCard: Boolean = false
 ) {
     enum class InputType {
         TEXT, PDF, OCR

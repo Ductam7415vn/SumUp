@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.sumup.domain.model.Summary
+import kotlin.math.min
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -123,10 +124,20 @@ fun InsightsDialog(
                                 icon = Icons.Outlined.Analytics,
                                 title = "Content Analysis",
                                 content = {
+                                    val aiMetrics = summary.aiQualityMetrics
                                     MetricRow("Key Points", "${summary.bulletPoints.size}")
                                     MetricRow("Average Point Length", "${summary.bulletPoints.map { it.length }.average().toInt()} chars")
-                                    MetricRow("Readability Level", getReadabilityLevel(summary))
-                                    MetricRow("Information Density", getInformationDensity(summary))
+                                    MetricRow("Readability Level", 
+                                        aiMetrics?.readabilityLevel?.toDisplayString() ?: getReadabilityLevel(summary)
+                                    )
+                                    MetricRow("Information Density", 
+                                        aiMetrics?.informationDensity?.toDisplayString() ?: getInformationDensity(summary)
+                                    )
+                                    if (aiMetrics != null) {
+                                        MetricRow("Clarity Score", "${aiMetrics.clarityScore}%")
+                                        MetricRow("Focus Score", "${aiMetrics.focusScore}%")
+                                        MetricRow("Topic Coverage", "${aiMetrics.topicCoverage}%")
+                                    }
                                 }
                             )
                         }
@@ -163,12 +174,41 @@ fun InsightsDialog(
                                 icon = Icons.Outlined.AutoAwesome,
                                 title = "AI Quality Metrics",
                                 content = {
-                                    MetricRow("Coherence Score", "94%")
-                                    MetricRow("Context Preservation", "High")
-                                    MetricRow("Information Retention", "92%")
-                                    MetricRow("Summary Type", summary.persona.displayName)
+                                    val aiMetrics = summary.aiQualityMetrics
+                                    if (aiMetrics != null) {
+                                        MetricRow("Coherence Score", "${aiMetrics.coherenceScore}%")
+                                        MetricRow("Context Preservation", "${aiMetrics.contextPreservation}%")
+                                        MetricRow("Information Retention", "${aiMetrics.informationRetention}%")
+                                        MetricRow("Accuracy Score", "${aiMetrics.accuracyScore}%")
+                                        MetricRow("Summary Type", summary.persona.displayName)
+                                        MetricRow("Confidence", "${(aiMetrics.overallConfidence * 100).toInt()}%")
+                                    } else {
+                                        // Fallback for old summaries without AI metrics
+                                        MetricRow("Coherence Score", "${calculateFallbackCoherence(summary)}%")
+                                        MetricRow("Context Preservation", "High")
+                                        MetricRow("Information Retention", "${calculateFallbackRetention(summary)}%")
+                                        MetricRow("Summary Type", summary.persona.displayName)
+                                    }
                                 }
                             )
+                        }
+                        
+                        // Advanced Analysis (if AI metrics available)
+                        summary.aiQualityMetrics?.let { aiMetrics ->
+                            item {
+                                InsightSection(
+                                    icon = Icons.Outlined.Psychology,
+                                    title = "Advanced Analysis",
+                                    content = {
+                                        MetricRow("Structure Quality", "${aiMetrics.structureQuality}%")
+                                        MetricRow("Transition Quality", "${aiMetrics.transitionQuality}%")
+                                        MetricRow("Hierarchy Score", "${aiMetrics.hierarchyScore}%")
+                                        MetricRow("Redundancy", "${100 - aiMetrics.redundancyScore}% unique")
+                                        MetricRow("Processing Difficulty", aiMetrics.processingDifficulty.toDisplayString())
+                                        MetricRow("Content Suitability", aiMetrics.contentSuitability.toDisplayString())
+                                    }
+                                )
+                            }
                         }
                         
                         // Recommendations
@@ -177,8 +217,29 @@ fun InsightsDialog(
                                 icon = Icons.Outlined.Lightbulb,
                                 title = "Recommendations",
                                 content = {
+                                    val aiMetrics = summary.aiQualityMetrics
+                                    
                                     RecommendationItem("Try the ${getRecommendedPersona(summary)} persona for different insights")
+                                    
+                                    if (aiMetrics != null) {
+                                        if (aiMetrics.readabilityLevel in listOf(
+                                            com.example.sumup.domain.model.ReadabilityLevel.GRADUATE,
+                                            com.example.sumup.domain.model.ReadabilityLevel.PROFESSIONAL
+                                        )) {
+                                            RecommendationItem("Consider using Simple persona for easier understanding")
+                                        }
+                                        
+                                        if (aiMetrics.redundancyScore > 30) {
+                                            RecommendationItem("High redundancy detected - try a shorter summary length")
+                                        }
+                                        
+                                        if (aiMetrics.clarityScore < 70) {
+                                            RecommendationItem("Clarity could be improved - try regenerating")
+                                        }
+                                    }
+                                    
                                     RecommendationItem("Export to PDF for professional documentation")
+                                    
                                     if (summary.bulletPoints.size > 10) {
                                         RecommendationItem("Consider using the brief overview for quick reference")
                                     }
@@ -339,11 +400,58 @@ private fun getInformationDensity(summary: Summary): String {
 
 private fun getRecommendedPersona(summary: Summary): String {
     return when (summary.persona) {
-        com.example.sumup.domain.model.SummaryPersona.GENERAL -> "Technical"
-        com.example.sumup.domain.model.SummaryPersona.TECHNICAL -> "Business"
-        com.example.sumup.domain.model.SummaryPersona.BUSINESS -> "Study"
-        com.example.sumup.domain.model.SummaryPersona.STUDY -> "Legal"
-        com.example.sumup.domain.model.SummaryPersona.LEGAL -> "Quick"
-        com.example.sumup.domain.model.SummaryPersona.QUICK -> "General"
+        com.example.sumup.domain.model.SummaryPersona.GENERAL -> "Study"
+        com.example.sumup.domain.model.SummaryPersona.STUDY -> "Professional"
+        com.example.sumup.domain.model.SummaryPersona.PROFESSIONAL -> "Academic"
+        com.example.sumup.domain.model.SummaryPersona.ACADEMIC -> "Simple"
+        com.example.sumup.domain.model.SummaryPersona.SIMPLE -> "General"
+    }
+}
+
+// Extension functions for enums
+private fun com.example.sumup.domain.model.ReadabilityLevel.toDisplayString(): String = when (this) {
+    com.example.sumup.domain.model.ReadabilityLevel.ELEMENTARY -> "Elementary"
+    com.example.sumup.domain.model.ReadabilityLevel.MIDDLE_SCHOOL -> "Middle School"
+    com.example.sumup.domain.model.ReadabilityLevel.HIGH_SCHOOL -> "High School"
+    com.example.sumup.domain.model.ReadabilityLevel.COLLEGE -> "College"
+    com.example.sumup.domain.model.ReadabilityLevel.GRADUATE -> "Graduate"
+    com.example.sumup.domain.model.ReadabilityLevel.PROFESSIONAL -> "Professional"
+}
+
+private fun com.example.sumup.domain.model.DensityLevel.toDisplayString(): String = when (this) {
+    com.example.sumup.domain.model.DensityLevel.SPARSE -> "Sparse"
+    com.example.sumup.domain.model.DensityLevel.LIGHT -> "Light"
+    com.example.sumup.domain.model.DensityLevel.MODERATE -> "Moderate"
+    com.example.sumup.domain.model.DensityLevel.DENSE -> "Dense"
+    com.example.sumup.domain.model.DensityLevel.VERY_DENSE -> "Very Dense"
+}
+
+private fun com.example.sumup.domain.model.DifficultyLevel.toDisplayString(): String = when (this) {
+    com.example.sumup.domain.model.DifficultyLevel.TRIVIAL -> "Trivial"
+    com.example.sumup.domain.model.DifficultyLevel.EASY -> "Easy"
+    com.example.sumup.domain.model.DifficultyLevel.MODERATE -> "Moderate"
+    com.example.sumup.domain.model.DifficultyLevel.CHALLENGING -> "Challenging"
+    com.example.sumup.domain.model.DifficultyLevel.EXPERT -> "Expert"
+}
+
+private fun com.example.sumup.domain.model.SuitabilityLevel.toDisplayString(): String = when (this) {
+    com.example.sumup.domain.model.SuitabilityLevel.EXCELLENT -> "Excellent"
+    com.example.sumup.domain.model.SuitabilityLevel.GOOD -> "Good"
+    com.example.sumup.domain.model.SuitabilityLevel.FAIR -> "Fair"
+    com.example.sumup.domain.model.SuitabilityLevel.POOR -> "Poor"
+}
+
+// Fallback functions for old summaries
+private fun calculateFallbackCoherence(summary: Summary): Int {
+    return 70 + min(summary.bulletPoints.size * 3, 25)
+}
+
+private fun calculateFallbackRetention(summary: Summary): Int {
+    val compressionRatio = summary.metrics.reductionPercentage
+    return when {
+        compressionRatio < 50 -> 95
+        compressionRatio < 70 -> 85
+        compressionRatio < 85 -> 75
+        else -> 65
     }
 }

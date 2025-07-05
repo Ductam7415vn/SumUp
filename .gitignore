@@ -18,6 +18,15 @@ local.properties
 
 # Test scripts
 test_*.sh
+
+# Firebase
+app/google-services.json
+*.google-services.json
+
+# Signing configs
+*.jks
+*.keystore
+keystore.properties
 test_*.py
 *Test.kt
 fix_*.sh

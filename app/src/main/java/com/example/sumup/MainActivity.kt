@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.view.WindowCompat
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @AndroidEntryPoint
@@ -40,7 +41,9 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        
+        // Enable edge-to-edge and configure system bars
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         
         // Perform API key migration on app startup
         lifecycleScope.launch {
@@ -59,20 +62,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
             val themeMode by settingsRepository.getThemeMode()
-                .stateIn(
-                    scope = lifecycleScope,
-                    started = SharingStarted.WhileSubscribed(5000),
-                    initialValue = ThemeMode.SYSTEM
+                .collectAsStateWithLifecycle(
+                    initialValue = ThemeMode.SYSTEM,
+                    lifecycle = lifecycle
                 )
-                .collectAsState()
             
             val isDynamicColorEnabled by settingsRepository.isDynamicColorEnabled()
-                .stateIn(
-                    scope = lifecycleScope,
-                    started = SharingStarted.WhileSubscribed(5000),
-                    initialValue = false
+                .collectAsStateWithLifecycle(
+                    initialValue = true,
+                    lifecycle = lifecycle
                 )
-                .collectAsState()
                 
             val isOnboardingCompleted by settingsRepository.isOnboardingCompleted
                 .collectAsStateWithLifecycle(initialValue = false)
@@ -83,9 +82,12 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             
+            // Debug logging
+            android.util.Log.d("MainActivity", "Theme: $themeMode, Dark: $darkTheme, Dynamic: $isDynamicColorEnabled")
+            
             SumUpTheme(
                 darkTheme = darkTheme,
-                dynamicColor = false // Temporarily disable to see custom UI
+                dynamicColor = isDynamicColorEnabled
             ) {
                 val navController = rememberNavController()
                 
@@ -115,10 +117,8 @@ class MainActivity : ComponentActivity() {
                                         inclusive = true
                                     }
                                 }
-                                // Mark onboarding as completed
-                                lifecycleScope.launch {
-                                    settingsRepository.setOnboardingCompleted(true)
-                                }
+                                // Don't automatically mark onboarding as completed when navigating to settings
+                                // User should explicitly complete onboarding through the proper flow
                             }
                         )
                     }

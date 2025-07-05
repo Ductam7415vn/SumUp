@@ -14,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
@@ -53,6 +57,30 @@ fun AdaptiveNavigation(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val hapticManager = rememberHapticFeedback()
+    
+    // Handle status bar appearance - keep it transparent always for edge-to-edge
+    val view = LocalView.current
+    val isDarkTheme = !MaterialTheme.colorScheme.surface.luminance().let { it > 0.5f }
+    
+    LaunchedEffect(drawerState.isOpen) {
+        if (!view.isInEditMode) {
+            val window = (view.context as? android.app.Activity)?.window
+            window?.let {
+                // Always keep status bar transparent for edge-to-edge experience
+                it.statusBarColor = android.graphics.Color.TRANSPARENT
+                
+                // Set status bar icons color based on drawer state
+                val insetsController = WindowCompat.getInsetsController(it, view)
+                // When drawer is open (white background), use light status bar (dark icons)
+                // When drawer is closed, use theme-based
+                insetsController.isAppearanceLightStatusBars = if (drawerState.isOpen) {
+                    true // Light status bar (dark icons) for white drawer
+                } else {
+                    !isDarkTheme // Theme-based when drawer is closed
+                }
+            }
+        }
+    }
     
     // Get current route
     val navBackStackEntry by navController.currentBackStackEntryAsState()

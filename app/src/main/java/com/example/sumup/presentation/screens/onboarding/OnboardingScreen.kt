@@ -67,13 +67,8 @@ fun OnboardingScreen(
         }
     }
     
-    // Complete onboarding when finished
-    LaunchedEffect(uiState.isLoading) {
-        if (uiState.isLoading) {
-            delay(1000) // Show loading animation
-            onOnboardingComplete()
-        }
-    }
+    // Removed auto-completion logic that was causing onboarding to close automatically
+    // Navigation should only happen when user explicitly completes onboarding
     
     Box(
         modifier = Modifier

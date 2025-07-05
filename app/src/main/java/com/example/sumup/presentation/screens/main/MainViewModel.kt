@@ -15,6 +15,10 @@ import com.example.sumup.domain.usecase.SummarizeTextUseCase
 import com.example.sumup.domain.usecase.ProcessPdfUseCase
 import com.example.sumup.domain.usecase.DraftManager
 import com.example.sumup.domain.usecase.FeatureDiscoveryUseCase
+// import com.example.sumup.domain.usecase.EnhancedFeatureDiscoveryUseCase
+// import com.example.sumup.domain.usecase.UserAction
+// import com.example.sumup.domain.usecase.AppState
+// import com.example.sumup.domain.usecase.UserLevel
 import com.example.sumup.domain.usecase.SmartSectioningUseCase
 import com.example.sumup.utils.PdfUtils
 import com.example.sumup.utils.InputValidator
@@ -24,6 +28,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.Job
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,13 +45,16 @@ class MainViewModel @Inject constructor(
     private val summaryRepository: SummaryRepository,
     private val draftManager: DraftManager,
     private val featureDiscovery: FeatureDiscoveryUseCase,
-    private val apiKeyManager: EnhancedApiKeyManager
+    // private val enhancedFeatureDiscovery: EnhancedFeatureDiscoveryUseCase,
+    private val apiKeyManager: EnhancedApiKeyManager,
+    private val analyticsHelper: com.example.sumup.utils.analytics.AnalyticsHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState(
         inputType = InputType.TEXT
     ))
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+    private val stateMutex = Mutex()
 
     init {
         loadDraft()
@@ -50,6 +62,8 @@ class MainViewModel @Inject constructor(
         loadSummaryCount()
         observeDraftChanges()
         observeApiUsageStats()
+        checkWelcomeCardVisibility()
+        // initializeEnhancedFeatureDiscovery()
     }
 
     private fun loadDraft() {
@@ -106,15 +120,20 @@ class MainViewModel @Inject constructor(
                         weekCount = weekCount
                     )
                 }
+                
+                // Check if we should show welcome card when count updates
+                checkWelcomeCardVisibility()
             }
         }
     }
 
     private fun observeDraftChanges() {
         viewModelScope.launch {
-            _uiState.map { it.inputText }
+            _uiState
+                .map { it.inputText }
                 .distinctUntilChanged()
                 .debounce(2000) // 2 seconds debounce
+                .flowOn(Dispatchers.Default) // Process on default dispatcher
                 .collect { text ->
                     if (text.isNotEmpty()) {
                         draftManager.saveDraft(text, InputType.TEXT)
@@ -126,9 +145,14 @@ class MainViewModel @Inject constructor(
     private fun observeApiUsageStats() {
         viewModelScope.launch {
             // Update API usage stats every 30 seconds
-            while (true) {
-                val stats = apiKeyManager.getUsageStats()
-                _uiState.update { it.copy(apiUsageStats = stats) }
+            while (isActive) { // Check if coroutine is still active
+                try {
+                    val stats = apiKeyManager.getUsageStats()
+                    _uiState.update { it.copy(apiUsageStats = stats) }
+                } catch (e: Exception) {
+                    // Log error but continue
+                    android.util.Log.e("MainViewModel", "Error updating API stats", e)
+                }
                 delay(30000) // 30 seconds
             }
         }
@@ -321,16 +345,19 @@ class MainViewModel @Inject constructor(
             val allTips = listOf("summarize_button", "pdf_upload", "summary_length", "ocr_button")
             val unshownTips = featureDiscovery.getUnshownTips(allTips)
             if (unshownTips.isNotEmpty()) {
-                _uiState.update { 
-                    it.copy(
-                        showFeatureDiscovery = true,
-                        currentFeatureTip = unshownTips.first()
-                    )
-                }
+                // Add all unshown tips to queue
+                tooltipQueue.clear()
+                tooltipQueue.addAll(unshownTips)
+                
+                // Show first tooltip
+                showNextTooltip()
             }
         }
     }
 
+    // Tooltip queue for sequential display
+    private val tooltipQueue = mutableListOf<String>()
+    
     fun dismissFeatureTip() {
         _uiState.value.currentFeatureTip?.let { tipId ->
             viewModelScope.launch {
@@ -342,6 +369,56 @@ class MainViewModel @Inject constructor(
                 showFeatureDiscovery = false,
                 currentFeatureTip = null
             )
+        }
+        
+        // Show next tooltip after a delay
+        viewModelScope.launch {
+            delay(500) // Small delay for better UX
+            showNextTooltip()
+        }
+    }
+    
+    private fun showNextTooltip() {
+        if (tooltipQueue.isNotEmpty()) {
+            val nextTip = tooltipQueue.removeAt(0)
+            _uiState.update {
+                it.copy(
+                    showFeatureDiscovery = true,
+                    currentFeatureTip = nextTip
+                )
+            }
+        }
+    }
+    
+    fun skipAllTooltips() {
+        tooltipQueue.clear()
+        _uiState.update { 
+            it.copy(
+                showFeatureDiscovery = false,
+                currentFeatureTip = null
+            )
+        }
+        // Mark all as shown
+        viewModelScope.launch {
+            val allTips = listOf("summarize_button", "pdf_upload", "summary_length", "ocr_button")
+            allTips.forEach { tipId ->
+                featureDiscovery.markTipAsShown(tipId)
+            }
+        }
+    }
+    
+    private fun checkWelcomeCardVisibility() {
+        viewModelScope.launch {
+            val hasSeenWelcome = draftManager.getHasSeenWelcomeCard()
+            val shouldShow = _uiState.value.totalCount == 0 && !hasSeenWelcome
+            _uiState.update { it.copy(showWelcomeCard = shouldShow) }
+        }
+    }
+    
+    fun dismissWelcomeCard() {
+        _uiState.update { it.copy(showWelcomeCard = false) }
+        viewModelScope.launch {
+            draftManager.setHasSeenWelcomeCard(true)
         }
     }
 
@@ -416,23 +493,30 @@ class MainViewModel @Inject constructor(
                     processingMessage = "Initializing..."
                 ) }
                 
-                // Simulate progress updates while processing
-                val progressJob = launch {
-                    val messages = listOf(
-                        "Reading your text...",
-                        "Analyzing content...",
-                        "Understanding context...",
-                        "Identifying key points...",
-                        "Creating summary...",
-                        "Polishing results..."
-                    )
-                    
-                    messages.forEachIndexed { index, message ->
-                        _uiState.update { it.copy(
-                            processingProgress = (index + 1) / messages.size.toFloat() * 0.8f,
-                            processingMessage = message
-                        ) }
-                        delay(500)
+                // Use a separate job for progress simulation
+                var progressJob: Job? = null
+                
+                // Only start progress job for non-PDF input
+                if (_uiState.value.inputType != InputType.PDF) {
+                    progressJob = launch(Dispatchers.Default) {
+                        val messages = listOf(
+                            "Reading your text...",
+                            "Analyzing content...",
+                            "Understanding context...",
+                            "Identifying key points...",
+                            "Creating summary...",
+                            "Polishing results..."
+                        )
+                        
+                        messages.forEachIndexed { index, message ->
+                            if (isActive) {
+                                _uiState.update { it.copy(
+                                    processingProgress = (index + 1) / messages.size.toFloat() * 0.8f,
+                                    processingMessage = message
+                                ) }
+                                delay(500)
+                            }
+                        }
                     }
                 }
                 
@@ -444,12 +528,15 @@ class MainViewModel @Inject constructor(
                         // Check if smart sectioning is needed
                         if (text.length >= SmartSectioningUseCase.SECTION_THRESHOLD) {
                             android.util.Log.d("MainViewModel", "Using smart sectioning for long text (${text.length} chars)")
-                            progressJob.cancel()
+                            progressJob?.cancel()
                             
                             smartSectioningUseCase(
                                 text = text,
                                 persona = com.example.sumup.domain.model.SummaryPersona.GENERAL
-                            ).collect { sectioningResult ->
+                            )
+                            .flowOn(Dispatchers.IO)
+                            .onEach { delay(50) } // Small delay to prevent too rapid emissions
+                            .collect { sectioningResult ->
                                 when (sectioningResult) {
                                     is SmartSectioningUseCase.SectioningResult.Progress -> {
                                         val progress = sectioningResult.currentSection.toFloat() / sectioningResult.totalSections
@@ -490,11 +577,25 @@ class MainViewModel @Inject constructor(
                             )
                             
                             // Cancel progress simulation
-                            progressJob.cancel()
+                            progressJob?.cancel()
                             
                             result.fold(
                                 onSuccess = { summary ->
                                     android.util.Log.d("MainViewModel", "Summarization successful, ID: ${summary.id}")
+                                    
+                                    // Track successful summarization
+                                    analyticsHelper.logEvent(
+                                        com.example.sumup.utils.analytics.AnalyticsEvent.FeatureUsed(
+                                            featureName = "summarize_success",
+                                            context = mapOf(
+                                                "input_type" to _uiState.value.inputType.name,
+                                                "text_length" to text.length,
+                                                "persona" to "GENERAL",
+                                                "summary_length" to _uiState.value.summaryLength.name
+                                            )
+                                        )
+                                    )
+                                    
                                     _uiState.update { it.copy(
                                         isLoading = false,
                                         summary = summary,
@@ -506,6 +607,14 @@ class MainViewModel @Inject constructor(
                                 },
                                 onFailure = { exception ->
                                     android.util.Log.e("MainViewModel", "Summarization failed", exception)
+                                    
+                                    // Track failure
+                                    analyticsHelper.logEvent(
+                                        com.example.sumup.utils.analytics.AnalyticsEvent.SummarizeError(
+                                            error = exception.message ?: "Unknown error"
+                                        )
+                                    )
+                                    
                                     _uiState.update { it.copy(
                                         isLoading = false,
                                         error = AppError.UnknownError(exception.message ?: "Summarization failed"),
@@ -520,17 +629,19 @@ class MainViewModel @Inject constructor(
                         android.util.Log.d("MainViewModel", "Processing PDF summarization")
                         _uiState.value.selectedPdfUri?.let { uriString ->
                             val uri = Uri.parse(uriString)
-                            processPdfUseCase(fileUri = uri).collect { state ->
-                                when (state) {
-                                    is FileUploadState.Processing -> {
-                                        _uiState.update { it.copy(
-                                            processingProgress = state.progress,
-                                            processingMessage = state.stage.displayName
-                                        ) }
-                                    }
+                            processPdfUseCase(fileUri = uri)
+                                .flowOn(Dispatchers.IO)
+                                .onEach { delay(50) } // Small delay to prevent too rapid emissions
+                                .collect { state ->
+                                    when (state) {
+                                        is FileUploadState.Processing -> {
+                                            _uiState.update { it.copy(
+                                                processingProgress = state.progress,
+                                                processingMessage = state.stage.displayName
+                                            ) }
+                                        }
                                     is FileUploadState.Success -> {
                                         // Process the extracted text with summarization
-                                        progressJob.cancel()
                                         val extractedText = state.extractedText
                                         
                                         // Check if smart sectioning is needed for PDF
@@ -540,7 +651,10 @@ class MainViewModel @Inject constructor(
                                             smartSectioningUseCase(
                                                 text = extractedText,
                                                 persona = com.example.sumup.domain.model.SummaryPersona.GENERAL
-                                            ).collect { sectioningResult ->
+                                            )
+                                            .flowOn(Dispatchers.IO)
+                                            .onEach { delay(50) } // Small delay to prevent too rapid emissions
+                                            .collect { sectioningResult ->
                                                 when (sectioningResult) {
                                                     is SmartSectioningUseCase.SectioningResult.Progress -> {
                                                         val progress = sectioningResult.currentSection.toFloat() / sectioningResult.totalSections
@@ -605,7 +719,7 @@ class MainViewModel @Inject constructor(
                                         }
                                     }
                                     is FileUploadState.Error -> {
-                                        progressJob.cancel()
+                                        // No progressJob for PDF processing
                                         android.util.Log.e("MainViewModel", "PDF processing error: ${state.error.message}")
                                         _uiState.update { it.copy(
                                             isLoading = false,
@@ -650,6 +764,102 @@ class MainViewModel @Inject constructor(
     fun onResultNavigationHandled() {
         _uiState.update { it.copy(navigateToResult = false, summaryId = null) }
     }
+    
+    fun setScannedText(text: String) {
+        viewModelScope.launch {
+            _uiState.update { 
+                it.copy(
+                    inputText = text,
+                    inputType = InputType.OCR
+                )
+            }
+            // Save as draft
+            draftManager.saveDraft(text, InputType.OCR)
+        }
+    }
+    
+    // Enhanced Feature Discovery Methods - COMMENTED OUT TEMPORARILY
+    /*
+    private fun initializeEnhancedFeatureDiscovery() {
+        // Initialize the enhanced feature discovery system
+        enhancedFeatureDiscovery.initialize(viewModelScope)
+        
+        // Update app state for contextual triggers
+        viewModelScope.launch {
+            // Track summary count changes
+            summaryRepository.getTotalCount().collect { count ->
+                enhancedFeatureDiscovery.updateAppState {
+                    copy(summaryCount = count)
+                }
+            }
+        }
+        
+        // Track API key status
+        viewModelScope.launch {
+            apiKeyManager.activeKeyId.collect { keyId ->
+                enhancedFeatureDiscovery.updateAppState {
+                    copy(hasApiKey = keyId != null)
+                }
+            }
+        }
+    }
+    
+    fun trackFeatureDiscoveryAction(action: String, target: String = "") {
+        enhancedFeatureDiscovery.trackUserAction(
+            UserAction(
+                type = action,
+                target = target,
+                metadata = mapOf(
+                    "screen" to "main",
+                    "input_type" to _uiState.value.inputType.name
+                )
+            )
+        )
+    }
+    
+    fun showEnhancedTooltips() {
+        viewModelScope.launch {
+            // Update current app state
+            enhancedFeatureDiscovery.updateAppState {
+                copy(
+                    currentScreen = "main",
+                    textLength = _uiState.value.inputText.length,
+                    lastPdfSize = _uiState.value.selectedPdfUri?.let { 
+                        // Get PDF size if available
+                        0L // Placeholder
+                    } ?: 0L
+                )
+            }
+            
+            // Get smart suggestions
+            val suggestions = enhancedFeatureDiscovery.getSmartSuggestions()
+            if (suggestions.isNotEmpty()) {
+                _uiState.update {
+                    it.copy(showEnhancedTooltips = true)
+                }
+            }
+        }
+    }
+    
+    fun onTextFieldFocused() {
+        trackFeatureDiscoveryAction("text_field_focused", "main_input")
+        enhancedFeatureDiscovery.updateAppState {
+            copy(textLength = _uiState.value.inputText.length)
+        }
+    }
+    
+    fun onPdfButtonClicked() {
+        trackFeatureDiscoveryAction("pdf_button_clicked", "pdf_upload")
+    }
+    
+    fun onOcrButtonClicked() {
+        trackFeatureDiscoveryAction("ocr_button_clicked", "ocr_capture")
+    }
+    
+    fun onLengthSelectorClicked() {
+        trackFeatureDiscoveryAction("length_selector_clicked", "summary_length")
+    }
+    */
     
     // Extension functions
     fun String.summarize(size: Int = 50): String {

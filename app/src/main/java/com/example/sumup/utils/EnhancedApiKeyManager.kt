@@ -28,9 +28,16 @@ class EnhancedApiKeyManager @Inject constructor(
     val activeKeyId: StateFlow<String?> = _activeKeyId.asStateFlow()
     
     init {
+        val instanceId = System.identityHashCode(this)
+        android.util.Log.d("EnhancedApiKeyManager", "=== NEW INSTANCE CREATED ===")
+        android.util.Log.d("EnhancedApiKeyManager", "Instance ID: $instanceId")
+        android.util.Log.d("EnhancedApiKeyManager", "SharedPreferences ID: ${System.identityHashCode(sharedPreferences)}")
+        
         loadApiKeys()
         loadActiveKeyId()
         logMigrationStatus()
+        
+        android.util.Log.d("EnhancedApiKeyManager", "Init complete for instance: $instanceId")
     }
     
     private fun logMigrationStatus() {
@@ -97,12 +104,36 @@ class EnhancedApiKeyManager @Inject constructor(
     }
     
     fun updateKeyUsage(keyId: String) {
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val instanceId = System.identityHashCode(this)
+        android.util.Log.d("EnhancedApiKeyManager", "=== UPDATE KEY USAGE ===")
+        android.util.Log.d("EnhancedApiKeyManager", "Instance ID: $instanceId")
+        android.util.Log.d("EnhancedApiKeyManager", "updateKeyUsage called for keyId: $keyId")
+        android.util.Log.d("EnhancedApiKeyManager", "Current keys count: ${_apiKeys.value.size}")
         
+        val keyExists = _apiKeys.value.any { it.id == keyId }
+        android.util.Log.d("EnhancedApiKeyManager", "Key exists in list: $keyExists")
+        
+        if (!keyExists) {
+            android.util.Log.e("EnhancedApiKeyManager", "ERROR: Key $keyId not found in API keys list!")
+            return
+        }
+        
+        val today = getTodayDateKey()
+        android.util.Log.d("EnhancedApiKeyManager", "Today's date key: $today")
+        
+        val oldKeys = _apiKeys.value
         _apiKeys.value = _apiKeys.value.map { key ->
             if (key.id == keyId) {
+                android.util.Log.d("EnhancedApiKeyManager", "Found matching key: ${key.name}")
+                android.util.Log.d("EnhancedApiKeyManager", "Current usage count: ${key.usageCount}")
+                android.util.Log.d("EnhancedApiKeyManager", "Current daily usage: ${key.dailyUsage}")
+                
                 val updatedDailyUsage = key.dailyUsage.toMutableMap()
-                updatedDailyUsage[today] = (updatedDailyUsage[today] ?: 0) + 1
+                val previousCount = updatedDailyUsage[today] ?: 0
+                updatedDailyUsage[today] = previousCount + 1
+                
+                android.util.Log.d("EnhancedApiKeyManager", "Updating usage for key ${key.name}: previous=$previousCount, new=${previousCount + 1}")
+                android.util.Log.d("EnhancedApiKeyManager", "New total usage count will be: ${key.usageCount + 1}")
                 
                 key.copy(
                     lastUsedAt = Date(),
@@ -111,16 +142,38 @@ class EnhancedApiKeyManager @Inject constructor(
                 )
             } else key
         }
+        
+        // Verify the update worked
+        val updatedKey = _apiKeys.value.find { it.id == keyId }
+        android.util.Log.d("EnhancedApiKeyManager", "After update - usage count: ${updatedKey?.usageCount}")
+        android.util.Log.d("EnhancedApiKeyManager", "After update - today's usage: ${updatedKey?.dailyUsage?.get(today)}")
+        
         saveApiKeys()
+        android.util.Log.d("EnhancedApiKeyManager", "API keys saved after usage update")
+        android.util.Log.d("EnhancedApiKeyManager", "=== USAGE UPDATE COMPLETE ===")
     }
     
     fun getUsageStats(): ApiUsageStats {
+        android.util.Log.d("EnhancedApiKeyManager", "=== GET USAGE STATS ===")
+        android.util.Log.d("EnhancedApiKeyManager", "Total API keys: ${_apiKeys.value.size}")
+        android.util.Log.d("EnhancedApiKeyManager", "Active key ID: ${_activeKeyId.value}")
+        
+        // Log all keys and their usage
+        _apiKeys.value.forEach { key ->
+            android.util.Log.d("EnhancedApiKeyManager", "Key: ${key.name}, ID: ${key.id}, Usage: ${key.usageCount}, Active: ${key.id == _activeKeyId.value}")
+        }
+        
         val activeKey = _activeKeyId.value?.let { id ->
             _apiKeys.value.find { it.id == id }
         }
+        android.util.Log.d("EnhancedApiKeyManager", "Active key found: ${activeKey != null}")
+        android.util.Log.d("EnhancedApiKeyManager", "Active key: ${activeKey?.name}, usage count: ${activeKey?.usageCount}")
         
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = getTodayDateKey()
         val todayUsage = activeKey?.dailyUsage?.get(today) ?: 0
+        android.util.Log.d("EnhancedApiKeyManager", "Today's date key: $today")
+        android.util.Log.d("EnhancedApiKeyManager", "Today's usage: $todayUsage")
+        android.util.Log.d("EnhancedApiKeyManager", "Daily usage map: ${activeKey?.dailyUsage}")
         
         // Calculate weekly usage
         val calendar = Calendar.getInstance()
@@ -129,12 +182,26 @@ class EnhancedApiKeyManager @Inject constructor(
         for (i in 0..6) {
             calendar.time = Date()
             calendar.add(Calendar.DAY_OF_YEAR, -i)
-            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+            val date = String.format(
+                Locale.US, 
+                "%04d-%02d-%02d", 
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
             weeklyUsage[date] = activeKey?.dailyUsage?.get(date) ?: 0
         }
         
         val totalRequests = activeKey?.usageCount ?: 0
         val estimatedTokens = totalRequests * 2000 // Rough estimate
+        
+        // Calculate monthly usage
+        val monthlyUsage = activeKey?.dailyUsage?.values?.sum() ?: 0
+        
+        // Calculate token usage estimates
+        val tokensToday = todayUsage * 2000
+        val tokensThisWeek = weeklyUsage.values.sum() * 2000
+        val tokensThisMonth = monthlyUsage * 2000
         
         return ApiUsageStats(
             totalKeys = _apiKeys.value.size,
@@ -146,6 +213,13 @@ class EnhancedApiKeyManager @Inject constructor(
             ),
             requestsToday = todayUsage,
             requestsThisWeek = weeklyUsage.values.sum(),
+            requestsThisMonth = monthlyUsage,
+            tokensToday = tokensToday,
+            tokensThisWeek = tokensThisWeek,
+            tokensThisMonth = tokensThisMonth,
+            successRate = 95, // Mock success rate
+            averageResponseTime = 1200, // Mock response time in ms
+            lastRequestTime = activeKey?.lastUsedAt?.time,
             rateLimitStatus = RateLimitStatus(
                 requestsPerMinute = todayUsage / (24 * 60), // Rough estimate
                 limit = 60, // Free tier limit
@@ -267,6 +341,18 @@ class EnhancedApiKeyManager @Inject constructor(
         return (diff / (1000 * 60 * 60 * 24)).toInt()
     }
     
+    private fun getTodayDateKey(): String {
+        // Ensure consistent date formatting across the app
+        val calendar = Calendar.getInstance()
+        return String.format(
+            Locale.US, 
+            "%04d-%02d-%02d", 
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
+    
     private fun encryptKey(key: String): String {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
@@ -352,6 +438,10 @@ class EnhancedApiKeyManager @Inject constructor(
             .putString("api_keys", json)
             .commit() // Use commit instead of apply to ensure immediate save
         android.util.Log.d("EnhancedApiKeyManager", "Save result: $result")
+        
+        // Verify the save worked by reading it back
+        val savedJson = sharedPreferences.getString("api_keys", null)
+        android.util.Log.d("EnhancedApiKeyManager", "Verification - saved JSON: ${savedJson?.take(200)}...")
     }
     
     private fun loadApiKeys() {
@@ -377,6 +467,8 @@ class EnhancedApiKeyManager @Inject constructor(
     }
     
     private fun SimpleDateFormat(pattern: String, locale: Locale): java.text.SimpleDateFormat {
-        return java.text.SimpleDateFormat(pattern, locale)
+        val formatter = java.text.SimpleDateFormat(pattern, locale)
+        formatter.timeZone = java.util.TimeZone.getDefault()
+        return formatter
     }
 }

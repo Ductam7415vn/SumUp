@@ -42,6 +42,7 @@ import com.example.sumup.presentation.components.FeatureStatusInfo
 fun ImprovedPdfUploadSection(
     selectedPdfUri: String?,
     selectedPdfName: String?,
+    serviceInfo: com.example.sumup.domain.model.ServiceInfo? = null,
     onPdfSelected: (uri: String, name: String, pageCount: Int) -> Unit,
     onClear: () -> Unit,
     onShowPreview: () -> Unit,
@@ -122,6 +123,7 @@ fun ImprovedPdfUploadSection(
             } else {
                 UploadPromptContent(
                     isProcessing = isProcessing,
+                    showDemoBadge = serviceInfo?.type == com.example.sumup.domain.model.ServiceType.MOCK_API,
                     onChooseFile = {
                         hapticManager.performHapticFeedback(HapticFeedbackType.CLICK)
                         launcher.launch("application/pdf")
@@ -131,13 +133,15 @@ fun ImprovedPdfUploadSection(
         }
     }
         
-        // Demo mode info
-        FeatureStatusInfo(
-            status = FeatureStatus.DEMO,
-            message = "PDF processing uses demo data. Add API key for real processing.",
-            onAction = onNavigateToSettings,
-            actionText = if (onNavigateToSettings != null) "Configure" else null
-        )
+//        // Demo mode info - only show if using mock API
+//        if (serviceInfo?.type == com.example.sumup.domain.model.ServiceType.MOCK_API) {
+//            FeatureStatusInfo(
+//                status = FeatureStatus.DEMO,
+//                message = "PDF processing uses demo data. Add API key for real processing.",
+//                onAction = onNavigateToSettings,
+//                actionText = if (onNavigateToSettings != null) "Configure" else null
+//            )
+//        }
     }
 }
 
@@ -254,6 +258,7 @@ private fun SelectedPdfContent(
 @Composable
 private fun UploadPromptContent(
     isProcessing: Boolean,
+    showDemoBadge: Boolean = true,
     onChooseFile: () -> Unit
 ) {
     Column(
@@ -328,13 +333,15 @@ private fun UploadPromptContent(
         
         Spacer(modifier = Modifier.height(Dimensions.spacingSm))
         
-        // Demo mode badge
-        FeatureStatusBadge(
-            status = FeatureStatus.DEMO,
-            showIcon = true
-        )
-        
-        Spacer(modifier = Modifier.height(Dimensions.spacingSm))
+        // Demo mode badge - only show if using mock API
+        if (showDemoBadge) {
+            FeatureStatusBadge(
+                status = FeatureStatus.DEMO,
+                showIcon = true
+            )
+            
+            Spacer(modifier = Modifier.height(Dimensions.spacingSm))
+        }
         
         Text(
             text = "or click to browse",

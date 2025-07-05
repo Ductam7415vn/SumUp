@@ -1,0 +1,16 @@
+07-05 11:58:26.554 18000 18000 D NetworkModule: === API SERVICE SETUP ===
+07-05 11:58:26.554 18000 18000 D NetworkModule: API Key present: true
+07-05 11:58:26.554 18000 18000 D NetworkModule: API Key valid: true
+07-05 11:58:26.554 18000 18000 D NetworkModule: API Key (first 10 chars): AIzaSyAqCH...
+07-05 11:58:26.554 18000 18000 D NetworkModule: Using REAL Gemini API Service (EnhancedGeminiApiService)
+07-05 11:58:56.962 18000 18007 I m.example.sumu: JIT allocated 66KB for stack maps of void com.example.sumup.presentation.screens.main.MainScreenKt.MainScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function0, java.lang.String, com.example.sumup.presentation.screens.main.MainViewModel, androidx.compose.runtime.Composer, int, int)
+07-05 11:58:56.966 18000 18007 I m.example.sumu: Compiler allocated 6MB to compile void com.example.sumup.presentation.screens.main.MainScreenKt.MainScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function0, java.lang.String, com.example.sumup.presentation.screens.main.MainViewModel, androidx.compose.runtime.Composer, int, int)
+07-05 12:04:30.279 18461 18461 D NetworkModule: === API SERVICE SETUP ===
+07-05 12:04:30.279 18461 18461 D NetworkModule: API Key present: true
+07-05 12:04:30.279 18461 18461 D NetworkModule: API Key valid: true
+07-05 12:04:30.279 18461 18461 D NetworkModule: API Key (first 10 chars): AIzaSyAqCH...
+07-05 12:04:30.279 18461 18461 D NetworkModule: Using REAL Gemini API Service (EnhancedGeminiApiService)
+07-05 12:04:42.967 18461 18466 I m.example.sumu: JIT allocated 66KB for stack maps of void com.example.sumup.presentation.screens.main.MainScreenKt.MainScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function0, java.lang.String, com.example.sumup.presentation.screens.main.MainViewModel, androidx.compose.runtime.Composer, int, int)
+07-05 12:04:42.971 18461 18466 I m.example.sumu: Compiler allocated 6MB to compile void com.example.sumup.presentation.screens.main.MainScreenKt.MainScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function0, java.lang.String, com.example.sumup.presentation.screens.main.MainViewModel, androidx.compose.runtime.Composer, int, int)
+07-05 12:04:50.081 18461 18461 D MainViewModel: Starting summarization process
+07-05 12:04:50.082 18461 18461 D MainViewModel: Processing PDF summarization

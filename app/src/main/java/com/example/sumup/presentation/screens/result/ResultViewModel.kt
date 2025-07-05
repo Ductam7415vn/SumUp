@@ -272,27 +272,8 @@ class ResultViewModel @Inject constructor(
                             "For general readers: $it" 
                         },
                         bulletPoints = currentSummary.bulletPoints.map { point ->
-                            "• General insight: $point"
+                            "• $point"
                         },
-                        persona = persona
-                    )
-                    
-                    SummaryPersona.TECHNICAL -> currentSummary.copy(
-                        summary = "Technical analysis reveals: ${currentSummary.summary} Implementation details and architectural considerations are highlighted.",
-                        briefOverview = "Technical deep-dive with focus on implementation specifics and system design.",
-                        detailedSummary = currentSummary.detailedSummary?.let { 
-                            "Technical breakdown: $it\n\nCode implications and performance considerations included." 
-                        },
-                        bulletPoints = listOf(
-                            "• Technical architecture and design patterns identified",
-                            "• Performance metrics and optimization opportunities",
-                            "• Implementation challenges and solutions"
-                        ) + currentSummary.bulletPoints.map { point -> "• Tech detail: $point" },
-                        keyInsights = listOf(
-                            "System architecture follows best practices",
-                            "Performance optimization opportunities identified",
-                            "Security considerations addressed"
-                        ),
                         persona = persona
                     )
                     
@@ -303,78 +284,90 @@ class ResultViewModel @Inject constructor(
                             "Educational breakdown: $it\n\nKey learning points and study tips included." 
                         },
                         bulletPoints = listOf(
-                            "• Key concepts and definitions to remember",
-                            "• Important relationships between ideas",
-                            "• Practice questions and review points"
+                            "• 📚 Key concept: Define and understand the main terminology",
+                            "• 🔍 Important: Note the relationships between different ideas",
+                            "• ✏️ Remember: This will likely be on the exam"
                         ) + currentSummary.bulletPoints.map { point -> "• Study note: $point" },
                         keyInsights = listOf(
-                            "Core concepts clearly identified",
-                            "Learning objectives mapped",
-                            "Study guide structure provided"
+                            "Core concepts clearly identified for easy memorization",
+                            "Learning objectives mapped to study goals",
+                            "Study guide structure follows logical progression"
                         ),
                         actionItems = listOf(
-                            "Review key definitions",
-                            "Create flashcards for main concepts",
-                            "Test understanding with practice questions"
+                            "Review these key definitions before class",
+                            "Create flashcards for the main concepts",
+                            "Test your understanding with practice questions"
                         ),
                         persona = persona
                     )
                     
-                    SummaryPersona.BUSINESS -> currentSummary.copy(
-                        summary = "Executive summary: ${currentSummary.summary} Key business impacts and ROI considerations are emphasized.",
-                        briefOverview = "Business-focused analysis highlighting strategic value and market implications.",
+                    SummaryPersona.PROFESSIONAL -> currentSummary.copy(
+                        summary = "Executive summary: ${currentSummary.summary} Key business impacts and actionable insights are highlighted.",
+                        briefOverview = "Professional analysis with focus on actionable outcomes and strategic implications.",
                         detailedSummary = currentSummary.detailedSummary?.let { 
-                            "Business impact analysis: $it\n\nROI projections and market positioning included." 
+                            "Professional analysis: $it\n\nAction items and next steps included." 
                         },
                         bulletPoints = listOf(
-                            "• Strategic business value and competitive advantages",
-                            "• Cost-benefit analysis and ROI projections",
-                            "• Market positioning and growth opportunities"
-                        ) + currentSummary.bulletPoints.map { point -> "• Business impact: $point" },
+                            "• Strategic insight: Identifies key business opportunities",
+                            "• Action required: Implementation timeline needed",
+                            "• Impact analysis: Potential ROI and resource requirements"
+                        ) + currentSummary.bulletPoints.map { point -> "• Business context: $point" },
                         keyInsights = listOf(
-                            "Strong market differentiation potential",
-                            "Clear path to revenue growth",
-                            "Operational efficiency gains expected"
+                            "Clear business value proposition identified",
+                            "Implementation roadmap can be developed",
+                            "Resource allocation decisions needed"
                         ),
                         actionItems = listOf(
-                            "Schedule stakeholder alignment meeting",
-                            "Prepare detailed ROI analysis",
-                            "Develop go-to-market strategy"
+                            "Schedule stakeholder alignment meeting by EOW",
+                            "Prepare implementation proposal with timeline",
+                            "Identify resource requirements and budget impact"
                         ),
                         persona = persona
                     )
                     
-                    SummaryPersona.LEGAL -> currentSummary.copy(
-                        summary = "Legal analysis: ${currentSummary.summary} Key legal terms, obligations, and implications are highlighted.",
-                        briefOverview = "Legal-focused summary emphasizing terms, conditions, and compliance requirements.",
+                    SummaryPersona.ACADEMIC -> currentSummary.copy(
+                        summary = "Academic analysis: ${currentSummary.summary} Scholarly context and theoretical framework preserved.",
+                        briefOverview = "Academic summary maintaining scholarly rigor and proper citations.",
                         detailedSummary = currentSummary.detailedSummary?.let { 
-                            "Legal analysis: $it\n\nCompliance requirements and risk factors included." 
+                            "Scholarly analysis: $it\n\nTheoretical implications and research context included." 
                         },
                         bulletPoints = listOf(
-                            "• Key legal terms and definitions",
-                            "• Obligations and compliance requirements",
-                            "• Risk factors and liabilities"
-                        ) + currentSummary.bulletPoints.map { point -> "• Legal note: $point" },
+                            "• Literature review: Connects to existing research (citation needed)",
+                            "• Methodology: Follows established academic frameworks",
+                            "• Findings: Statistical significance and limitations noted"
+                        ) + currentSummary.bulletPoints.map { point -> "• Research note: $point" },
                         keyInsights = listOf(
-                            "Legal implications clearly identified",
-                            "Compliance requirements outlined",
-                            "Risk assessment provided"
+                            "Research methodology appears sound and replicable",
+                            "Findings contribute to existing body of knowledge",
+                            "Further research recommended in specific areas"
                         ),
                         actionItems = listOf(
-                            "Review with legal counsel",
-                            "Ensure compliance with regulations",
-                            "Document risk mitigation strategies"
+                            "Verify all citations and references",
+                            "Consider peer review before publication",
+                            "Identify areas for follow-up research"
                         ),
                         persona = persona
                     )
                     
-                    SummaryPersona.QUICK -> currentSummary.copy(
-                        summary = currentSummary.bulletPoints.take(3).joinToString(". "),
-                        briefOverview = "Ultra-concise summary with only the most essential points.",
-                        detailedSummary = null, // No detailed summary for quick read
-                        bulletPoints = currentSummary.bulletPoints.take(5),
-                        keyInsights = currentSummary.keyInsights?.take(2),
-                        actionItems = currentSummary.actionItems?.take(2),
+                    SummaryPersona.SIMPLE -> currentSummary.copy(
+                        summary = "Here's what this is about in simple terms: ${currentSummary.summary.take(200)}... It basically means ${currentSummary.bulletPoints.firstOrNull() ?: "the main point"}.",
+                        briefOverview = "Easy-to-understand summary using everyday language.",
+                        detailedSummary = currentSummary.detailedSummary?.let { 
+                            "Let me explain this simply: $it\n\nThink of it like this - it's similar to everyday situations you already know." 
+                        },
+                        bulletPoints = listOf(
+                            "• The main idea is simple: ${currentSummary.bulletPoints.firstOrNull()?.take(50) ?: "Key point"}",
+                            "• In other words: This affects your daily life",
+                            "• What this means for you: Easy to understand and apply"
+                        ) + currentSummary.bulletPoints.take(2).map { point -> 
+                            "• Simply put: ${point.take(50)}..." 
+                        },
+                        keyInsights = listOf(
+                            "This is easier to understand than it first appears",
+                            "The basic concept is something we all deal with",
+                            "You can apply this in your everyday life"
+                        ),
+                        keywords = listOf("simple", "easy", "understand", "everyday", "basic"),
                         persona = persona
                     )
                 }

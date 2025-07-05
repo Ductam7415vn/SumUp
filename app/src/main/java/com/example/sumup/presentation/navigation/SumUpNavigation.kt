@@ -1,6 +1,7 @@
 package com.example.sumup.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,7 +36,17 @@ fun SumUpNavigation(
         navController = navController,
         startDestination = Screen.Main.route
     ) {
-        composable(Screen.Main.route) {
+        composable(Screen.Main.route) { backStackEntry ->
+            // Check for scanned text from OCR screen
+            val scannedText = backStackEntry.savedStateHandle.get<String>("scanned_text")
+            
+            LaunchedEffect(scannedText) {
+                if (!scannedText.isNullOrEmpty()) {
+                    // Clear the saved state to prevent re-processing
+                    backStackEntry.savedStateHandle.remove<String>("scanned_text")
+                }
+            }
+            
             MainScreen(
                 onNavigateToOcr = {
                     navController.navigate(Screen.Ocr.route)
@@ -53,7 +64,8 @@ fun SumUpNavigation(
                     navController.navigate(Screen.Result.createRoute(summaryId)) {
                         popUpTo(Screen.Main.route)
                     }
-                }
+                },
+                scannedText = scannedText
             )
         }
         

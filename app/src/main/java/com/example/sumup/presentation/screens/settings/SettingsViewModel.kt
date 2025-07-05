@@ -7,6 +7,7 @@ import com.example.sumup.domain.repository.SummaryRepository
 import com.example.sumup.domain.model.Achievement
 import com.example.sumup.domain.model.AchievementType
 import com.example.sumup.domain.model.AchievementTier
+import com.example.sumup.domain.model.SummaryViewPreference
 // Old ApiKeyManager removed - using EnhancedApiKeyManager only
 import com.example.sumup.utils.ApiKeyValidator
 import com.example.sumup.utils.EnhancedApiKeyManager
@@ -23,7 +24,8 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val summaryRepository: SummaryRepository,
     private val enhancedApiKeyManager: EnhancedApiKeyManager,
-    private val apiKeyValidator: ApiKeyValidator
+    private val apiKeyValidator: ApiKeyValidator,
+    private val apiUsageTracker: com.example.sumup.utils.ApiUsageTracker
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -43,14 +45,14 @@ class SettingsViewModel @Inject constructor(
             combine(
                 settingsRepository.getThemeMode(),
                 settingsRepository.isDynamicColorEnabled(),
-                settingsRepository.defaultSummaryLength,
+                settingsRepository.summaryViewMode,
                 settingsRepository.language
-            ) { theme: ThemeMode, dynamicColor: Boolean, length: Float, language: String ->
+            ) { theme: ThemeMode, dynamicColor: Boolean, viewMode: String, language: String ->
                 _uiState.update {
                     it.copy(
                         themeMode = theme,
                         isDynamicColorEnabled = dynamicColor,
-                        summaryLength = length,
+                        summaryViewPreference = SummaryViewPreference.fromString(viewMode),
                         language = language
                     )
                 }
@@ -62,7 +64,6 @@ class SettingsViewModel @Inject constructor(
             
             _uiState.update {
                 it.copy(
-                    storageUsage = storageUsage,
                     appVersion = settingsRepository.getAppVersion()
                 )
             }
@@ -99,30 +100,30 @@ class SettingsViewModel @Inject constructor(
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             settingsRepository.setThemeMode(mode)
-            _uiState.update { it.copy(themeMode = mode, showThemeDialog = false) }
+            _uiState.update { it.copy(showThemeDialog = false) }
         }
     }
     
     fun setDynamicColorEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setDynamicColorEnabled(enabled)
-            _uiState.update { it.copy(isDynamicColorEnabled = enabled) }
+            // No need to update UI state - it will flow through the combine
         }
     }
     
-    // Summary length management
-    fun showLengthDialog() {
-        _uiState.update { it.copy(showLengthDialog = true) }
+    // Summary view preference management
+    fun showSummaryViewDialog() {
+        _uiState.update { it.copy(showSummaryViewDialog = true) }
     }
     
-    fun hideLengthDialog() {
-        _uiState.update { it.copy(showLengthDialog = false) }
+    fun hideSummaryViewDialog() {
+        _uiState.update { it.copy(showSummaryViewDialog = false) }
     }
     
-    fun setSummaryLength(length: Float) {
+    fun setSummaryViewPreference(preference: SummaryViewPreference) {
         viewModelScope.launch {
-            settingsRepository.updateDefaultSummaryLength(length)
-            _uiState.update { it.copy(summaryLength = length, showLengthDialog = false) }
+            settingsRepository.updateSummaryViewMode(preference.name)
+            _uiState.update { it.copy(showSummaryViewDialog = false) }
         }
     }
     
@@ -138,43 +139,53 @@ class SettingsViewModel @Inject constructor(
     fun setLanguage(language: String) {
         viewModelScope.launch {
             settingsRepository.updateLanguage(language)
-            _uiState.update { it.copy(language = language, showLanguageDialog = false) }
+            _uiState.update { it.copy(showLanguageDialog = false) }
         }
     }
     
-    // Data management
-    fun showClearDataDialog() {
-        _uiState.update { it.copy(showClearDataDialog = true) }
+    // History management
+    fun showClearHistoryDialog() {
+        viewModelScope.launch {
+            // Get current summary count before showing dialog
+            val count = summaryRepository.getSummaryCount()
+            _uiState.update { 
+                it.copy(
+                    showClearHistoryDialog = true,
+                    summaryCountToDelete = count
+                )
+            }
+        }
     }
     
-    fun hideClearDataDialog() {
-        _uiState.update { it.copy(showClearDataDialog = false) }
+    fun hideClearHistoryDialog() {
+        _uiState.update { it.copy(showClearHistoryDialog = false) }
     }
     
-    fun clearAllData() {
+    fun clearHistory() {
         viewModelScope.launch {
             _uiState.update { it.copy(isClearing = true) }
             
             try {
-                // Clear all summaries
+                // Clear only summaries, keep settings intact
                 summaryRepository.deleteAllSummaries()
                 
-                // Clear all data including settings
-                settingsRepository.clearAllData()
+                // Reload stats after clearing
+                loadUserStats()
                 
                 _uiState.update { 
                     it.copy(
                         isClearing = false,
-                        showClearDataDialog = false,
-                        clearDataSuccess = true,
-                        storageUsage = 0L
+                        showClearHistoryDialog = false,
+                        clearHistorySuccess = true,
+                        totalSummaries = 0,
+                        totalTimeSaved = 0
                     )
                 }
             } catch (e: Exception) {
                 _uiState.update { 
                     it.copy(
                         isClearing = false,
-                        error = "Failed to clear data: ${e.message}"
+                        error = "Failed to clear history: ${e.message}"
                     )
                 }
             }
@@ -186,7 +197,7 @@ class SettingsViewModel @Inject constructor(
             try {
                 val exportData = settingsRepository.exportData()
                 // TODO: Handle exported data (save to file, share, etc.)
-                _uiState.update { it.copy(clearDataSuccess = true) }
+                _uiState.update { it.copy(exportSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = "Export failed: ${e.message}") }
             }
@@ -194,7 +205,7 @@ class SettingsViewModel @Inject constructor(
     }
     
     fun dismissSuccess() {
-        _uiState.update { it.copy(clearDataSuccess = false) }
+        _uiState.update { it.copy(clearHistorySuccess = false) }
     }
     
     fun dismissError() {
@@ -383,11 +394,23 @@ class SettingsViewModel @Inject constructor(
                 enhancedApiKeyManager.activeKeyId
             ) { keys, activeId ->
                 android.util.Log.d("SettingsViewModel", "API keys updated: ${keys.size} keys, active: $activeId")
+                
+                // Get stats from both sources
+                val enhancedStats = enhancedApiKeyManager.getUsageStats()
+                val simpleTotal = apiUsageTracker.getTotalUsage()
+                val simpleToday = apiUsageTracker.getTodayUsage()
+                
+                // Use the maximum value from both sources
+                val correctedStats = enhancedStats.copy(
+                    requestsToday = maxOf(enhancedStats.requestsToday, simpleToday),
+                    requestsThisMonth = maxOf(enhancedStats.requestsThisMonth, simpleTotal)
+                )
+                
                 _uiState.update {
                     it.copy(
                         apiKeys = keys,
                         activeApiKeyId = activeId,
-                        apiUsageStats = enhancedApiKeyManager.getUsageStats()
+                        apiUsageStats = correctedStats
                     )
                 }
             }.collect()
@@ -453,8 +476,32 @@ class SettingsViewModel @Inject constructor(
     
     fun refreshUsageStats() {
         viewModelScope.launch {
-            val stats = enhancedApiKeyManager.getUsageStats()
-            _uiState.update { it.copy(apiUsageStats = stats) }
+            // Get stats from EnhancedApiKeyManager
+            val enhancedStats = enhancedApiKeyManager.getUsageStats()
+            
+            // Get stats from simple ApiUsageTracker
+            val simpleTotal = apiUsageTracker.getTotalUsage()
+            val simpleToday = apiUsageTracker.getTodayUsage()
+            
+            android.util.Log.d("SettingsViewModel", "=== REFRESH USAGE STATS ===")
+            android.util.Log.d("SettingsViewModel", "Enhanced stats - Today: ${enhancedStats.requestsToday}, Total: ${enhancedStats.requestsThisMonth}")
+            android.util.Log.d("SettingsViewModel", "Simple tracker - Today: $simpleToday, Total: $simpleTotal")
+            
+            // Use the maximum value from both sources (in case one is working better than the other)
+            val actualToday = maxOf(enhancedStats.requestsToday, simpleToday)
+            val actualTotal = maxOf(enhancedStats.requestsThisMonth, simpleTotal)
+            
+            // Create updated stats with corrected values
+            val correctedStats = enhancedStats.copy(
+                requestsToday = actualToday,
+                requestsThisMonth = actualTotal,
+                tokenUsage = enhancedStats.tokenUsage.copy(
+                    used = actualTotal * 2000, // Estimate tokens
+                    percentage = minOf(100f, (actualTotal * 2000f / 1_000_000) * 100)
+                )
+            )
+            
+            _uiState.update { it.copy(apiUsageStats = correctedStats) }
         }
     }
     
@@ -563,16 +610,16 @@ data class SettingsUiState(
     val showThemeDialog: Boolean = false,
     
     // Summarization
-    val summaryLength: Float = 0.5f, // Medium by default
+    val summaryViewPreference: SummaryViewPreference = SummaryViewPreference.STANDARD,
     val language: String = "en",
-    val showLengthDialog: Boolean = false,
+    val showSummaryViewDialog: Boolean = false,
     val showLanguageDialog: Boolean = false,
     
-    // Data & Storage
-    val storageUsage: Long = 0L,
-    val showClearDataDialog: Boolean = false,
+    // History
+    val showClearHistoryDialog: Boolean = false,
     val isClearing: Boolean = false,
-    val clearDataSuccess: Boolean = false,
+    val clearHistorySuccess: Boolean = false,
+    val summaryCountToDelete: Int = 0,
     
     // About
     val appVersion: String = "1.0.0",

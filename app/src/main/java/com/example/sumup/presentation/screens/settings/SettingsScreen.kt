@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
@@ -33,8 +34,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.presentation.components.*
 import com.example.sumup.presentation.screens.settings.components.*
+import com.example.sumup.presentation.screens.settings.components.EnhancedApiKeyDialog
+import com.example.sumup.presentation.screens.settings.components.ClearHistoryDialog
 import com.example.sumup.domain.model.Achievement
 import com.example.sumup.domain.model.AchievementType
+import com.example.sumup.domain.model.SummaryViewPreference
 import com.example.sumup.utils.haptic.*
 import com.example.sumup.presentation.components.EnhancedLoadingState
 import kotlinx.coroutines.launch
@@ -236,10 +240,13 @@ fun SettingsScreen(
                         
                         // Usage Analytics Dashboard
                         uiState.apiUsageStats?.let { stats ->
+                            android.util.Log.d("SettingsScreen", "Rendering ApiUsageDashboard with stats: requestsToday=${stats.requestsToday}, totalKeys=${stats.totalKeys}")
                             ApiUsageDashboard(
                                 usageStats = stats,
                                 onRefresh = viewModel::refreshUsageStats
                             )
+                        } ?: run {
+                            android.util.Log.d("SettingsScreen", "ApiUsageDashboard not shown - apiUsageStats is null")
                         }
                     }
                 }, index = 1)
@@ -253,14 +260,10 @@ fun SettingsScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     EnhancedSettingItem(
-                        title = "Default Summary Length",
-                        subtitle = when {
-                            uiState.summaryLength <= 0.3f -> "Short"
-                            uiState.summaryLength <= 0.7f -> "Medium"
-                            else -> "Long"
-                        },
-                        icon = Icons.Default.TextFields,
-                        onClick = { viewModel.showLengthDialog() }
+                        title = "Preferred Summary View",
+                        subtitle = uiState.summaryViewPreference.displayName,
+                        icon = Icons.Default.ViewCompact,
+                        onClick = { viewModel.showSummaryViewDialog() }
                     )
                     
                     EnhancedSettingItem(
@@ -279,25 +282,25 @@ fun SettingsScreen(
                 }, index = 2)
             }
             
-            // Data & Storage Section
+            // History Section
             item {
                 AnimatedSettingsItem(content = {
                     AnimatedPreferenceCard(
-                        title = "Data & Storage",
+                        title = "History",
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                     EnhancedSettingItem(
-                        title = "Storage Usage",
-                        subtitle = "${uiState.storageUsage / 1024} KB used",
-                        icon = Icons.Default.Storage,
-                        onClick = null
-                    )
-                    
-                    EnhancedSettingItem(
-                        title = "Clear All Data",
-                        subtitle = "Remove all summaries and settings",
+                        title = "Clear History",
+                        subtitle = if (uiState.totalSummaries > 0) {
+                            "${uiState.totalSummaries} summaries saved"
+                        } else {
+                            "No summaries to clear"
+                        },
                         icon = Icons.Default.Delete,
-                        onClick = { viewModel.showClearDataDialog() }
+                        onClick = if (uiState.totalSummaries > 0) {
+                            { viewModel.showClearHistoryDialog() }
+                        } else null,
+                        enabled = uiState.totalSummaries > 0
                     )
                     
                     Row(
@@ -468,22 +471,80 @@ fun SettingsScreen(
             }
         )
         
-        AnimatedSelectionDialog(
-            visible = uiState.showLengthDialog,
-            onDismiss = { viewModel.hideLengthDialog() },
-            title = "Summary Length",
-            options = listOf(
-                "0.3" to "Short",
-                "0.5" to "Medium",
-                "0.8" to "Long"
-            ),
-            selectedOption = when {
-                uiState.summaryLength <= 0.3f -> "0.3"
-                uiState.summaryLength <= 0.7f -> "0.5"
-                else -> "0.8"
-            },
-            onOptionSelected = { viewModel.setSummaryLength(it.toFloat()) }
-        )
+        // Custom Summary View Preference Dialog
+        if (uiState.showSummaryViewDialog) {
+            BlurDialog(
+                visible = true,
+                onDismiss = { viewModel.hideSummaryViewDialog() },
+                title = "Preferred Summary View"
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SummaryViewPreference.values().forEach { preference ->
+                        Card(
+                            onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.setSummaryViewPreference(preference)
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (preference == uiState.summaryViewPreference) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surface
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = preference.displayName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (preference == uiState.summaryViewPreference) {
+                                            FontWeight.Bold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
+                                    )
+                                    if (preference == uiState.summaryViewPreference) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = preference.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    TextButton(
+                        onClick = { viewModel.hideSummaryViewDialog() },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
         
         AnimatedSelectionDialog(
             visible = uiState.showLanguageDialog,
@@ -499,17 +560,18 @@ fun SettingsScreen(
             onOptionSelected = { viewModel.setLanguage(it) }
         )
         
-        if (uiState.showClearDataDialog) {
-            ClearDataConfirmationDialog(
-                onConfirm = { viewModel.clearAllData() },
-                onDismiss = { viewModel.hideClearDataDialog() },
+        if (uiState.showClearHistoryDialog) {
+            ClearHistoryDialog(
+                summaryCount = uiState.summaryCountToDelete,
+                onConfirm = { viewModel.clearHistory() },
+                onDismiss = { viewModel.hideClearHistoryDialog() },
                 isClearing = uiState.isClearing
             )
         }
         
-        if (uiState.clearDataSuccess) {
+        if (uiState.clearHistorySuccess) {
             SuccessDialog(
-                message = "Data cleared successfully",
+                message = "History cleared successfully",
                 onDismiss = { viewModel.dismissSuccess() }
             )
         }
@@ -570,8 +632,8 @@ fun SettingsScreen(
             }
         )
         
-        // API Key Dialog
-        ApiKeyDialog(
+        // Enhanced API Key Dialog
+        EnhancedApiKeyDialog(
             visible = uiState.showApiKeyDialog,
             currentKey = uiState.apiKeyInput,
             isValidating = uiState.isValidatingApiKey,

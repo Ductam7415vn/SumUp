@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,14 +21,19 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sumup.domain.model.ApiUsageStats
 import com.example.sumup.domain.model.RateLimitStatus
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.min
+import kotlinx.coroutines.launch
 
 @Composable
 fun ApiUsageDashboard(
@@ -34,59 +41,174 @@ fun ApiUsageDashboard(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    android.util.Log.d("ApiUsageDashboard", "Rendering ApiUsageDashboard with stats: $usageStats")
+    var selectedPeriod by remember { mutableStateOf(UsagePeriod.TODAY) }
+    val refreshRotation = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Header
-        DashboardHeader(
-            onRefresh = onRefresh
-        )
-        
-        // Rate Limit Warning
-        if (usageStats.rateLimitStatus.isNearLimit) {
-            RateLimitWarning(
-                rateLimitStatus = usageStats.rateLimitStatus
-            )
-        }
-        
-        // Usage Overview Cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            UsageCard(
-                title = "Today's Requests",
-                value = "${usageStats.requestsToday}",
-                subtitle = "of 60/min limit",
-                icon = Icons.Default.Today,
-                modifier = Modifier.weight(1f)
+            // Header with refresh
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Analytics,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "API Usage",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            refreshRotation.animateTo(
+                                targetValue = refreshRotation.value + 360f,
+                                animationSpec = tween(500)
+                            )
+                        }
+                        onRefresh()
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = "Refresh",
+                        modifier = Modifier.graphicsLayer {
+                            rotationZ = refreshRotation.value
+                        }
+                    )
+                }
+            }
+            
+            // Period selector
+            UsagePeriodSelector(
+                selectedPeriod = selectedPeriod,
+                onPeriodChange = { selectedPeriod = it }
             )
             
-            UsageCard(
-                title = "Week's Requests",
-                value = usageStats.requestsThisWeek.toString(),
-                subtitle = "This week",
-                icon = Icons.Default.Analytics,
-                modifier = Modifier.weight(1f)
-            )
+            // Main usage display
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Circular progress for requests
+                UsageCircularProgress(
+                    label = "Requests",
+                    current = when (selectedPeriod) {
+                        UsagePeriod.TODAY -> usageStats.requestsToday
+                        UsagePeriod.THIS_WEEK -> usageStats.requestsThisWeek
+                        UsagePeriod.THIS_MONTH -> usageStats.requestsThisMonth
+                    },
+                    limit = when (selectedPeriod) {
+                        UsagePeriod.TODAY -> 60 // per minute limit shown as daily
+                        UsagePeriod.THIS_WEEK -> 420 // 60 * 7 approximation
+                        UsagePeriod.THIS_MONTH -> 1800 // 60 * 30 approximation
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Circular progress for tokens
+                UsageCircularProgress(
+                    label = "Tokens",
+                    current = when (selectedPeriod) {
+                        UsagePeriod.TODAY -> usageStats.tokensToday
+                        UsagePeriod.THIS_WEEK -> usageStats.tokensThisWeek
+                        UsagePeriod.THIS_MONTH -> usageStats.tokensThisMonth
+                    },
+                    limit = when (selectedPeriod) {
+                        UsagePeriod.TODAY -> 33333 // 1M / 30 days
+                        UsagePeriod.THIS_WEEK -> 233333 // 1M / 30 * 7
+                        UsagePeriod.THIS_MONTH -> 1000000 // 1M monthly limit
+                    },
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            // Additional stats
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Success rate
+                StatsRow(
+                    icon = Icons.Default.CheckCircle,
+                    label = "Success Rate",
+                    value = "${usageStats.successRate}%",
+                    color = Color(0xFF4CAF50)
+                )
+                
+                // Average response time
+                StatsRow(
+                    icon = Icons.Default.Speed,
+                    label = "Avg Response Time",
+                    value = "${usageStats.averageResponseTime}ms",
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                
+                // Last request
+                StatsRow(
+                    icon = Icons.Default.AccessTime,
+                    label = "Last Request",
+                    value = formatLastRequestTime(usageStats.lastRequestTime),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // Warning if approaching limits
+            if (shouldShowWarning(usageStats, selectedPeriod)) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Approaching usage limits. Consider upgrading for more capacity.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
         }
-        
-        // Token Usage Progress
-        TokenUsageCard(
-            tokenUsage = usageStats.tokenUsage
-        )
-        
-        // Usage Chart
-        UsageChart(
-            usageStats = usageStats
-        )
-        
-        // Reset Timer
-        ResetTimerCard(
-            resetTime = usageStats.rateLimitStatus.resetTime
-        )
     }
 }
 
@@ -509,6 +631,180 @@ private fun ResetTimerCard(
                 color = MaterialTheme.colorScheme.secondary
             )
         }
+    }
+}
+
+@Composable
+private fun UsagePeriodSelector(
+    selectedPeriod: UsagePeriod,
+    onPeriodChange: (UsagePeriod) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        UsagePeriod.values().forEach { period ->
+            FilterChip(
+                selected = selectedPeriod == period,
+                onClick = { onPeriodChange(period) },
+                label = { Text(period.displayName) },
+                modifier = Modifier.weight(1f),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun UsageCircularProgress(
+    label: String,
+    current: Int,
+    limit: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    val percentage = min(100f, (current.toFloat() / limit) * 100)
+    val animatedPercentage by animateFloatAsState(
+        targetValue = percentage,
+        animationSpec = tween(1000, easing = FastOutSlowInEasing)
+    )
+    
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(100.dp)
+        ) {
+            CircularProgressIndicator(
+                progress = animatedPercentage / 100f,
+                modifier = Modifier.fillMaxSize(),
+                strokeWidth = 8.dp,
+                color = color,
+                trackColor = color.copy(alpha = 0.1f)
+            )
+            
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${animatedPercentage.toInt()}%",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                Text(
+                    text = formatNumber(current),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Text(
+            text = "${formatNumber(current)} / ${formatNumber(limit)}",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun StatsRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    color: Color
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.1f)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = color.copy(alpha = 0.2f),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f)
+            )
+            
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = color
+            )
+        }
+    }
+}
+
+private enum class UsagePeriod(val displayName: String) {
+    TODAY("Today"),
+    THIS_WEEK("This Week"),
+    THIS_MONTH("This Month")
+}
+
+private fun formatNumber(number: Int): String {
+    return when {
+        number >= 1_000_000 -> "${DecimalFormat("#.#").format(number / 1_000_000.0)}M"
+        number >= 1_000 -> "${DecimalFormat("#.#").format(number / 1_000.0)}K"
+        else -> number.toString()
+    }
+}
+
+private fun formatLastRequestTime(timestamp: Long?): String {
+    if (timestamp == null) return "Never"
+    
+    val now = System.currentTimeMillis()
+    val diff = now - timestamp
+    
+    return when {
+        diff < 60_000 -> "Just now"
+        diff < 3_600_000 -> "${diff / 60_000}m ago"
+        diff < 86_400_000 -> "${diff / 3_600_000}h ago"
+        else -> "${diff / 86_400_000}d ago"
+    }
+}
+
+private fun shouldShowWarning(stats: ApiUsageStats, period: UsagePeriod): Boolean {
+    return when (period) {
+        UsagePeriod.TODAY -> stats.requestsToday > 50 || stats.tokensToday > 30000
+        UsagePeriod.THIS_WEEK -> stats.requestsThisWeek > 350 || stats.tokensThisWeek > 200000
+        UsagePeriod.THIS_MONTH -> stats.requestsThisMonth > 1500 || stats.tokensThisMonth > 800000
     }
 }
 

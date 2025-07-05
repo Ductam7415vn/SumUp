@@ -21,6 +21,13 @@ data class ApiUsageStats(
     val tokenUsage: TokenUsage,
     val requestsToday: Int,
     val requestsThisWeek: Int,
+    val requestsThisMonth: Int,
+    val tokensToday: Int,
+    val tokensThisWeek: Int,
+    val tokensThisMonth: Int,
+    val successRate: Int,
+    val averageResponseTime: Int,
+    val lastRequestTime: Long?,
     val rateLimitStatus: RateLimitStatus,
     val weeklyUsage: Map<String, Int> = emptyMap()
 )

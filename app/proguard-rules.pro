@@ -89,3 +89,37 @@
 -keepattributes *Annotation*, InnerClasses
 -keepattributes SourceFile,LineNumberTable
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# Firebase
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# Security - Obfuscate security-sensitive classes
+-keep class com.example.sumup.data.remote.security.** { *; }
+-keep class com.example.sumup.utils.ApiKeyManager { *; }
+-keep class com.example.sumup.utils.EnhancedApiKeyManager { *; }
+
+# Remove logs in release builds
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int i(...);
+    public static int w(...);
+    public static int d(...);
+    public static int e(...);
+}
+
+# Obfuscate API endpoints
+-obfuscate class com.example.sumup.data.remote.api.** {
+    *;
+}
+
+# Keep BuildConfig for app functionality
+-keep class com.example.sumup.BuildConfig { *; }
+
+# Extra obfuscation for release
+-repackageclasses 'o'
+-allowaccessmodification
+-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*

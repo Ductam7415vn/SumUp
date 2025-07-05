@@ -83,14 +83,22 @@ fun SumUpTheme(
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             try {
+                android.util.Log.d("SumUpTheme", "Using dynamic colors (dark=$darkTheme)")
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             } catch (e: Exception) {
+                android.util.Log.e("SumUpTheme", "Dynamic color failed: ${e.message}")
                 // Fallback if dynamic color fails
                 if (darkTheme) DarkColorScheme else LightColorScheme
             }
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> {
+            android.util.Log.d("SumUpTheme", "Using dark theme")
+            DarkColorScheme
+        }
+        else -> {
+            android.util.Log.d("SumUpTheme", "Using light theme")
+            LightColorScheme
+        }
     }
     
     val view = LocalView.current
@@ -103,9 +111,10 @@ fun SumUpTheme(
             window.navigationBarColor = Color.Transparent.toArgb()
             
             // Set system bar icon colors based on theme
-            val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
         }
     }
 

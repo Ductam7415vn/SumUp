@@ -18,7 +18,9 @@ data class Summary(
     val detailedSummary: String? = null,
     val keyInsights: List<String>? = null,
     val actionItems: List<String>? = null,
-    val keywords: List<String>? = null
+    val keywords: List<String>? = null,
+    // AI Quality Metrics
+    val aiQualityMetrics: AiQualityMetrics? = null
 ) {
     /**
      * Get the summary as a single text string

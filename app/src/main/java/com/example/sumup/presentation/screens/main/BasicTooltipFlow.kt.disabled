@@ -1,0 +1,109 @@
+package com.example.sumup.presentation.screens.main
+
+import androidx.compose.runtime.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.sumup.domain.usecase.FeatureDiscoveryUseCase
+import kotlinx.coroutines.launch
+
+/**
+ * Simple tooltip flow that shows tooltips sequentially
+ */
+@Composable
+fun rememberBasicTooltipFlow(
+    viewModel: MainViewModel,
+    featureDiscovery: FeatureDiscoveryUseCase
+): BasicTooltipFlow {
+    return remember {
+        BasicTooltipFlow(viewModel, featureDiscovery)
+    }
+}
+
+class BasicTooltipFlow(
+    private val viewModel: MainViewModel,
+    private val featureDiscovery: FeatureDiscoveryUseCase
+) {
+    private val allTips = listOf(
+        "summarize_button",
+        "pdf_upload", 
+        "summary_length",
+        "ocr_button"
+    )
+    
+    private var currentTipQueue = mutableStateListOf<String>()
+    
+    /**
+     * Initialize and show first unshown tooltip
+     */
+    fun initializeTooltips() {
+        viewModel.viewModelScope.launch {
+            val unshownTips = featureDiscovery.getUnshownTips(allTips)
+            currentTipQueue.clear()
+            currentTipQueue.addAll(unshownTips)
+            
+            // Show first tooltip if available
+            showNextTooltip()
+        }
+    }
+    
+    /**
+     * Show next tooltip in queue
+     */
+    private fun showNextTooltip() {
+        if (currentTipQueue.isNotEmpty()) {
+            val nextTip = currentTipQueue.first()
+            viewModel._uiState.update { 
+                it.copy(
+                    showFeatureDiscovery = true,
+                    currentFeatureTip = nextTip
+                )
+            }
+        }
+    }
+    
+    /**
+     * Dismiss current tooltip and show next
+     */
+    fun dismissCurrentAndShowNext() {
+        viewModel.viewModelScope.launch {
+            // Mark current as shown
+            viewModel._uiState.value.currentFeatureTip?.let { tipId ->
+                featureDiscovery.markTipAsShown(tipId)
+                currentTipQueue.remove(tipId)
+            }
+            
+            // Hide current
+            viewModel._uiState.update { 
+                it.copy(
+                    showFeatureDiscovery = false,
+                    currentFeatureTip = null
+                )
+            }
+            
+            // Show next after delay
+            kotlinx.coroutines.delay(500)
+            showNextTooltip()
+        }
+    }
+    
+    /**
+     * Skip all remaining tooltips
+     */
+    fun skipAllTooltips() {
+        viewModel.viewModelScope.launch {
+            // Mark all as shown
+            currentTipQueue.forEach { tipId ->
+                featureDiscovery.markTipAsShown(tipId)
+            }
+            currentTipQueue.clear()
+            
+            // Hide tooltip
+            viewModel._uiState.update { 
+                it.copy(
+                    showFeatureDiscovery = false,
+                    currentFeatureTip = null
+                )
+            }
+        }
+    }
+}

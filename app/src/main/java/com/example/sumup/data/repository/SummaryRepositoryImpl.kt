@@ -12,6 +12,7 @@ import com.example.sumup.domain.repository.SummaryRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,7 +23,9 @@ class SummaryRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val localDataSource: SummaryDao,
     private val remoteDataSource: GeminiApiService,
-    private val mapper: SummaryMapper
+    private val mapper: SummaryMapper,
+    private val settingsRepository: com.example.sumup.domain.repository.SettingsRepository,
+    private val calculateAiMetrics: com.example.sumup.domain.usecase.CalculateAiMetricsUseCase
 ) : SummaryRepository {
 
     override fun getAllSummaries(): Flow<List<Summary>> =
@@ -72,6 +75,10 @@ class SummaryRepositoryImpl @Inject constructor(
         android.util.Log.d("SummaryRepository", "Length multiplier: $lengthMultiplier")
         
         try {
+            // Get language preference from settings
+            val language = settingsRepository.language.first()
+            android.util.Log.d("SummaryRepository", "Language from settings: $language")
+            
             // Calculate target length as percentage of original text
             // lengthMultiplier: 0.05 (5%), 0.10 (10%), or 0.20 (20%)
             val wordCount = text.split("\\s+".toRegex()).size
@@ -87,12 +94,14 @@ class SummaryRepositoryImpl @Inject constructor(
             val request = SummarizeRequest(
                 text = text,
                 style = persona.apiStyle,
-                maxLength = targetLength
+                maxLength = targetLength,
+                language = language
             )
             
             android.util.Log.d("SummaryRepository", "Created request with:")
             android.util.Log.d("SummaryRepository", "  - Style: ${request.style}")
             android.util.Log.d("SummaryRepository", "  - Max length: ${request.maxLength}")
+            android.util.Log.d("SummaryRepository", "  - Language: ${request.language}")
             android.util.Log.d("SummaryRepository", "Calling remoteDataSource.summarizeText...")
 
             val response = remoteDataSource.summarizeText(request)
@@ -117,7 +126,7 @@ class SummaryRepositoryImpl @Inject constructor(
                 summaryReadingTime = summaryReadingTime
             )
 
-            val summary = Summary(
+            var summary = Summary(
                 id = java.util.UUID.randomUUID().toString(),
                 originalText = text,
                 summary = response.summary,
@@ -134,6 +143,16 @@ class SummaryRepositoryImpl @Inject constructor(
                 actionItems = response.actionItems,
                 keywords = response.keywords
             )
+            
+            // Calculate AI quality metrics
+            val aiMetrics = calculateAiMetrics(summary)
+            summary = summary.copy(aiQualityMetrics = aiMetrics)
+            
+            android.util.Log.d("SummaryRepository", "AI Metrics calculated:")
+            android.util.Log.d("SummaryRepository", "  - Coherence: ${aiMetrics.coherenceScore}")
+            android.util.Log.d("SummaryRepository", "  - Context Preservation: ${aiMetrics.contextPreservation}")
+            android.util.Log.d("SummaryRepository", "  - Information Retention: ${aiMetrics.informationRetention}")
+            android.util.Log.d("SummaryRepository", "  - Readability: ${aiMetrics.readabilityLevel}")
             
             android.util.Log.d("SummaryRepository", "Created summary with ID: ${summary.id}")
             android.util.Log.d("SummaryRepository", "Summary has ${response.bullets.size} bullet points")

@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    id("com.google.firebase.firebase-perf")
 }
 
 // Load local.properties
@@ -24,21 +27,21 @@ android {
         applicationId = "com.example.sumup"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         debug {
             isDebuggable = true
-            val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: "your_gemini_api_key_here"
-            buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
+            // Không load API key từ local.properties - bắt user phải tự nhập
+            buildConfigField("String", "GEMINI_API_KEY", "\"\"")
         }
         release {
             isMinifyEnabled = true
-            val apiKey = localProperties.getProperty("GEMINI_API_KEY") ?: "your_gemini_api_key_here"
-            buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
+            // Không load API key từ local.properties - bắt user phải tự nhập
+            buildConfigField("String", "GEMINI_API_KEY", "\"\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -165,6 +168,13 @@ dependencies {
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     // TODO: Add PDF viewer later if needed
     // implementation("com.github.barteksc:android-pdf-viewer:2.8.2")
+    
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-perf-ktx")
+    implementation("com.google.firebase:firebase-config-ktx")
     
     // Testing
     testImplementation(libs.junit)

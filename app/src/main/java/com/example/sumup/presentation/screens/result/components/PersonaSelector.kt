@@ -108,10 +108,9 @@ private fun getPersonaLabel(persona: SummaryPersona): String {
     return when (persona) {
         SummaryPersona.GENERAL -> "General"
         SummaryPersona.STUDY -> "Study"
-        SummaryPersona.BUSINESS -> "Business"
-        SummaryPersona.LEGAL -> "Legal"
-        SummaryPersona.TECHNICAL -> "Technical"
-        SummaryPersona.QUICK -> "Quick"
+        SummaryPersona.PROFESSIONAL -> "Professional"
+        SummaryPersona.ACADEMIC -> "Academic"
+        SummaryPersona.SIMPLE -> "Simple"
     }
 }
 
@@ -143,7 +142,7 @@ fun PersonaSelectorStudentPreview() {
 fun PersonaSelectorDarkPreview() {
     PreviewWrapper(darkTheme = true) {
         PersonaSelector(
-            currentPersona = SummaryPersona.TECHNICAL,
+            currentPersona = SummaryPersona.PROFESSIONAL,
             onPersonaChange = {}
         )
     }

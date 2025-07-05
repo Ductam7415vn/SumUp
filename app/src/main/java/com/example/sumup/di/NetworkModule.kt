@@ -58,10 +58,23 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
+        @ApplicationContext context: Context,
         chuckerInterceptor: ChuckerInterceptor
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(chuckerInterceptor)
+            
+        // Add Certificate Pinning for production
+        if (!BuildConfig.DEBUG) {
+            val certificatePinner = okhttp3.CertificatePinner.Builder()
+                // Google's Gemini API certificate pins (you need to get actual pins)
+                .add("generativelanguage.googleapis.com", "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=")
+                .add("generativelanguage.googleapis.com", "sha256/4ZaGJlQW0+4g2B5oPNwGOCugeqPwAOL4Ob86suKC7lI=")
+                .add("*.googleapis.com", "sha256/hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=")
+                .build()
+            
+            builder.certificatePinner(certificatePinner)
+        }
         
         // Only add logging interceptors in debug builds
         if (BuildConfig.DEBUG) {
@@ -96,6 +109,41 @@ object NetworkModule {
             .addInterceptor(logging)
         }
         
+        // Add caching
+        val cacheSize = 10 * 1024 * 1024L // 10MB
+        val cache = okhttp3.Cache(context.cacheDir.resolve("http_cache"), cacheSize)
+        builder.cache(cache)
+        
+        // Add cache control interceptor
+        builder.addInterceptor { chain ->
+            val request = chain.request()
+            val response = chain.proceed(request)
+            
+            // Cache successful responses for 5 minutes
+            if (response.isSuccessful) {
+                val maxAge = 300 // 5 minutes
+                response.newBuilder()
+                    .header("Cache-Control", "public, max-age=$maxAge")
+                    .build()
+            } else {
+                response
+            }
+        }
+        
+        // Add offline interceptor
+        builder.addInterceptor { chain ->
+            var request = chain.request()
+            
+            if (!isNetworkAvailable(context)) {
+                val maxStale = 60 * 60 * 24 * 7 // 1 week
+                request = request.newBuilder()
+                    .header("Cache-Control", "public, only-if-cached, max-stale=$maxStale")
+                    .build()
+            }
+            
+            chain.proceed(request)
+        }
+        
         return builder
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -114,9 +162,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideApiUsageTracker(
+        sharedPreferences: SharedPreferences
+    ): com.example.sumup.utils.ApiUsageTracker {
+        return com.example.sumup.utils.ApiUsageTracker(sharedPreferences)
+    }
+    
+    @Provides
+    @Singleton
     fun provideGeminiApiService(
         retrofit: Retrofit,
-        enhancedApiKeyManager: EnhancedApiKeyManager
+        enhancedApiKeyManager: EnhancedApiKeyManager,
+        apiUsageTracker: com.example.sumup.utils.ApiUsageTracker
     ): GeminiApiService {
         val activeKey = enhancedApiKeyManager.getActiveApiKey()
         val hasValidKey = activeKey != null
@@ -134,7 +191,7 @@ object NetworkModule {
         return if (hasValidKey && activeKey != null && !forceMock) {
             // Use enhanced API with retry logic when valid key is provided
             android.util.Log.d("NetworkModule", "Using REAL Gemini API Service (EnhancedGeminiApiService)")
-            EnhancedGeminiApiService(retrofit, activeKey)
+            EnhancedGeminiApiService(retrofit, activeKey, enhancedApiKeyManager, apiUsageTracker)
         } else {
             // Use mock implementation for development/demo
             android.util.Log.d("NetworkModule", "Using MOCK Gemini API Service (forceMock=$forceMock)")
@@ -180,6 +237,12 @@ object NetworkModule {
         } else {
             ServiceInfo(type = ServiceType.MOCK_API)
         }
+    }
+    
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetworkInfo
+        return activeNetwork?.isConnectedOrConnecting == true
     }
     
     @Provides
