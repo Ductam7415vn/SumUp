@@ -20,7 +20,13 @@ data class Summary(
     val actionItems: List<String>? = null,
     val keywords: List<String>? = null,
     // AI Quality Metrics
-    val aiQualityMetrics: AiQualityMetrics? = null
+    val aiQualityMetrics: AiQualityMetrics? = null,
+    // Streaming and partial results support
+    val isPartial: Boolean = false,
+    val processedSections: Int = 0,
+    val totalSections: Int = 0,
+    val sections: List<SectionSummary> = emptyList(),
+    val processingStatus: ProcessingStatus = ProcessingStatus.COMPLETED
 ) {
     /**
      * Get the summary as a single text string

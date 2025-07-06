@@ -47,6 +47,22 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        
+        <!-- WorkManager broadcast receiver -->
+        <receiver 
+            android:name=".utils.WorkManagerBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.sumup.ACTION_CANCEL" />
+                <action android:name="com.example.sumup.ACTION_PAUSE" />
+            </intent-filter>
+        </receiver>
+        
+        <!-- WorkManager initialization -->
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            tools:node="remove" />
     </application>
 
 </manifest>

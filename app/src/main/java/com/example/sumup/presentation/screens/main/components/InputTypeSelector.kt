@@ -53,12 +53,12 @@ fun InputTypeSelectorAnimated(
                     .fillMaxHeight()
             )
             
-            // PDF Button
+            // Document Button
             TextPdfButton(
-                text = "PDF",
-                icon = Icons.Default.PictureAsPdf,
-                isSelected = selectedType == MainUiState.InputType.PDF,
-                onClick = { onTypeSelected(MainUiState.InputType.PDF) },
+                text = "Document",
+                icon = Icons.Default.Description,
+                isSelected = selectedType == MainUiState.InputType.DOCUMENT,
+                onClick = { onTypeSelected(MainUiState.InputType.DOCUMENT) },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()

@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -36,6 +38,7 @@ import com.example.sumup.presentation.components.*
 import com.example.sumup.presentation.screens.settings.components.*
 import com.example.sumup.presentation.screens.settings.components.EnhancedApiKeyDialog
 import com.example.sumup.presentation.screens.settings.components.ClearHistoryDialog
+import com.example.sumup.presentation.screens.settings.components.SimplifiedSettingsTopBar
 import com.example.sumup.domain.model.Achievement
 import com.example.sumup.domain.model.AchievementType
 import com.example.sumup.domain.model.SummaryViewPreference
@@ -98,13 +101,11 @@ fun SettingsScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0.dp),
             topBar = {
-                ModernSettingsTopBar(
+                SimplifiedSettingsTopBar(
                     onNavigateBack = onNavigateBack,
-                    scrollOffset = scrollOffset,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
-                    userName = uiState.userEmail?.substringBefore("@") ?: "User"
+                    scrollOffset = scrollOffset
                 )
             }
         ) { paddingValues ->

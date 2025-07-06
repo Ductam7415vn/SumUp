@@ -70,6 +70,7 @@ object Dimensions {
     // Specific measurements
     val bottomNavHeight = 80.dp
     val topBarHeight = 64.dp
+    val topBarBigBoy = 128.dp
     val fabSize = 56.dp
     val chipHeight = 32.dp
     

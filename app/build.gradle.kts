@@ -7,9 +7,10 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
-    id("com.google.firebase.firebase-perf")
+    // Tạm thời comment để build được nhiều flavors
+    // id("com.google.gms.google-services")
+    // id("com.google.firebase.crashlytics")
+    // id("com.google.firebase.firebase-perf")
 }
 
 // Load local.properties
@@ -49,6 +50,33 @@ android {
         }
     }
     
+    // Tạo nhiều flavor để có thể cài nhiều phiên bản trên cùng thiết bị
+    flavorDimensions += "version"
+    productFlavors {
+        create("dev") {
+            dimension = "version"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "SumUp Dev")
+            // Disable Firebase for dev flavor
+            extra["enableCrashlytics"] = false
+        }
+        create("staging") {
+            dimension = "version"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            resValue("string", "app_name", "SumUp Staging")
+            // Disable Firebase for staging flavor
+            extra["enableCrashlytics"] = false
+        }
+        create("prod") {
+            dimension = "version"
+            resValue("string", "app_name", "SumUp")
+            // Enable Firebase only for prod
+            extra["enableCrashlytics"] = true
+        }
+    }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -77,6 +105,9 @@ android {
             excludes += "/META-INF/LICENSE"
             excludes += "/META-INF/LICENSE.txt"
             excludes += "/META-INF/NOTICE.txt"
+            // Apache POI specific excludes
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+            excludes += "schemaorg_apache_xmlbeans/system/sD023D6490046BA0250A839A9AD24C443/**"
         }
     }
 }
@@ -112,6 +143,7 @@ dependencies {
     // ViewModel & Lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.6")
     
     // Navigation
     implementation(libs.androidx.navigation.compose)
@@ -155,17 +187,20 @@ dependencies {
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
     
-    // PDF Processing
-    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    // Document Processing
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0") // PDF
+    implementation("org.zwobble.mammoth:mammoth:1.5.0") // DOCX
+    
+    // For now, we'll implement basic text extraction for other formats
+    // Apache POI requires API 26+, which would break compatibility with API 24
+    // Alternative: Using Mammoth for DOCX support which works with API 24+
     
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.7.0")
     
     // Work Manager
     implementation("androidx.work:work-runtime-ktx:2.10.0")
-    
-    // PDF Processing (PDFBox Android)
-    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
     // TODO: Add PDF viewer later if needed
     // implementation("com.github.barteksc:android-pdf-viewer:2.8.2")
     

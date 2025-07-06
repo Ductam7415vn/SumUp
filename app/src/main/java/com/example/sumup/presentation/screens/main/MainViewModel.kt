@@ -9,20 +9,27 @@ import com.example.sumup.presentation.screens.main.MainUiState.InputType
 import com.example.sumup.domain.model.ServiceType
 import com.example.sumup.domain.model.FileUploadState
 import com.example.sumup.domain.model.LargePdfOption
+import com.example.sumup.domain.model.DocumentType
+import com.example.sumup.domain.model.Document
 import com.example.sumup.domain.repository.PdfRepository
 import com.example.sumup.domain.repository.SummaryRepository
 import com.example.sumup.domain.usecase.SummarizeTextUseCase
 import com.example.sumup.domain.usecase.ProcessPdfUseCase
+import com.example.sumup.domain.usecase.ProcessDocumentUseCase
 import com.example.sumup.domain.usecase.DraftManager
 import com.example.sumup.domain.usecase.FeatureDiscoveryUseCase
+import com.example.sumup.domain.usecase.DocumentProcessorFactory
 // import com.example.sumup.domain.usecase.EnhancedFeatureDiscoveryUseCase
 // import com.example.sumup.domain.usecase.UserAction
 // import com.example.sumup.domain.usecase.AppState
 // import com.example.sumup.domain.usecase.UserLevel
 import com.example.sumup.domain.usecase.SmartSectioningUseCase
+import com.example.sumup.domain.usecase.AdaptiveProcessingUseCase
+import com.example.sumup.domain.model.ProcessingStrategy
 import com.example.sumup.utils.PdfUtils
 import com.example.sumup.utils.InputValidator
 import com.example.sumup.utils.EnhancedApiKeyManager
+import com.example.sumup.utils.WorkManagerHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -40,14 +47,18 @@ class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val summarizeTextUseCase: SummarizeTextUseCase,
     private val processPdfUseCase: ProcessPdfUseCase,
+    private val processDocumentUseCase: ProcessDocumentUseCase,
     private val smartSectioningUseCase: SmartSectioningUseCase,
+    private val adaptiveProcessingUseCase: AdaptiveProcessingUseCase,
     private val pdfRepository: PdfRepository,
     private val summaryRepository: SummaryRepository,
     private val draftManager: DraftManager,
     private val featureDiscovery: FeatureDiscoveryUseCase,
     // private val enhancedFeatureDiscovery: EnhancedFeatureDiscoveryUseCase,
     private val apiKeyManager: EnhancedApiKeyManager,
-    private val analyticsHelper: com.example.sumup.utils.analytics.AnalyticsHelper
+    private val analyticsHelper: com.example.sumup.utils.analytics.AnalyticsHelper,
+    private val workManagerHelper: WorkManagerHelper,
+    private val documentProcessorFactory: DocumentProcessorFactory
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState(
@@ -159,11 +170,76 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateText(text: String) {
+        android.util.Log.d("MainViewModel", "=== UPDATE TEXT CALLED ===")
+        android.util.Log.d("MainViewModel", "New text: '$text'")
+        android.util.Log.d("MainViewModel", "Text length: ${text.length}")
         _uiState.update { it.copy(inputText = text) }
+        android.util.Log.d("MainViewModel", "UI State updated with new text")
     }
 
     fun selectInputType(type: InputType) {
         _uiState.update { it.copy(inputType = type) }
+    }
+    
+    fun selectDocument(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            try {
+                // Get document info
+                val document = processDocumentUseCase.getDocumentInfo(uri.toString())
+                
+                if (document != null) {
+                    // For PDF files, also get page count using existing utility
+                    val pageCount = if (document.type == DocumentType.PDF) {
+                        PdfUtils.getPageCount(context, uri)
+                    } else {
+                        null
+                    }
+                    
+                    _uiState.update { 
+                        it.copy(
+                            selectedDocumentUri = uri.toString(),
+                            selectedDocumentName = document.fileName,
+                            selectedDocument = document.copy(pageCount = pageCount),
+                            // Also update legacy PDF fields for compatibility
+                            selectedPdfUri = if (document.type == DocumentType.PDF) uri.toString() else null,
+                            selectedPdfName = if (document.type == DocumentType.PDF) document.fileName else null,
+                            pdfPageCount = pageCount ?: 0,
+                            isLoading = false
+                        )
+                    }
+                    
+                    // Show preview for large PDFs
+                    if (document.type == DocumentType.PDF && pageCount != null && pageCount > 50) {
+                        _uiState.update { 
+                            it.copy(
+                                showLargePdfWarning = true,
+                                largePdfPageCount = pageCount,
+                                largePdfEstimatedTime = (pageCount * 2).toLong()
+                            )
+                        }
+                    } else if (document.type == DocumentType.PDF) {
+                        // Show PDF preview for smaller PDFs
+                        _uiState.update { it.copy(showPdfPreview = true) }
+                    }
+                } else {
+                    _uiState.update { 
+                        it.copy(
+                            error = AppError.UnknownError("Unable to read document information"),
+                            isLoading = false
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        error = AppError.UnknownError("Error loading document: ${e.message}"),
+                        isLoading = false
+                    )
+                }
+            }
+        }
     }
 
     fun selectPdf(uri: Uri) {
@@ -223,9 +299,17 @@ class MainViewModel @Inject constructor(
             it.copy(
                 selectedPdfUri = null,
                 selectedPdfName = null,
-                pdfPageCount = 0
+                pdfPageCount = 0,
+                // Also clear document data
+                selectedDocumentUri = null,
+                selectedDocumentName = null,
+                selectedDocument = null
             )
         }
+    }
+    
+    fun clearDocument() {
+        clearPdf() // Reuse the same function
     }
 
     fun clearText() {
@@ -241,6 +325,23 @@ class MainViewModel @Inject constructor(
 
     fun hidePdfPreview() {
         _uiState.update { it.copy(showPdfPreview = false) }
+    }
+    
+    fun showDocxPreview() {
+        _uiState.update { it.copy(showDocxPreview = true) }
+    }
+    
+    fun hideDocxPreview() {
+        _uiState.update { it.copy(showDocxPreview = false) }
+    }
+    
+    suspend fun extractDocxTextForPreview(uri: String): String {
+        return try {
+            val processor = documentProcessorFactory.getProcessor(DocumentType.DOCX)
+            processor.extractText(uri)
+        } catch (e: Exception) {
+            throw Exception("Failed to extract text: ${e.message}")
+        }
     }
 
     fun processPdfWithPages(pageRange: IntRange?) {
@@ -339,6 +440,13 @@ class MainViewModel @Inject constructor(
         // Start processing after navigation is complete
         processSummarization()
     }
+    
+    fun onResultNavigationHandled() {
+        _uiState.update { it.copy(
+            navigateToResult = false,
+            selectedProcessingStrategy = null // Clear strategy after use
+        ) }
+    }
 
     fun checkAndShowFeatureDiscovery() {
         viewModelScope.launch {
@@ -421,11 +529,59 @@ class MainViewModel @Inject constructor(
             draftManager.setHasSeenWelcomeCard(true)
         }
     }
+    
+    fun showProcessingMethodDialog(text: String) {
+        val options = adaptiveProcessingUseCase.getProcessingOptions(text.length)
+        _uiState.update { 
+            it.copy(
+                showProcessingMethodDialog = true,
+                processingOptions = options,
+                pendingTextForProcessing = text
+            )
+        }
+    }
+    
+    fun dismissProcessingMethodDialog() {
+        _uiState.update { 
+            it.copy(
+                showProcessingMethodDialog = false,
+                processingOptions = emptyList(),
+                pendingTextForProcessing = ""
+            )
+        }
+    }
+    
+    fun selectProcessingStrategy(strategy: ProcessingStrategy) {
+        _uiState.update { 
+            it.copy(
+                selectedProcessingStrategy = strategy,
+                showProcessingMethodDialog = false,
+                navigateToProcessing = true
+            )
+        }
+    }
+    
+    private fun checkAndProceedWithProcessing(text: String) {
+        val textLength = text.length
+        
+        // For small texts, proceed directly with SINGLE strategy
+        if (textLength < AdaptiveProcessingUseCase.SINGLE_STRATEGY_THRESHOLD) {
+            _uiState.update { 
+                it.copy(
+                    selectedProcessingStrategy = ProcessingStrategy.SINGLE,
+                    navigateToProcessing = true
+                )
+            }
+        } else {
+            // For larger texts, show processing method dialog
+            showProcessingMethodDialog(text)
+        }
+    }
 
     val canSummarize: Boolean
         get() = when (_uiState.value.inputType) {
             InputType.TEXT -> _uiState.value.inputText.isNotBlank()
-            InputType.PDF -> _uiState.value.selectedPdfUri != null
+            InputType.DOCUMENT -> _uiState.value.selectedDocumentUri != null
             InputType.OCR -> false // OCR handled separately
         }
 
@@ -438,40 +594,59 @@ class MainViewModel @Inject constructor(
     
     fun summarize() {
         viewModelScope.launch {
+            android.util.Log.d("MainViewModel", "=== SUMMARIZE CALLED ===")
+            android.util.Log.d("MainViewModel", "Current input type: ${_uiState.value.inputType}")
+            android.util.Log.d("MainViewModel", "Current input text: ${_uiState.value.inputText}")
+            android.util.Log.d("MainViewModel", "Text length: ${_uiState.value.inputText.length}")
+            
             when (_uiState.value.inputType) {
                 InputType.TEXT -> {
+                    android.util.Log.d("MainViewModel", "Processing TEXT input type")
+                    android.util.Log.d("MainViewModel", "Text content preview: ${_uiState.value.inputText.take(100)}...")
+                    
                     // Validate text input
                     val validationResult = InputValidator.validateTextInput(_uiState.value.inputText)
+                    android.util.Log.d("MainViewModel", "Validation result: $validationResult")
+                    
                     when (validationResult) {
                         is InputValidator.ValidationResult.Error -> {
+                            android.util.Log.e("MainViewModel", "Validation error: ${validationResult.message}")
                             _uiState.update { 
                                 it.copy(error = AppError.UnknownError(validationResult.message))
                             }
                         }
                         is InputValidator.ValidationResult.Warning -> {
-                            // Show warning but proceed
-                            _uiState.update { it.copy(navigateToProcessing = true) }
+                            android.util.Log.w("MainViewModel", "Validation warning: ${validationResult.message}")
+                            // Check if we should show processing method dialog
+                            checkAndProceedWithProcessing(_uiState.value.inputText)
                         }
                         is InputValidator.ValidationResult.Success -> {
-                            _uiState.update { it.copy(navigateToProcessing = true) }
+                            android.util.Log.d("MainViewModel", "Validation successful")
+                            // Check if we should show processing method dialog
+                            checkAndProceedWithProcessing(_uiState.value.inputText)
                         }
                     }
                 }
-                InputType.PDF -> {
-                    _uiState.value.selectedPdfUri?.let { uriString ->
-                        // Validate PDF
-                        val uri = android.net.Uri.parse(uriString)
-                        val validationResult = InputValidator.validatePdfFile(context, uri)
-                        when (validationResult) {
-                            is InputValidator.ValidationResult.Error -> {
-                                _uiState.update { 
-                                    it.copy(error = AppError.UnknownError(validationResult.message))
+                InputType.DOCUMENT -> {
+                    _uiState.value.selectedDocumentUri?.let { uriString ->
+                        val document = _uiState.value.selectedDocument
+                        if (document?.type == DocumentType.PDF) {
+                            // Validate PDF using existing validator
+                            val uri = android.net.Uri.parse(uriString)
+                            val validationResult = InputValidator.validatePdfFile(context, uri)
+                            when (validationResult) {
+                                is InputValidator.ValidationResult.Error -> {
+                                    _uiState.update { 
+                                        it.copy(error = AppError.UnknownError(validationResult.message))
+                                    }
+                                }
+                                else -> {
+                                    _uiState.update { it.copy(navigateToProcessing = true) }
                                 }
                             }
-                            else -> {
-                                // Additional page count validation happens after PDF is loaded
-                                _uiState.update { it.copy(navigateToProcessing = true) }
-                            }
+                        } else {
+                            // For non-PDF documents, proceed directly
+                            _uiState.update { it.copy(navigateToProcessing = true) }
                         }
                     }
                 }
@@ -496,8 +671,8 @@ class MainViewModel @Inject constructor(
                 // Use a separate job for progress simulation
                 var progressJob: Job? = null
                 
-                // Only start progress job for non-PDF input
-                if (_uiState.value.inputType != InputType.PDF) {
+                // Only start progress job for text input
+                if (_uiState.value.inputType == InputType.TEXT) {
                     progressJob = launch(Dispatchers.Default) {
                         val messages = listOf(
                             "Reading your text...",
@@ -523,31 +698,72 @@ class MainViewModel @Inject constructor(
                 when (_uiState.value.inputType) {
                     InputType.TEXT, InputType.OCR -> {
                         android.util.Log.d("MainViewModel", "Processing text summarization")
+                        android.util.Log.d("MainViewModel", "=== TEXT BEING SUMMARIZED ===")
                         val text = _uiState.value.inputText
+                        android.util.Log.d("MainViewModel", "Text from uiState: '$text'")
+                        android.util.Log.d("MainViewModel", "Text length: ${text.length}")
+                        android.util.Log.d("MainViewModel", "Text preview: ${text.take(200)}...")
                         
-                        // Check if smart sectioning is needed
-                        if (text.length >= SmartSectioningUseCase.SECTION_THRESHOLD) {
-                            android.util.Log.d("MainViewModel", "Using smart sectioning for long text (${text.length} chars)")
+                        // Use adaptive processing with selected strategy
+                        val strategy = _uiState.value.selectedProcessingStrategy ?: ProcessingStrategy.SINGLE
+                        val shouldUseAdaptive = strategy != ProcessingStrategy.SINGLE || text.length >= SmartSectioningUseCase.SECTION_THRESHOLD
+                        
+                        if (shouldUseAdaptive) {
+                            android.util.Log.d("MainViewModel", "Using adaptive processing with strategy: $strategy for text (${text.length} chars)")
                             progressJob?.cancel()
                             
-                            smartSectioningUseCase(
+                            // For very large documents with MULTI strategy, offer background processing
+                            if (text.length > 50_000 && strategy == ProcessingStrategy.MULTI) {
+                                android.util.Log.d("MainViewModel", "Document is very large, using background processing")
+                                
+                                // Generate document ID
+                                val documentId = java.util.UUID.randomUUID().toString()
+                                val documentTitle = "Summary ${java.text.SimpleDateFormat("MMM dd, HH:mm").format(java.util.Date())}"
+                                
+                                // Enqueue background work
+                                workManagerHelper.enqueueResumableSummarization(
+                                    documentId = documentId,
+                                    text = text,
+                                    title = documentTitle,
+                                    persona = com.example.sumup.domain.model.SummaryPersona.GENERAL
+                                )
+                                
+                                // Update UI to show background processing started
+                                _uiState.update { it.copy(
+                                    isLoading = false,
+                                    summaryId = documentId,
+                                    navigateToResult = false, // Don't navigate yet
+                                    navigateToProcessing = true, // Show processing screen
+                                    processingMessage = "Processing in background..."
+                                ) }
+                                
+                                return@launch
+                            }
+                            
+                            // Use adaptive processing
+                            adaptiveProcessingUseCase(
                                 text = text,
-                                persona = com.example.sumup.domain.model.SummaryPersona.GENERAL
+                                strategy = strategy,
+                                persona = com.example.sumup.domain.model.SummaryPersona.GENERAL,
+                                targetLengthRatio = _uiState.value.summaryLength.multiplier,
+                                language = "en" // Default to English for now
                             )
                             .flowOn(Dispatchers.IO)
                             .onEach { delay(50) } // Small delay to prevent too rapid emissions
-                            .collect { sectioningResult ->
-                                when (sectioningResult) {
-                                    is SmartSectioningUseCase.SectioningResult.Progress -> {
-                                        val progress = sectioningResult.currentSection.toFloat() / sectioningResult.totalSections
+                            .collect { processingResult ->
+                                when (processingResult) {
+                                    is AdaptiveProcessingUseCase.ProcessingResult.Starting -> {
+                                        android.util.Log.d("MainViewModel", "Adaptive processing started with strategy: ${processingResult.strategy}")
+                                    }
+                                    is AdaptiveProcessingUseCase.ProcessingResult.Progress -> {
                                         _uiState.update { it.copy(
-                                            processingProgress = 0.2f + (progress * 0.6f),
-                                            processingMessage = "Processing section ${sectioningResult.currentSection} of ${sectioningResult.totalSections}..."
+                                            processingProgress = processingResult.progress,
+                                            processingMessage = processingResult.message
                                         ) }
                                     }
-                                    is SmartSectioningUseCase.SectioningResult.Success -> {
-                                        val summary = sectioningResult.sectionedSummary.overallSummary
-                                        android.util.Log.d("MainViewModel", "Smart sectioning successful, ID: ${summary.id}")
+                                    is AdaptiveProcessingUseCase.ProcessingResult.Success -> {
+                                        val summary = processingResult.summary
+                                        android.util.Log.d("MainViewModel", "Adaptive processing successful, ID: ${summary.id}, requests: ${processingResult.totalRequests}")
                                         _uiState.update { it.copy(
                                             isLoading = false,
                                             summary = summary,
@@ -557,11 +773,11 @@ class MainViewModel @Inject constructor(
                                             navigateToResult = true
                                         ) }
                                     }
-                                    is SmartSectioningUseCase.SectioningResult.Error -> {
-                                        android.util.Log.e("MainViewModel", "Smart sectioning failed: ${sectioningResult.message}")
+                                    is AdaptiveProcessingUseCase.ProcessingResult.Error -> {
+                                        android.util.Log.e("MainViewModel", "Adaptive processing failed: ${processingResult.message}")
                                         _uiState.update { it.copy(
                                             isLoading = false,
-                                            error = AppError.UnknownError(sectioningResult.message),
+                                            error = AppError.UnknownError(processingResult.message),
                                             processingProgress = 0f,
                                             processingMessage = ""
                                         ) }
@@ -625,11 +841,15 @@ class MainViewModel @Inject constructor(
                             )
                         }
                     }
-                    InputType.PDF -> {
-                        android.util.Log.d("MainViewModel", "Processing PDF summarization")
-                        _uiState.value.selectedPdfUri?.let { uriString ->
-                            val uri = Uri.parse(uriString)
-                            processPdfUseCase(fileUri = uri)
+                    InputType.DOCUMENT -> {
+                        android.util.Log.d("MainViewModel", "Processing document summarization")
+                        _uiState.value.selectedDocumentUri?.let { uriString ->
+                            val document = _uiState.value.selectedDocument
+                            
+                            if (document?.type == DocumentType.PDF) {
+                                // Use existing PDF processing for PDFs
+                                val uri = Uri.parse(uriString)
+                                processPdfUseCase(fileUri = uri)
                                 .flowOn(Dispatchers.IO)
                                 .onEach { delay(50) } // Small delay to prevent too rapid emissions
                                 .collect { state ->
@@ -731,6 +951,67 @@ class MainViewModel @Inject constructor(
                                     else -> {}
                                 }
                             }
+                            } else {
+                                // Process non-PDF documents
+                                progressJob?.cancel()
+                                android.util.Log.d("MainViewModel", "Processing ${document?.type} document")
+                                
+                                processDocumentUseCase.processDocument(
+                                    uri = uriString,
+                                    documentType = document?.type ?: DocumentType.TXT
+                                )
+                                .flowOn(Dispatchers.IO)
+                                .collect { extractionResult ->
+                                    if (extractionResult.success) {
+                                        val extractedText = extractionResult.extractedText
+                                        android.util.Log.d("MainViewModel", "Document text extraction successful, ${extractedText.length} chars")
+                                        
+                                        // Update progress
+                                        _uiState.update { it.copy(
+                                            processingProgress = 0.5f,
+                                            processingMessage = "Summarizing content..."
+                                        ) }
+                                        
+                                        // Summarize the extracted text
+                                        val result = summarizeTextUseCase(
+                                            text = extractedText,
+                                            persona = com.example.sumup.domain.model.SummaryPersona.GENERAL,
+                                            lengthMultiplier = _uiState.value.summaryLength.multiplier
+                                        )
+                                        
+                                        result.fold(
+                                            onSuccess = { summary ->
+                                                android.util.Log.d("MainViewModel", "Document summarization successful, ID: ${summary.id}")
+                                                _uiState.update { it.copy(
+                                                    isLoading = false,
+                                                    summary = summary,
+                                                    summaryId = summary.id,
+                                                    processingProgress = 1f,
+                                                    processingMessage = "Done!",
+                                                    navigateToResult = true
+                                                ) }
+                                            },
+                                            onFailure = { exception ->
+                                                android.util.Log.e("MainViewModel", "Document summarization failed", exception)
+                                                _uiState.update { it.copy(
+                                                    isLoading = false,
+                                                    error = AppError.UnknownError(exception.message ?: "Document summarization failed"),
+                                                    processingProgress = 0f,
+                                                    processingMessage = ""
+                                                ) }
+                                            }
+                                        )
+                                    } else {
+                                        android.util.Log.e("MainViewModel", "Document extraction failed: ${extractionResult.errorMessage}")
+                                        _uiState.update { it.copy(
+                                            isLoading = false,
+                                            error = AppError.UnknownError(extractionResult.errorMessage ?: "Failed to extract text from document"),
+                                            processingProgress = 0f,
+                                            processingMessage = ""
+                                        ) }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -761,9 +1042,7 @@ class MainViewModel @Inject constructor(
         }
     }
     
-    fun onResultNavigationHandled() {
-        _uiState.update { it.copy(navigateToResult = false, summaryId = null) }
-    }
+    // Remove duplicate method - already defined above
     
     fun setScannedText(text: String) {
         viewModelScope.launch {

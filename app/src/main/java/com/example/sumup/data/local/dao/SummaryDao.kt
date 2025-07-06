@@ -14,9 +14,15 @@ interface SummaryDao {
 
     @Query("SELECT * FROM summaries WHERE id = :id")
     suspend fun getSummaryById(id: String): SummaryEntity?
+    
+    @Query("SELECT * FROM summaries WHERE id = :id")
+    fun observeSummaryById(id: String): Flow<SummaryEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSummary(summary: SummaryEntity)
+    
+    @Update
+    suspend fun updateSummary(summary: SummaryEntity)
 
     @Delete
     suspend fun deleteSummary(summary: SummaryEntity)

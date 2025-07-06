@@ -29,7 +29,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.sumup.domain.model.PdfDocument
 import com.example.sumup.domain.model.PdfExtractionResult
 import com.example.sumup.domain.usecase.StructuredPdfData
-import com.example.sumup.domain.usecase.DocumentType
+import com.example.sumup.domain.usecase.PdfDocumentType
 import com.example.sumup.domain.usecase.ReadingLevel
 import com.example.sumup.domain.usecase.ProcessingMetrics
 
@@ -634,7 +634,7 @@ private fun formatFileSize(bytes: Long): String {
     }
 }
 
-private fun formatDocumentType(type: DocumentType): String {
+private fun formatDocumentType(type: PdfDocumentType): String {
     return type.name.replace("_", " ").lowercase()
         .split(" ").joinToString(" ") { it.capitalize() }
 }

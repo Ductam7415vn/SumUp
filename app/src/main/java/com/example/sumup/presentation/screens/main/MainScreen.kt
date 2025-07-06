@@ -61,11 +61,16 @@ import com.example.sumup.presentation.components.HapticCard
 import com.example.sumup.presentation.components.HapticFilterChip
 import com.example.sumup.presentation.components.hapticClickable
 import com.example.sumup.presentation.components.ImprovedPdfPreviewDialog
+import com.example.sumup.presentation.components.DocxPreviewDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.example.sumup.domain.model.DocumentType
 import com.example.sumup.presentation.components.ApiStatusBanner
 import com.example.sumup.presentation.components.ImprovedCharacterLimitIndicator
 import com.example.sumup.presentation.components.CharacterLimitWarningDialog
 import com.example.sumup.presentation.components.RateLimitWarningBanner
 import com.example.sumup.presentation.components.SumUpLogo
+import com.example.sumup.presentation.components.ProcessingMethodDialog
 import com.example.sumup.utils.haptic.HapticFeedbackType
 import com.example.sumup.utils.haptic.rememberHapticFeedback
 import com.example.sumup.ui.theme.extendedColorScheme
@@ -227,16 +232,23 @@ fun MainScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
-                            MainUiState.InputType.PDF -> {
-                                ImprovedPdfUploadSection(
-                                    selectedPdfUri = uiState.selectedPdfUri,
-                                    selectedPdfName = uiState.selectedPdfName,
+                            MainUiState.InputType.DOCUMENT -> {
+                                ImprovedDocumentUploadSection(
+                                    selectedDocumentUri = uiState.selectedDocumentUri,
+                                    selectedDocumentName = uiState.selectedDocumentName,
+                                    selectedDocument = uiState.selectedDocument,
                                     serviceInfo = uiState.serviceInfo,
-                                    onPdfSelected = { uri, name, pageCount -> 
-                                        viewModel.selectPdfWithPreview(android.net.Uri.parse(uri))
+                                    onDocumentSelected = { uri -> 
+                                        viewModel.selectDocument(android.net.Uri.parse(uri))
                                     },
-                                    onClear = viewModel::clearPdf,
-                                    onShowPreview = viewModel::showPdfPreview,
+                                    onClear = viewModel::clearDocument,
+                                    onShowPreview = {
+                                        when (uiState.selectedDocument?.type) {
+                                            DocumentType.PDF -> viewModel.showPdfPreview()
+                                            DocumentType.DOCX -> viewModel.showDocxPreview()
+                                            else -> {} // No preview for other types
+                                        }
+                                    },
                                     onNavigateToSettings = onNavigateToSettings,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -264,7 +276,12 @@ fun MainScreen(
                         onClick = viewModel::summarize,
                         enabled = viewModel.canSummarize,
                         isLoading = uiState.isLoading,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        textLength = if (uiState.inputType == MainUiState.InputType.TEXT) {
+                            uiState.inputText.length
+                        } else {
+                            0 // For documents, we don't show estimates on button
+                        }
                     )
                     
                     HapticCard(
@@ -356,6 +373,17 @@ fun MainScreen(
                     onDismiss = viewModel::hidePdfPreview
                 )
             }
+            
+            // DOCX Preview Dialog
+            val selectedDocumentUri = uiState.selectedDocumentUri
+            if (uiState.showDocxPreview && selectedDocumentUri != null && uiState.isDocxInput) {
+                DocxPreviewDialog(
+                    documentUri = selectedDocumentUri,
+                    documentName = uiState.selectedDocumentName ?: "Document.docx",
+                    onDismiss = viewModel::hideDocxPreview,
+                    onExtractText = viewModel::extractDocxTextForPreview
+                )
+            }
 
             if (uiState.showLargePdfWarning) {
                 com.example.sumup.presentation.components.LargePdfWarningDialog(
@@ -393,6 +421,15 @@ fun MainScreen(
                     cancelText = "Discard"
                 )
             }
+
+            // Processing Method Dialog
+            ProcessingMethodDialog(
+                isVisible = uiState.showProcessingMethodDialog,
+                documentSize = uiState.pendingTextForProcessing.length,
+                options = uiState.processingOptions,
+                onOptionSelected = viewModel::selectProcessingStrategy,
+                onDismiss = viewModel::dismissProcessingMethodDialog
+            )
 
             // Feature Discovery Tooltips
             if (uiState.showFeatureDiscovery && uiState.currentFeatureTip != null) {
@@ -562,7 +599,7 @@ private fun InputTypeSelectorAnimated(
 ) {
     val types = listOf(
         MainUiState.InputType.TEXT to Triple(Icons.AutoMirrored.Filled.Article, "Text", 0),
-        MainUiState.InputType.PDF to Triple(Icons.Default.Description, "PDF", 1)
+        MainUiState.InputType.DOCUMENT to Triple(Icons.Default.Description, "Document", 1)
     )
     
     Box(
@@ -1085,11 +1122,27 @@ private fun AnimatedSummarizeButton(
     onClick: () -> Unit,
     enabled: Boolean,
     isLoading: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    textLength: Int = 0
 ) {
+    // Calculate estimated requests for text processing
+    val estimatedRequests = when {
+        textLength < 30_000 -> 1
+        textLength < 100_000 -> 2 to 3  // Range
+        else -> 4 to 6  // Range for very large texts
+    }
+    
+    val buttonText = if (textLength >= 30_000 && estimatedRequests is Pair<*, *>) {
+        "Generate Summary (${estimatedRequests.first}-${estimatedRequests.second} requests)"
+    } else if (textLength >= 30_000) {
+        "Generate Summary ($estimatedRequests request)"
+    } else {
+        "Generate Summary"
+    }
+    
     AnimatedGradientButton(
         onClick = onClick,
-        text = "Generate Summary",
+        text = buttonText,
         modifier = modifier,
         enabled = enabled,
         icon = Icons.Default.AutoAwesome,

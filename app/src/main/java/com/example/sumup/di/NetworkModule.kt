@@ -6,6 +6,7 @@ import com.example.sumup.data.remote.api.GeminiApiService
 import com.example.sumup.data.remote.mock.MockGeminiApiService
 import com.example.sumup.data.remote.api.RealGeminiApiService
 import com.example.sumup.data.remote.api.EnhancedGeminiApiService
+import com.example.sumup.data.remote.api.DocumentConversionApi
 import com.chuckerteam.chucker.api.ChuckerCollector
 import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.chuckerteam.chucker.api.RetentionManager
@@ -145,8 +146,9 @@ object NetworkModule {
         }
         
         return builder
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS) // Increased for large documents
+            .readTimeout(60, TimeUnit.SECONDS)     // Increased for large documents
+            .writeTimeout(30, TimeUnit.SECONDS)    // Added write timeout
             .build()
     }
 
@@ -158,6 +160,23 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+    }
+    
+    @Provides
+    @Singleton
+    @Named("ConversionApi")
+    fun provideConversionRetrofit(okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.sumup-converter.com/") // Replace with your actual server URL
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideDocumentConversionApi(@Named("ConversionApi") retrofit: Retrofit): DocumentConversionApi {
+        return retrofit.create(DocumentConversionApi::class.java)
     }
 
     @Provides

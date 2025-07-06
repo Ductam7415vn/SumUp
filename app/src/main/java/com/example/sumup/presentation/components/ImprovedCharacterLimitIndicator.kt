@@ -102,12 +102,30 @@ fun ImprovedCharacterLimitIndicator(
                             fontWeight = if (ratio >= showWarningThreshold) FontWeight.Bold else FontWeight.Normal,
                             color = textColor
                         )
-                        if (wordCount > 0) {
-                            Text(
-                                text = "$wordCount ${if (wordCount == 1) "word" else "words"}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = textColor.copy(alpha = 0.7f)
-                            )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (wordCount > 0) {
+                                Text(
+                                    text = "$wordCount ${if (wordCount == 1) "word" else "words"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = textColor.copy(alpha = 0.7f)
+                                )
+                            }
+                            // Show estimated API requests for large texts
+                            if (currentLength >= 30_000) {
+                                val estimatedRequests = when {
+                                    currentLength < 30_000 -> 1
+                                    currentLength < 100_000 -> "2-3"
+                                    else -> "4-6"
+                                }
+                                Text(
+                                    text = "• $estimatedRequests API ${if (estimatedRequests == "1" || estimatedRequests == 1) "request" else "requests"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                     

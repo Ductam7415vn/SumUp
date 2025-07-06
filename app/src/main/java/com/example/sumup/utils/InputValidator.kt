@@ -19,6 +19,12 @@ object InputValidator {
     const val MAX_PDF_PAGES = 200
     const val MAX_PDF_PAGES_WARNING = 50
     
+    // Document constraints
+    const val MAX_DOC_SIZE_MB = 10
+    const val MAX_DOCX_SIZE_MB = 10
+    const val MAX_TXT_SIZE_MB = 5
+    const val MAX_RTF_SIZE_MB = 10
+    
     /**
      * Validates text input for summarization
      */
@@ -62,6 +68,35 @@ object InputValidator {
             pageCount > MAX_PDF_PAGES -> ValidationResult.Error("PDF too large. Maximum $MAX_PDF_PAGES pages allowed")
             pageCount > MAX_PDF_PAGES_WARNING -> ValidationResult.Warning("Large PDF detected. Processing may take longer")
             else -> ValidationResult.Success
+        }
+    }
+    
+    /**
+     * Validates any document file before processing
+     */
+    fun validateDocumentFile(context: Context, uri: Uri, mimeType: String?): ValidationResult {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val sizeInBytes = inputStream.available()
+                val sizeInMB = sizeInBytes / (1024.0 * 1024.0)
+                
+                val maxSize = when {
+                    mimeType == "application/pdf" -> MAX_PDF_SIZE_MB
+                    mimeType == "application/msword" -> MAX_DOC_SIZE_MB
+                    mimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> MAX_DOCX_SIZE_MB
+                    mimeType == "text/plain" -> MAX_TXT_SIZE_MB
+                    mimeType == "application/rtf" || mimeType == "text/rtf" -> MAX_RTF_SIZE_MB
+                    else -> MAX_DOC_SIZE_MB // Default
+                }
+                
+                if (sizeInMB > maxSize) {
+                    return ValidationResult.Error("File too large. Maximum ${maxSize}MB allowed")
+                }
+            }
+            
+            return ValidationResult.Success
+        } catch (e: Exception) {
+            return ValidationResult.Error("Unable to read file: ${e.message}")
         }
     }
     

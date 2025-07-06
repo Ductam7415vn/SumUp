@@ -4,6 +4,7 @@ import com.example.sumup.data.local.entity.SummaryEntity
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.SummaryMetrics
 import com.example.sumup.domain.model.SummaryPersona
+import com.example.sumup.domain.model.ProcessingStatus
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +38,16 @@ class SummaryMapper @Inject constructor() {
             detailedSummary = entity.detailedSummary,
             keyInsights = entity.keyInsights,
             actionItems = entity.actionItems,
-            keywords = entity.keywords
+            keywords = entity.keywords,
+            // Streaming support
+            isPartial = entity.isPartial,
+            processedSections = entity.processedSections,
+            totalSections = entity.totalSections,
+            processingStatus = try {
+                ProcessingStatus.valueOf(entity.processingStatus)
+            } catch (e: IllegalArgumentException) {
+                ProcessingStatus.COMPLETED
+            }
         )
     }
     
@@ -61,7 +71,12 @@ class SummaryMapper @Inject constructor() {
             detailedSummary = domain.detailedSummary,
             keyInsights = domain.keyInsights,
             actionItems = domain.actionItems,
-            keywords = domain.keywords
+            keywords = domain.keywords,
+            // Streaming support
+            isPartial = domain.isPartial,
+            processedSections = domain.processedSections,
+            totalSections = domain.totalSections,
+            processingStatus = domain.processingStatus.name
         )
     }
 }

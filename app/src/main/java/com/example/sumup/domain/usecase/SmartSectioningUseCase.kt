@@ -8,8 +8,15 @@ import com.example.sumup.domain.model.SummaryPersona
 import com.example.sumup.domain.repository.SummaryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.ceil
+import kotlin.math.min
 
 /**
  * Use case for smart sectioning of long documents
@@ -21,9 +28,20 @@ class SmartSectioningUseCase @Inject constructor(
 ) {
     companion object {
         const val SECTION_THRESHOLD = 10_000 // Characters
-        const val MAX_SECTION_SIZE = 5_000 // Characters per section
-        const val MIN_SECTION_SIZE = 1_000 // Minimum characters per section
-        const val OVERLAP_SIZE = 200 // Characters overlap between sections
+        const val MAX_SECTION_SIZE = 8_000 // Characters per section (increased for better performance)
+        const val MIN_SECTION_SIZE = 2_000 // Minimum characters per section
+        const val OVERLAP_SIZE = 300 // Characters overlap between sections
+        const val PARALLEL_BATCH_SIZE = 3 // Process 3 sections simultaneously
+        
+        // Dynamic sizing based on document length
+        fun getOptimalSectionSize(totalLength: Int): Int {
+            return when {
+                totalLength < 50_000 -> 5_000 // ~10 pages
+                totalLength < 150_000 -> 8_000 // ~30 pages
+                totalLength < 300_000 -> 10_000 // ~60 pages
+                else -> 12_000 // 60+ pages
+            }
+        }
     }
 
     sealed class SectioningResult {
@@ -72,17 +90,14 @@ class SmartSectioningUseCase @Inject constructor(
             val sections = createSmartSections(text)
             send(SectioningResult.Progress(0, sections.size))
 
-            // Process sections sequentially to avoid concurrent emissions
-            val sectionSummaries = sections.mapIndexed { index, section ->
-                send(SectioningResult.Progress(index + 1, sections.size))
-                val summaryResult = summarizeTextUseCase(
-                    section.content,
-                    persona
-                )
-                summaryResult.getOrNull()?.let { summary ->
-                    section.copy(summary = summary)
-                } ?: section
-            }
+            // Process sections in parallel batches
+            val sectionSummaries = processSectionsInParallel(
+                sections = sections,
+                persona = persona,
+                onProgress = { currentSection ->
+                    send(SectioningResult.Progress(currentSection, sections.size))
+                }
+            )
 
             // Generate overall summary from section summaries
             val combinedSectionSummaries = sectionSummaries.joinToString("\n\n") { section ->
@@ -120,15 +135,62 @@ class SmartSectioningUseCase @Inject constructor(
     }
 
     /**
+     * Process sections in parallel batches for better performance
+     */
+    private suspend fun processSectionsInParallel(
+        sections: List<DocumentSection>,
+        persona: SummaryPersona,
+        onProgress: suspend (Int) -> Unit
+    ): List<DocumentSection> = coroutineScope {
+        var processedCount = 0
+        val countMutex = kotlinx.coroutines.sync.Mutex()
+        
+        // Process sections in batches to avoid overwhelming the API
+        sections.chunked(PARALLEL_BATCH_SIZE).flatMap { batch ->
+            // Launch parallel processing for each batch
+            val deferredResults = batch.map { section ->
+                async {
+                    try {
+                        val summaryResult = summarizeTextUseCase(
+                            section.content,
+                            persona
+                        )
+                        
+                        // Update progress after each section completes
+                        countMutex.withLock {
+                            processedCount++
+                        }
+                        launch { onProgress(processedCount) }
+                        
+                        summaryResult.getOrNull()?.let { summary ->
+                            section.copy(summary = summary)
+                        } ?: section
+                    } catch (e: Exception) {
+                        android.util.Log.e("SmartSectioningUseCase", 
+                            "Failed to process section ${section.title}", e)
+                        section // Return original section on error
+                    }
+                }
+            }
+            
+            // Wait for all in the batch to complete
+            deferredResults.awaitAll()
+        }
+    }
+
+    /**
      * Creates smart sections based on natural breaks in the text
      */
-    private fun createSmartSections(text: String): List<DocumentSection> {
+    fun createSmartSections(text: String): List<DocumentSection> {
         val sections = mutableListOf<DocumentSection>()
+        
+        // Get optimal section size based on document length
+        val optimalSectionSize = getOptimalSectionSize(text.length)
         
         // Try to detect natural sections first (headers, chapters, etc.)
         val naturalSections = detectNaturalSections(text)
         
-        if (naturalSections.isNotEmpty() && naturalSections.all { it.content.length <= MAX_SECTION_SIZE }) {
+        if (naturalSections.isNotEmpty() && naturalSections.all { it.content.length <= optimalSectionSize }) {
             return naturalSections
         }
 
@@ -141,7 +203,7 @@ class SmartSectioningUseCase @Inject constructor(
         paragraphs.forEach { paragraph ->
             val paragraphStart = text.indexOf(paragraph, currentStart)
             
-            if (currentSection.length + paragraph.length > MAX_SECTION_SIZE && 
+            if (currentSection.length + paragraph.length > optimalSectionSize && 
                 currentSection.length >= MIN_SECTION_SIZE) {
                 // Create section
                 sections.add(

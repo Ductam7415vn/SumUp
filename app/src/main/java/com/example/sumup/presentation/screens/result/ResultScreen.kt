@@ -120,7 +120,8 @@ fun ResultScreen(
                 hasData = uiState.summary != null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f),
+                    .weight(1f)
+                    .padding(top = 8.dp),
                 shimmerContent = {
                     // Enhanced shimmer with animations
                     LazyColumn(

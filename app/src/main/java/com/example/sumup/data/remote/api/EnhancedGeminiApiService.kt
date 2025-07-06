@@ -24,7 +24,8 @@ class EnhancedGeminiApiService(
         private const val MAX_RETRIES = 3
         private const val INITIAL_RETRY_DELAY = 1000L // 1 second
         private const val MAX_RETRY_DELAY = 8000L // 8 seconds
-        private const val TIMEOUT_MILLIS = 30000L // 30 seconds
+        private const val DEFAULT_TIMEOUT_MILLIS = 45000L // 45 seconds per chunk
+        private const val MAX_TOTAL_TIMEOUT_MILLIS = 600000L // 10 minutes total
         private const val RATE_LIMIT_DELAY = 5000L // 5 seconds
         
         // Optimized parameters for better responses
@@ -32,11 +33,28 @@ class EnhancedGeminiApiService(
         private const val OPTIMAL_TOP_K = 40
         private const val OPTIMAL_TOP_P = 0.95f
         private const val MAX_OUTPUT_TOKENS = 2048
+        
+        // Dynamic timeout based on text length
+        fun getTimeoutForTextLength(textLength: Int): Long {
+            return when {
+                textLength < 1000 -> 15000L   // 15s for short text
+                textLength < 5000 -> 30000L   // 30s for medium text
+                textLength < 10000 -> 45000L  // 45s for long text
+                else -> 60000L                // 60s for very long text
+            }
+        }
     }
     
     override suspend fun generateContent(apiKey: String, request: GeminiRequest): GeminiResponse {
         android.util.Log.d("EnhancedGeminiAPI", "generateContent called with key: ${apiKey.take(10)}...")
-        return withTimeout(TIMEOUT_MILLIS) {
+        
+        // Calculate dynamic timeout based on request content length
+        val textLength = request.contents.firstOrNull()?.parts?.firstOrNull()?.text?.length ?: 0
+        val timeoutMillis = getTimeoutForTextLength(textLength)
+        
+        android.util.Log.d("EnhancedGeminiAPI", "Using timeout: ${timeoutMillis}ms for text length: $textLength")
+        
+        return withTimeout(timeoutMillis) {
             android.util.Log.d("EnhancedGeminiAPI", "Inside withTimeout block")
             executeWithRetry {
                 android.util.Log.d("EnhancedGeminiAPI", "Calling geminiApi.generateContent...")
@@ -69,7 +87,11 @@ class EnhancedGeminiApiService(
             
             // Execute with retry logic
             android.util.Log.d("EnhancedGeminiAPI", "Executing API call...")
-            android.util.Log.d("EnhancedGeminiAPI", "Calling Gemini API with timeout: ${TIMEOUT_MILLIS}ms")
+            
+            // Use dynamic timeout for the request
+            val requestTimeout = getTimeoutForTextLength(request.text.length)
+            android.util.Log.d("EnhancedGeminiAPI", "Calling Gemini API with timeout: ${requestTimeout}ms")
+            
             val response = executeWithRetry {
                 android.util.Log.d("EnhancedGeminiAPI", "Making actual HTTP request...")
                 val result = generateContent(apiKey, geminiRequest)
@@ -105,7 +127,6 @@ class EnhancedGeminiApiService(
             }
             
             result
-            
         } catch (e: Exception) {
             android.util.Log.e("EnhancedGeminiAPI", "=== API CALL FAILED ===")
             android.util.Log.e("EnhancedGeminiAPI", "Error type: ${e.javaClass.simpleName}")
