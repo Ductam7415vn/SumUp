@@ -190,7 +190,7 @@ private fun MainInputPane(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                MainUiState.InputType.PDF -> {
+                MainUiState.InputType.DOCUMENT -> {
                     PdfUploadSection(
                         selectedPdfName = uiState.selectedPdfName,
                         onPdfSelected = { uri, _ -> viewModel.selectPdf(android.net.Uri.parse(uri)) },
@@ -370,7 +370,7 @@ private fun MainSinglePane(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                MainUiState.InputType.PDF -> {
+                MainUiState.InputType.DOCUMENT -> {
                     PdfUploadSection(
                         selectedPdfName = uiState.selectedPdfName,
                         onPdfSelected = { uri, _ -> viewModel.selectPdf(android.net.Uri.parse(uri)) },

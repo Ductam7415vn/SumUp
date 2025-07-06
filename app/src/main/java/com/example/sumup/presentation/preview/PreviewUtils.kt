@@ -75,7 +75,7 @@ object PreviewData {
     )
 
     val mainUiStateWithPdf = MainUiState(
-        inputType = MainUiState.InputType.PDF,
+        inputType = MainUiState.InputType.DOCUMENT,
         selectedPdfUri = "/path/to/document.pdf",
         selectedPdfName = "document.pdf",
         pdfPageCount = 10,

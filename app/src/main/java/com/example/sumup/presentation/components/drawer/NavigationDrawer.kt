@@ -264,6 +264,16 @@ private fun DrawerContent(
             // Settings and Other Options
             item {
                 DrawerMenuItem(
+                    icon = Icons.Outlined.History,
+                    title = "View All History",
+                    isSelected = currentRoute == "history",
+                    onClick = onNavigateToHistory,
+                    hapticManager = hapticManager
+                )
+            }
+            
+            item {
+                DrawerMenuItem(
                     icon = Icons.Outlined.Settings,
                     title = "Settings",
                     isSelected = currentRoute == "settings",
@@ -523,7 +533,7 @@ private fun QuickActionsSection(
             OutlinedButton(
                 onClick = { 
                     hapticManager?.performHapticFeedback(HapticFeedbackType.CLICK)
-                    onStartNewSummary(MainUiState.InputType.PDF)
+                    onStartNewSummary(MainUiState.InputType.DOCUMENT)
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)

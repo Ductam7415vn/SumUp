@@ -21,6 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import com.example.sumup.ui.theme.Dimensions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +77,7 @@ fun HeroSection(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(Dimensions.topBarBigBoy)
     ) {
         // Animated gradient background
         Box(
@@ -112,135 +115,68 @@ fun HeroSection(
         )
         
         // Content
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .statusBarsPadding()
-        ) {
-            // Top bar
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        modifier = Modifier.graphicsLayer {
-                            alpha = if (isVisible) 1f else 0f
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Navigate back",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = onMoreOptions,
-                        modifier = Modifier.graphicsLayer {
-                            alpha = if (isVisible) 1f else 0f
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Animated title and subtitle
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(animationSpec = tween(600)) + 
-                        slideInVertically(initialOffsetY = { it / 2 }),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+        TopAppBar(
+            modifier = Modifier.statusBarsPadding(),
+            title = {
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = fadeIn(animationSpec = tween(600)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // AI Success indicator
-                    AnimatedAIIndicator()
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    Text(
-                        text = "AI Summary Ready",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "Your $contentType has been intelligently condensed",
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "✨",
+                            fontSize = 18.sp,
+                            modifier = Modifier.graphicsLayer {
+                                val scale = 1f + 0.1f * kotlin.math.sin(System.currentTimeMillis() / 1000f)
+                                scaleX = scale
+                                scaleY = scale
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "AI Summary Ready",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.graphicsLayer {
+                        alpha = if (isVisible) 1f else 0f
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.ArrowBack,
+                        contentDescription = "Navigate back",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AnimatedAIIndicator() {
-    val infiniteTransition = rememberInfiniteTransition(label = "ai_indicator")
-    
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "ai_scale"
-    )
-    
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "ai_alpha"
-    )
-    
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.alpha = alpha
-            }
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        Color.Transparent
+            },
+            actions = {
+                IconButton(
+                    onClick = onMoreOptions,
+                    modifier = Modifier.graphicsLayer {
+                        alpha = if (isVisible) 1f else 0f
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "More options",
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
-                ),
-                shape = androidx.compose.foundation.shape.CircleShape
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent
             )
-    ) {
-        Text(
-            text = "✨",
-            fontSize = 24.sp,
-            modifier = Modifier.align(Alignment.Center)
         )
     }
 }
+

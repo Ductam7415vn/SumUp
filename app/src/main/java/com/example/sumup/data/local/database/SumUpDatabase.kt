@@ -13,7 +13,7 @@ import com.example.sumup.data.local.entity.SummaryEntity
 
 @Database(
     entities = [SummaryEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(StringListConverter::class)
@@ -44,6 +44,17 @@ abstract class SumUpDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE summaries ADD COLUMN keywords TEXT")
             }
         }
+        
+        // Migration from version 3 to 4
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add columns for streaming and partial results support
+                database.execSQL("ALTER TABLE summaries ADD COLUMN isPartial INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE summaries ADD COLUMN processedSections INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE summaries ADD COLUMN totalSections INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE summaries ADD COLUMN processingStatus TEXT NOT NULL DEFAULT 'COMPLETED'")
+            }
+        }
 
         fun getDatabase(context: Context): SumUpDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -52,7 +63,7 @@ abstract class SumUpDatabase : RoomDatabase() {
                     SumUpDatabase::class.java,
                     "sumup_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     // Only use destructive migration as last resort for corrupted databases
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build()

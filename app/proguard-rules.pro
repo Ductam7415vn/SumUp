@@ -96,6 +96,14 @@
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
+# Mammoth library for DOCX processing
+-keep class org.zwobble.mammoth.** { *; }
+-keepclassmembers class org.zwobble.mammoth.** {
+    <fields>;
+    <methods>;
+}
+-dontwarn org.zwobble.mammoth.**
+
 # Security - Obfuscate security-sensitive classes
 -keep class com.example.sumup.data.remote.security.** { *; }
 -keep class com.example.sumup.utils.ApiKeyManager { *; }

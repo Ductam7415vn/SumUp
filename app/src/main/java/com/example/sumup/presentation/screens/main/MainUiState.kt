@@ -4,9 +4,18 @@ import com.example.sumup.domain.model.AppError
 import com.example.sumup.domain.model.FileUploadState
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.ServiceInfo
+import com.example.sumup.domain.model.Document
+import com.example.sumup.domain.model.DocumentType
+import com.example.sumup.domain.model.ProcessingOption
+import com.example.sumup.domain.model.ProcessingStrategy
 
 data class MainUiState(
     val inputText: String = "",
+    // Document selection (supports PDF, DOC, DOCX, TXT, RTF)
+    val selectedDocumentUri: String? = null,
+    val selectedDocumentName: String? = null,
+    val selectedDocument: Document? = null,
+    // Legacy PDF fields (kept for compatibility)
     val selectedPdfUri: String? = null,
     val selectedPdfName: String? = null,
     val inputType: InputType = InputType.TEXT,
@@ -41,6 +50,8 @@ data class MainUiState(
     // PDF preview
     val showPdfPreview: Boolean = false,
     val pdfPageCount: Int = 0,
+    // DOCX preview
+    val showDocxPreview: Boolean = false,
     // Service info
     val serviceInfo: ServiceInfo? = null,
     // Feature discovery
@@ -51,10 +62,15 @@ data class MainUiState(
     // API usage stats
     val apiUsageStats: com.example.sumup.domain.model.ApiUsageStats? = null,
     // Welcome card
-    val showWelcomeCard: Boolean = false
+    val showWelcomeCard: Boolean = false,
+    // Processing method selection
+    val showProcessingMethodDialog: Boolean = false,
+    val processingOptions: List<ProcessingOption> = emptyList(),
+    val selectedProcessingStrategy: ProcessingStrategy? = null,
+    val pendingTextForProcessing: String = ""
 ) {
     enum class InputType {
-        TEXT, PDF, OCR
+        TEXT, DOCUMENT, OCR
     }
     
     enum class SummaryLength(val displayName: String, val multiplier: Float) {
@@ -65,16 +81,18 @@ data class MainUiState(
     
     val characterCount: Int get() = inputText.length
     val isTextInput: Boolean get() = inputType == InputType.TEXT
-    val isPdfInput: Boolean get() = inputType == InputType.PDF
+    val isDocumentInput: Boolean get() = inputType == InputType.DOCUMENT
+    val isPdfInput: Boolean get() = inputType == InputType.DOCUMENT && selectedDocument?.type == DocumentType.PDF
+    val isDocxInput: Boolean get() = inputType == InputType.DOCUMENT && selectedDocument?.type == DocumentType.DOCX
     val isInputValid: Boolean get() = when (inputType) {
         InputType.TEXT -> inputText.trim().length >= 50
-        InputType.PDF -> selectedPdfUri != null
+        InputType.DOCUMENT -> selectedDocumentUri != null
         InputType.OCR -> inputText.trim().length >= 50
     }
     val isInputOverLimit: Boolean get() = inputText.length > 5000
     val hasContent: Boolean get() = when (inputType) {
         InputType.TEXT -> inputText.isNotEmpty()
-        InputType.PDF -> selectedPdfUri != null
+        InputType.DOCUMENT -> selectedDocumentUri != null
         InputType.OCR -> inputText.isNotEmpty()
     }
 }

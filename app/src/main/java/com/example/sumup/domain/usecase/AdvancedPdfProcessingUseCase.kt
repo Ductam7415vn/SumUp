@@ -40,13 +40,13 @@ data class TableData(
 )
 
 data class DocumentMetadata(
-    val documentType: DocumentType,
+    val documentType: PdfDocumentType,
     val language: String,
     val readingLevel: ReadingLevel,
     val topicCategories: List<String>
 )
 
-enum class DocumentType {
+enum class PdfDocumentType {
     ACADEMIC_PAPER, REPORT, CONTRACT, MANUAL, ARTICLE, BOOK, OTHER
 }
 
@@ -249,15 +249,15 @@ class AdvancedPdfProcessingUseCase @Inject constructor(
         return DocumentMetadata(documentType, language, readingLevel, topicCategories)
     }
     
-    private fun detectDocumentType(text: String, sections: List<DocumentSection>): DocumentType {
+    private fun detectDocumentType(text: String, sections: List<DocumentSection>): PdfDocumentType {
         val lowerText = text.lowercase()
         return when {
-            lowerText.contains("abstract") && lowerText.contains("references") -> DocumentType.ACADEMIC_PAPER
-            lowerText.contains("executive summary") || lowerText.contains("recommendations") -> DocumentType.REPORT
-            lowerText.contains("terms and conditions") || lowerText.contains("agreement") -> DocumentType.CONTRACT
-            lowerText.contains("user guide") || lowerText.contains("instructions") -> DocumentType.MANUAL
-            sections.any { it.sectionType == SectionType.HEADER } && sections.size > 5 -> DocumentType.ARTICLE
-            else -> DocumentType.OTHER
+            lowerText.contains("abstract") && lowerText.contains("references") -> PdfDocumentType.ACADEMIC_PAPER
+            lowerText.contains("executive summary") || lowerText.contains("recommendations") -> PdfDocumentType.REPORT
+            lowerText.contains("terms and conditions") || lowerText.contains("agreement") -> PdfDocumentType.CONTRACT
+            lowerText.contains("user guide") || lowerText.contains("instructions") -> PdfDocumentType.MANUAL
+            sections.any { it.sectionType == SectionType.HEADER } && sections.size > 5 -> PdfDocumentType.ARTICLE
+            else -> PdfDocumentType.OTHER
         }
     }
     
@@ -309,8 +309,8 @@ class AdvancedPdfProcessingUseCase @Inject constructor(
         val sectionScore = (data.sections.size / 10f).coerceIn(0f, 1f)
         val tableScore = (data.tables.size / 3f).coerceIn(0f, 1f)
         val typeScore = when (data.metadata.documentType) {
-            DocumentType.ACADEMIC_PAPER, DocumentType.CONTRACT -> 0.9f
-            DocumentType.REPORT, DocumentType.MANUAL -> 0.7f
+            PdfDocumentType.ACADEMIC_PAPER, PdfDocumentType.CONTRACT -> 0.9f
+            PdfDocumentType.REPORT, PdfDocumentType.MANUAL -> 0.7f
             else -> 0.5f
         }
         

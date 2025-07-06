@@ -35,5 +35,10 @@ data class SummaryEntity(
     val detailedSummary: String? = null,
     val keyInsights: List<String>? = null,
     val actionItems: List<String>? = null,
-    val keywords: List<String>? = null
+    val keywords: List<String>? = null,
+    // Streaming and partial results support
+    val isPartial: Boolean = false,
+    val processedSections: Int = 0,
+    val totalSections: Int = 0,
+    val processingStatus: String = "COMPLETED"
 )
