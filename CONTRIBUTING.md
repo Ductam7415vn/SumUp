@@ -1,67 +1,189 @@
 # Contributing to SumUp
 
-First off, thank you for considering contributing to SumUp! 🎉
+First off, thank you for considering contributing to SumUp! 🎉 We're excited to have you join our community.
 
-## Code of Conduct
+## 📋 Table of Contents
 
-This project and everyone participating in it is governed by our Code of Conduct. By participating, you are expected to uphold this code.
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [How Can I Contribute?](#how-can-i-contribute)
+- [Development Process](#development-process)
+- [Style Guidelines](#style-guidelines)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Community](#community)
 
-## How Can I Contribute?
+## 📜 Code of Conduct
 
-### Reporting Bugs
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to ductam7415@gmail.com.
 
-Before creating bug reports, please check existing issues. When creating a bug report, include:
+## 🚀 Getting Started
 
-- **Clear title and description**
-- **Steps to reproduce**
-- **Expected behavior**
-- **Actual behavior**
-- **Screenshots** (if applicable)
-- **Device/OS information**
+### Prerequisites
 
-### Suggesting Enhancements
+- Android Studio Koala (2024.1.1) or later
+- JDK 17
+- Git
+- GitHub account
+- Basic knowledge of Kotlin and Android development
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, include:
+### Setting Up Your Development Environment
 
-- **Clear title and description**
-- **Use case** - why is this needed?
-- **Possible implementation**
-- **Alternative solutions**
+1. **Fork the repository**
+   ```bash
+   # Navigate to https://github.com/Ductam7415vn/SumUp
+   # Click the "Fork" button
+   ```
 
-### Pull Requests
+2. **Clone your fork**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/SumUp.git
+   cd SumUp
+   ```
 
-1. Fork the repo and create your branch from `develop`
-2. Follow the existing code style
-3. Add tests if applicable
-4. Ensure the test suite passes
-5. Update documentation
-6. Issue that pull request!
+3. **Add upstream remote**
+   ```bash
+   git remote add upstream https://github.com/Ductam7415vn/SumUp.git
+   ```
 
-## Development Setup
+4. **Set up API key**
+   ```bash
+   # Copy the template
+   cp local.properties.template local.properties
+   
+   # Add your Gemini API key
+   echo "GEMINI_API_KEY=your_api_key_here" >> local.properties
+   ```
 
-```bash
-# Clone your fork
-git clone https://github.com/your-username/SumUp.git
+5. **Open in Android Studio**
+   - Open Android Studio
+   - Select "Open an existing project"
+   - Navigate to the cloned directory
+   - Let Gradle sync complete
 
-# Add upstream remote
-git remote add upstream https://github.com/Ductam7415vn/SumUp.git
+## 🤝 How Can I Contribute?
 
-# Create feature branch
-git checkout -b feature/amazing-feature develop
+### 🐛 Reporting Bugs
+
+Before creating bug reports, please check [existing issues](https://github.com/Ductam7415vn/SumUp/issues) to avoid duplicates.
+
+**When reporting a bug, include:**
+
+- **Clear and descriptive title**
+- **Detailed description** of the issue
+- **Steps to reproduce** the behavior
+- **Expected behavior** description
+- **Screenshots or screen recordings** if applicable
+- **Environment details:**
+  ```markdown
+  - Device: [e.g. Pixel 6]
+  - OS: [e.g. Android 13]
+  - App Version: [e.g. 1.0.3]
+  - Kotlin Version: [e.g. 2.0.21]
+  ```
+
+### 💡 Suggesting Enhancements
+
+Enhancement suggestions are welcome! Please create an issue with:
+
+- **Use case:** Why is this enhancement needed?
+- **Proposed solution:** How do you envision it working?
+- **Alternatives considered:** What other solutions did you think about?
+- **Additional context:** Mockups, examples, etc.
+
+### 📝 Your First Code Contribution
+
+Unsure where to begin? Look for these labels:
+
+- `good first issue` - Simple issues perfect for beginners
+- `help wanted` - Issues where we need community help
+- `documentation` - Documentation improvements
+
+### 🔄 Pull Requests
+
+1. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes**
+   - Follow our [coding standards](#coding-standards)
+   - Add tests for new functionality
+   - Update documentation as needed
+
+3. **Commit your changes**
+   ```bash
+   git commit -m "feat: add amazing new feature"
+   ```
+
+4. **Push to your fork**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+5. **Open a Pull Request**
+   - Use our PR template
+   - Link related issues
+   - Ensure all checks pass
+
+## 💻 Development Process
+
+### Branch Strategy
+
+- `main` - Production-ready code
+- `develop` - Development branch
+- `feature/*` - New features
+- `fix/*` - Bug fixes
+- `docs/*` - Documentation updates
+
+### Workflow
+
+1. Always branch from `develop`
+2. Keep commits atomic and meaningful
+3. Write descriptive commit messages
+4. Keep PRs focused and small
+5. Request reviews from maintainers
+
+## 📐 Style Guidelines
+
+### Kotlin Code Style
+
+We follow the [official Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html) with these additions:
+
+```kotlin
+// ✅ Good
+class SummaryRepository @Inject constructor(
+    private val apiService: GeminiApiService,
+    private val dao: SummaryDao
+) {
+    suspend fun summarizeText(text: String): Result<Summary> {
+        return try {
+            val response = apiService.summarize(text)
+            Result.Success(response.toDomainModel())
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+}
+
+// ❌ Bad
+class summary_repository @Inject constructor(val api: GeminiApiService, val d: SummaryDao) {
+    suspend fun doSummary(t: String) = try {
+        Result.Success(api.summarize(t).toDomainModel())
+    } catch (e: Exception) { Result.Error(e) }
+}
 ```
 
-## Coding Standards
+### Compose UI Guidelines
 
-### Kotlin Style Guide
-
-- Follow [Kotlin official conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- Use meaningful variable names
-- Keep functions small and focused
-- Document complex logic
+- Use `Modifier` parameter for all composables
+- Follow Material 3 design guidelines
+- Provide content descriptions for accessibility
+- Keep composables small and focused
 
 ### Commit Messages
 
-Follow conventional commits:
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <subject>
@@ -71,52 +193,128 @@ Follow conventional commits:
 <footer>
 ```
 
-Types:
+**Types:**
 - `feat`: New feature
 - `fix`: Bug fix
-- `docs`: Documentation
-- `style`: Code style changes
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
 - `refactor`: Code refactoring
-- `test`: Test additions/changes
-- `chore`: Maintenance tasks
+- `perf`: Performance improvements
+- `test`: Test additions or changes
+- `build`: Build system changes
+- `ci`: CI configuration changes
+- `chore`: Other changes
 
-### Architecture Guidelines
+**Examples:**
+```bash
+feat(summary): add PDF export functionality
+fix(ocr): resolve camera permission crash on Android 14
+docs(readme): update installation instructions
+```
 
-- Follow Clean Architecture principles
-- Keep layers separated
-- Use dependency injection
-- Write testable code
+## 🧪 Testing
 
-## Testing
+### Running Tests
 
 ```bash
-# Run unit tests
+# Unit tests
 ./gradlew test
 
-# Run instrumented tests
+# Instrumented tests
 ./gradlew connectedAndroidTest
 
-# Run lint checks
+# All tests with coverage
+./gradlew testDebugUnitTestCoverage
+
+# Lint checks
 ./gradlew lint
 ```
 
-## Documentation
+### Writing Tests
+
+- Aim for >70% code coverage
+- Test edge cases and error scenarios
+- Use meaningful test names
+- Follow AAA pattern (Arrange, Act, Assert)
+
+```kotlin
+@Test
+fun `summarizeText returns error when text is empty`() = runTest {
+    // Arrange
+    val useCase = SummarizeTextUseCase(repository)
+    
+    // Act
+    val result = useCase("")
+    
+    // Assert
+    assertTrue(result is Result.Error)
+    assertEquals("Text cannot be empty", result.message)
+}
+```
+
+## 📚 Documentation
+
+### Code Documentation
+
+- Add KDoc comments for public APIs
+- Include examples for complex functionality
+- Document non-obvious implementations
+
+```kotlin
+/**
+ * Summarizes the provided text using the specified persona.
+ *
+ * @param text The text to summarize (50-30,000 characters)
+ * @param persona The AI persona to use for summarization
+ * @return Flow emitting the summarization progress and result
+ * @throws IllegalArgumentException if text length is invalid
+ *
+ * Example:
+ * ```
+ * summarizeTextUseCase(
+ *     text = "Long article text...",
+ *     persona = Persona.STUDENT
+ * ).collect { result ->
+ *     when (result) {
+ *         is Result.Success -> updateUI(result.data)
+ *         is Result.Error -> showError(result.error)
+ *         is Result.Loading -> showProgress()
+ *     }
+ * }
+ * ```
+ */
+```
+
+### User Documentation
 
 - Update README.md for user-facing changes
-- Update technical docs for architecture changes
-- Add KDoc comments for public APIs
-- Include examples where helpful
+- Add screenshots for UI changes
+- Update API documentation for backend changes
 
-## Release Process
+## 🌟 Recognition
 
-1. Update version in `build.gradle.kts`
-2. Update CHANGELOG.md
-3. Create pull request to `main`
-4. After merge, tag release
-5. Create GitHub release
+Contributors will be:
+- Listed in our [Contributors](https://github.com/Ductam7415vn/SumUp/graphs/contributors) page
+- Mentioned in release notes for significant contributions
+- Eligible for special contributor badges
 
-## Questions?
+## 🤔 Questions?
 
-Feel free to open an issue with the `question` label or reach out to the maintainers.
+- 💬 [GitHub Discussions](https://github.com/Ductam7415vn/SumUp/discussions) - General discussions
+- 🐛 [GitHub Issues](https://github.com/Ductam7415vn/SumUp/issues) - Bug reports and features
+- 📧 Email: ductam7415@gmail.com - Private inquiries
 
-Thank you for contributing! 🚀
+## 📋 Checklist Before Submitting
+
+- [ ] I've read the contributing guidelines
+- [ ] I've checked for existing issues/PRs
+- [ ] I've followed the code style guidelines
+- [ ] I've added tests for my changes
+- [ ] I've updated relevant documentation
+- [ ] All tests pass locally
+- [ ] I've tested on different screen sizes
+- [ ] I've signed the CLA (if required)
+
+---
+
+Thank you for making SumUp better! 🚀 Your contributions help thousands of users save time every day.
