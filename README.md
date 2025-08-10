@@ -56,6 +56,11 @@
 </table>
 </div>
 
+## 📥 Download
+
+### Try SumUp Now
+Download the latest APK from our [Google Drive folder](https://drive.google.com/drive/folders/14ZlVof3C42ugtQ4hR_T7P_rpb-MKZaLD)
+
 ## 🚀 Getting Started
 
 ### Prerequisites
