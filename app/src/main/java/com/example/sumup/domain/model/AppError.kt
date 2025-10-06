@@ -11,5 +11,8 @@ sealed class AppError(val message: String) {
     object ModelLoadingError : AppError("AI model loading")
     object ApiKeyError : AppError("API key required")
     object InvalidApiKeyError : AppError("Invalid API key")
+    data class ExportError(val originalMessage: String) : AppError(originalMessage)
+    object StoragePermissionError : AppError("Storage permission required")
+    object DiskFullError : AppError("Insufficient storage space")
     data class UnknownError(val originalMessage: String) : AppError(originalMessage)
 }

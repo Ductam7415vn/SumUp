@@ -7,10 +7,9 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
-    // Tạm thời comment để build được nhiều flavors
-    // id("com.google.gms.google-services")
-    // id("com.google.firebase.crashlytics")
-    // id("com.google.firebase.firebase-perf")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    id("com.google.firebase.firebase-perf")
 }
 
 // Load local.properties

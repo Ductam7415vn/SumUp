@@ -74,7 +74,7 @@ class EnhancedGeminiApiService(
             android.util.Log.d("EnhancedGeminiAPI", "Request text length: ${request.text.length}")
             android.util.Log.d("EnhancedGeminiAPI", "Request style: ${request.style}")
             android.util.Log.d("EnhancedGeminiAPI", "Request maxLength: ${request.maxLength}")
-            android.util.Log.d("EnhancedGeminiAPI", "API endpoint: v1beta/models/gemini-1.5-flash:generateContent")
+            android.util.Log.d("EnhancedGeminiAPI", "API endpoint: v1/models/gemini-2.0-flash:generateContent")
             
             // Build optimized prompt
             val prompt = GeminiPromptBuilder.buildAdvancedPrompt(request)

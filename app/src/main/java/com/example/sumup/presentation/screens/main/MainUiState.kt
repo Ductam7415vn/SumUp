@@ -36,6 +36,7 @@ data class MainUiState(
     // Draft recovery
     val showDraftRecoveryDialog: Boolean = false,
     val recoverableDraftText: String = "",
+    val draftTimestamp: Long = 0L,
     val autoSaveEnabled: Boolean = true,
     // Stats
     val todayCount: Int = 0,

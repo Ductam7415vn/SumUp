@@ -360,13 +360,8 @@ fun ResultScreen(
         // Export success handling
         LaunchedEffect(uiState.showExportSuccess) {
             if (uiState.showExportSuccess) {
-                val file = uiState.exportedFile
-                if (file != null) {
-                    haptics.success()
-                    // Auto share the exported file
-                    viewModel.shareExportedFile(file)
-                    viewModel.dismissExportSuccess()
-                }
+                haptics.success()
+                viewModel.dismissExportSuccess()
             }
         }
     }

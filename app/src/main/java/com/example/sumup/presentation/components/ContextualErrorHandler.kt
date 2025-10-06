@@ -338,6 +338,46 @@ private fun getContextualError(
             }
         )
         
+        is AppError.ExportError -> ContextualError(
+            error = appError,
+            title = "Export Failed",
+            description = "Failed to export your summary: ${appError.originalMessage}. Please try again.",
+            icon = Icons.Default.Error,
+            actions = buildList {
+                onRetry?.let {
+                    add(ContextualErrorAction("Try Again", it, isPrimary = true))
+                }
+                add(ContextualErrorAction("Cancel", onDismiss))
+            }
+        )
+
+        AppError.StoragePermissionError -> ContextualError(
+            error = appError,
+            title = "Storage Permission Required",
+            description = "SumUp needs storage permission to save exported files. Please grant the permission to continue.",
+            icon = Icons.Default.Lock,
+            actions = buildList {
+                onNavigateToSettings?.let {
+                    add(ContextualErrorAction("Grant Permission", it, isPrimary = true))
+                }
+                add(ContextualErrorAction("Cancel", onDismiss))
+            }
+        )
+
+        AppError.DiskFullError -> ContextualError(
+            error = appError,
+            title = "Insufficient Storage",
+            description = "Your device doesn't have enough storage space to save the exported file. Please free up some space and try again.",
+            icon = Icons.Default.Storage,
+            actions = buildList {
+                add(ContextualErrorAction("Manage Storage", {
+                    // TODO: Open storage management
+                    onDismiss()
+                }, isPrimary = true))
+                add(ContextualErrorAction("OK", onDismiss))
+            }
+        )
+
         is AppError.UnknownError -> ContextualError(
             error = appError,
             title = "Something Went Wrong",

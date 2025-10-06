@@ -58,7 +58,11 @@ class MainViewModel @Inject constructor(
     private val apiKeyManager: EnhancedApiKeyManager,
     private val analyticsHelper: com.example.sumup.utils.analytics.AnalyticsHelper,
     private val workManagerHelper: WorkManagerHelper,
-    private val documentProcessorFactory: DocumentProcessorFactory
+    private val documentProcessorFactory: DocumentProcessorFactory,
+    // Analytics & Monitoring
+    private val analyticsManager: com.example.sumup.analytics.AnalyticsManager,
+    private val crashlyticsManager: com.example.sumup.analytics.CrashlyticsManager,
+    private val performanceMonitor: com.example.sumup.analytics.PerformanceMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState(
@@ -68,6 +72,10 @@ class MainViewModel @Inject constructor(
     private val stateMutex = Mutex()
 
     init {
+        // Analytics: Log screen view
+        analyticsManager.logScreenView(com.example.sumup.analytics.AnalyticsManager.SCREEN_MAIN)
+        crashlyticsManager.setCurrentScreen(com.example.sumup.analytics.AnalyticsManager.SCREEN_MAIN)
+
         loadDraft()
         loadServiceInfo()
         loadSummaryCount()
@@ -81,10 +89,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val recoveredDraft = draftManager.recoverDraft()
             if (recoveredDraft.isNotEmpty()) {
-                _uiState.update { 
+                val timestamp = draftManager.getDraftTimestamp()
+                _uiState.update {
                     it.copy(
                         inputText = recoveredDraft,
                         recoverableDraftText = recoveredDraft,
+                        draftTimestamp = timestamp,
                         showDraftRecoveryDialog = true
                     )
                 }
@@ -178,6 +188,13 @@ class MainViewModel @Inject constructor(
     }
 
     fun selectInputType(type: InputType) {
+        // Analytics: Track input type selection
+        analyticsManager.logSettingsChange(
+            setting = "input_type",
+            value = type.name.lowercase()
+        )
+        crashlyticsManager.logAction("Input type changed", "Type: ${type.name}")
+
         _uiState.update { it.copy(inputType = type) }
     }
     
@@ -196,8 +213,14 @@ class MainViewModel @Inject constructor(
                     } else {
                         null
                     }
-                    
-                    _uiState.update { 
+
+                    // Analytics: Track document selection
+                    crashlyticsManager.logAction(
+                        "Document selected",
+                        "Type: ${document.type.name}, Pages: ${pageCount ?: 0}, Size: ${document.sizeBytes / 1024}KB"
+                    )
+
+                    _uiState.update {
                         it.copy(
                             selectedDocumentUri = uri.toString(),
                             selectedDocumentName = document.fileName,
@@ -611,7 +634,16 @@ class MainViewModel @Inject constructor(
                     when (validationResult) {
                         is InputValidator.ValidationResult.Error -> {
                             android.util.Log.e("MainViewModel", "Validation error: ${validationResult.message}")
-                            _uiState.update { 
+
+                            // Analytics: Track input validation error
+                            analyticsManager.logError(
+                                errorType = "InputValidationError",
+                                errorMessage = validationResult.message,
+                                context = "text_input_validation"
+                            )
+                            crashlyticsManager.logAction("Input validation failed", "Error: ${validationResult.message}")
+
+                            _uiState.update {
                                 it.copy(error = AppError.UnknownError(validationResult.message))
                             }
                         }
@@ -636,7 +668,15 @@ class MainViewModel @Inject constructor(
                             val validationResult = InputValidator.validatePdfFile(context, uri)
                             when (validationResult) {
                                 is InputValidator.ValidationResult.Error -> {
-                                    _uiState.update { 
+                                    // Analytics: Track PDF validation error
+                                    analyticsManager.logError(
+                                        errorType = "PdfValidationError",
+                                        errorMessage = validationResult.message,
+                                        context = "pdf_input_validation"
+                                    )
+                                    crashlyticsManager.logAction("PDF validation failed", "Error: ${validationResult.message}")
+
+                                    _uiState.update {
                                         it.copy(error = AppError.UnknownError(validationResult.message))
                                     }
                                 }
@@ -661,8 +701,14 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 android.util.Log.d("MainViewModel", "Starting summarization process")
+
+                // Analytics: Start performance trace
+                val startTime = System.currentTimeMillis()
+                val inputType = _uiState.value.inputType
+                crashlyticsManager.logAction("Start summarization", "Type: ${inputType.name}")
+
                 _uiState.update { it.copy(
-                    isLoading = true, 
+                    isLoading = true,
                     error = null,
                     processingProgress = 0f,
                     processingMessage = "Initializing..."
@@ -791,27 +837,45 @@ class MainViewModel @Inject constructor(
                                 persona = com.example.sumup.domain.model.SummaryPersona.GENERAL,
                                 lengthMultiplier = _uiState.value.summaryLength.multiplier
                             )
-                            
+
                             // Cancel progress simulation
                             progressJob?.cancel()
-                            
+
                             result.fold(
                                 onSuccess = { summary ->
                                     android.util.Log.d("MainViewModel", "Summarization successful, ID: ${summary.id}")
-                                    
-                                    // Track successful summarization
+
+                                    // Calculate processing time
+                                    val processingTime = System.currentTimeMillis() - startTime
+
+                                    // Analytics: Log successful summarization with comprehensive metrics
+                                    analyticsManager.logSummaryCreated(
+                                        persona = summary.persona.name,
+                                        wordCount = summary.metrics.summaryWordCount,
+                                        reductionPercentage = summary.metrics.reductionPercentage,
+                                        processingTimeMs = processingTime,
+                                        source = inputType.name.lowercase()
+                                    )
+
+                                    // Crashlytics breadcrumb
+                                    crashlyticsManager.logAction(
+                                        "Summarization success",
+                                        "ID: ${summary.id}, Time: ${processingTime}ms, Words: ${summary.metrics.summaryWordCount}"
+                                    )
+
+                                    // Legacy analytics (keep for now)
                                     analyticsHelper.logEvent(
                                         com.example.sumup.utils.analytics.AnalyticsEvent.FeatureUsed(
                                             featureName = "summarize_success",
                                             context = mapOf(
-                                                "input_type" to _uiState.value.inputType.name,
+                                                "input_type" to inputType.name,
                                                 "text_length" to text.length,
                                                 "persona" to "GENERAL",
                                                 "summary_length" to _uiState.value.summaryLength.name
                                             )
                                         )
                                     )
-                                    
+
                                     _uiState.update { it.copy(
                                         isLoading = false,
                                         summary = summary,
@@ -823,14 +887,24 @@ class MainViewModel @Inject constructor(
                                 },
                                 onFailure = { exception ->
                                     android.util.Log.e("MainViewModel", "Summarization failed", exception)
-                                    
-                                    // Track failure
+
+                                    // Analytics: Log error with context
+                                    analyticsManager.logError(
+                                        errorType = "SummarizationError",
+                                        errorMessage = exception.message ?: "Unknown error",
+                                        context = "summarize_${inputType.name.lowercase()}"
+                                    )
+
+                                    // Crashlytics exception tracking
+                                    crashlyticsManager.logException(exception, "Summarization failed")
+
+                                    // Legacy analytics (keep for now)
                                     analyticsHelper.logEvent(
                                         com.example.sumup.utils.analytics.AnalyticsEvent.SummarizeError(
                                             error = exception.message ?: "Unknown error"
                                         )
                                     )
-                                    
+
                                     _uiState.update { it.copy(
                                         isLoading = false,
                                         error = AppError.UnknownError(exception.message ?: "Summarization failed"),
@@ -886,6 +960,30 @@ class MainViewModel @Inject constructor(
                                                     is SmartSectioningUseCase.SectioningResult.Success -> {
                                                         val summary = sectioningResult.sectionedSummary.overallSummary
                                                         android.util.Log.d("MainViewModel", "PDF smart sectioning successful, ID: ${summary.id}")
+
+                                                        // Calculate processing time
+                                                        val processingTime = System.currentTimeMillis() - startTime
+
+                                                        // Analytics: Log PDF processing success
+                                                        analyticsManager.logPdfProcessed(
+                                                            pageCount = document.pageCount ?: 0,
+                                                            success = true,
+                                                            processingTimeMs = processingTime
+                                                        )
+
+                                                        analyticsManager.logSummaryCreated(
+                                                            persona = summary.persona.name,
+                                                            wordCount = summary.metrics.summaryWordCount,
+                                                            reductionPercentage = summary.metrics.reductionPercentage,
+                                                            processingTimeMs = processingTime,
+                                                            source = "pdf"
+                                                        )
+
+                                                        crashlyticsManager.logAction(
+                                                            "PDF sectioning success",
+                                                            "ID: ${summary.id}, Pages: ${document.pageCount}, Time: ${processingTime}ms"
+                                                        )
+
                                                         _uiState.update { it.copy(
                                                             isLoading = false,
                                                             summary = summary,
@@ -897,6 +995,16 @@ class MainViewModel @Inject constructor(
                                                     }
                                                     is SmartSectioningUseCase.SectioningResult.Error -> {
                                                         android.util.Log.e("MainViewModel", "PDF smart sectioning failed: ${sectioningResult.message}")
+
+                                                        // Analytics: Log PDF processing error
+                                                        analyticsManager.logError(
+                                                            errorType = "PdfSectioningError",
+                                                            errorMessage = sectioningResult.message,
+                                                            context = "pdf_smart_sectioning"
+                                                        )
+
+                                                        crashlyticsManager.logAction("PDF sectioning failed", "Error: ${sectioningResult.message}")
+
                                                         _uiState.update { it.copy(
                                                             isLoading = false,
                                                             error = AppError.UnknownError(sectioningResult.message),
@@ -917,6 +1025,30 @@ class MainViewModel @Inject constructor(
                                             result.fold(
                                                 onSuccess = { summary ->
                                                     android.util.Log.d("MainViewModel", "PDF summarization successful, ID: ${summary.id}")
+
+                                                    // Calculate processing time
+                                                    val processingTime = System.currentTimeMillis() - startTime
+
+                                                    // Analytics: Log PDF processing success
+                                                    analyticsManager.logPdfProcessed(
+                                                        pageCount = document.pageCount ?: 0,
+                                                        success = true,
+                                                        processingTimeMs = processingTime
+                                                    )
+
+                                                    analyticsManager.logSummaryCreated(
+                                                        persona = summary.persona.name,
+                                                        wordCount = summary.metrics.summaryWordCount,
+                                                        reductionPercentage = summary.metrics.reductionPercentage,
+                                                        processingTimeMs = processingTime,
+                                                        source = "pdf"
+                                                    )
+
+                                                    crashlyticsManager.logAction(
+                                                        "PDF summarization success",
+                                                        "ID: ${summary.id}, Pages: ${document.pageCount}, Time: ${processingTime}ms"
+                                                    )
+
                                                     _uiState.update { it.copy(
                                                         isLoading = false,
                                                         summary = summary,
@@ -928,6 +1060,22 @@ class MainViewModel @Inject constructor(
                                                 },
                                                 onFailure = { exception ->
                                                     android.util.Log.e("MainViewModel", "PDF summarization failed", exception)
+
+                                                    // Analytics: Log PDF processing failure
+                                                    analyticsManager.logPdfProcessed(
+                                                        pageCount = document.pageCount ?: 0,
+                                                        success = false,
+                                                        processingTimeMs = System.currentTimeMillis() - startTime
+                                                    )
+
+                                                    analyticsManager.logError(
+                                                        errorType = "PdfSummarizationError",
+                                                        errorMessage = exception.message ?: "Unknown error",
+                                                        context = "pdf_summarization"
+                                                    )
+
+                                                    crashlyticsManager.logException(exception, "PDF summarization failed")
+
                                                     _uiState.update { it.copy(
                                                         isLoading = false,
                                                         error = AppError.UnknownError(exception.message ?: "PDF summarization failed"),
@@ -941,6 +1089,16 @@ class MainViewModel @Inject constructor(
                                     is FileUploadState.Error -> {
                                         // No progressJob for PDF processing
                                         android.util.Log.e("MainViewModel", "PDF processing error: ${state.error.message}")
+
+                                        // Analytics: Log PDF extraction error
+                                        analyticsManager.logError(
+                                            errorType = "PdfExtractionError",
+                                            errorMessage = state.error.message,
+                                            context = "pdf_text_extraction"
+                                        )
+
+                                        crashlyticsManager.logAction("PDF extraction failed", "Error: ${state.error.message}")
+
                                         _uiState.update { it.copy(
                                             isLoading = false,
                                             error = AppError.UnknownError(state.error.message),

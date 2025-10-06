@@ -7,8 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.domain.model.SummaryPersona
-import com.example.sumup.presentation.screens.result.components.ExportFormat
-import com.example.sumup.presentation.screens.result.export.SummaryExportService
+import com.example.sumup.domain.model.ExportFormat
+import com.example.sumup.domain.usecase.ExportSummaryUseCase
+import com.example.sumup.analytics.AnalyticsManager
+import com.example.sumup.analytics.CrashlyticsManager
+import com.example.sumup.analytics.PerformanceMonitor
 import com.example.sumup.utils.clipboard.ClipboardManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,15 +34,21 @@ class ResultViewModel @Inject constructor(
     private val clipboardManager: ClipboardManager,
     private val summaryRepository: com.example.sumup.domain.repository.SummaryRepository,
     private val settingsRepository: com.example.sumup.domain.repository.SettingsRepository,
-    private val achievementManager: AchievementManager
+    private val achievementManager: AchievementManager,
+    private val exportSummaryUseCase: ExportSummaryUseCase,
+    private val analyticsManager: AnalyticsManager,
+    private val crashlyticsManager: CrashlyticsManager,
+    private val performanceMonitor: PerformanceMonitor
 ) : ViewModel() {
-    
-    private val exportService = SummaryExportService(context)
     
     private val _uiState = MutableStateFlow(ResultUiState())
     val uiState: StateFlow<ResultUiState> = _uiState.asStateFlow()
     
     init {
+        // Log screen view
+        analyticsManager.logScreenView(AnalyticsManager.SCREEN_RESULT)
+        crashlyticsManager.setCurrentScreen(AnalyticsManager.SCREEN_RESULT)
+
         // Load summary from navigation args or saved state
         val summaryId = savedStateHandle.get<String>("summaryId")
         if (summaryId != null) {
@@ -47,7 +56,7 @@ class ResultViewModel @Inject constructor(
         } else {
             loadSummary()
         }
-        
+
         // Load saved summary view mode preference
         viewModelScope.launch {
             settingsRepository.summaryViewMode.collect { savedMode ->
@@ -143,6 +152,10 @@ class ResultViewModel @Inject constructor(
         val summaryText = buildSummaryText(uiState.value.summary)
         clipboardManager.copyToClipboard(summaryText)
         _uiState.update { it.copy(showCopySuccess = true) }
+
+        // Log copy action
+        analyticsManager.logShare("clipboard", "summary")
+        crashlyticsManager.logAction("Copy summary", "")
     }
     
     fun saveSummary() {
@@ -168,67 +181,82 @@ class ResultViewModel @Inject constructor(
     fun exportSummary(format: ExportFormat) {
         viewModelScope.launch {
             _uiState.update { it.copy(isExporting = true, exportError = null) }
-            
+
             val summary = _uiState.value.summary
             if (summary == null) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
-                        isExporting = false, 
+                        isExporting = false,
                         exportError = "No summary to export"
-                    ) 
+                    )
                 }
+                crashlyticsManager.log("Export failed: No summary available")
+                analyticsManager.logExport(format.extension, success = false, wordCount = 0)
                 return@launch
             }
-            
-            val result = when (format) {
-                ExportFormat.PDF -> exportService.exportToPdf(summary, _uiState.value.selectedPersona)
-                ExportFormat.IMAGE -> exportService.exportToImage(summary, _uiState.value.selectedPersona)
-                ExportFormat.TEXT -> exportService.exportToText(summary, _uiState.value.selectedPersona)
-                ExportFormat.MARKDOWN -> exportService.exportToMarkdown(summary, _uiState.value.selectedPersona)
-                ExportFormat.JSON -> exportService.exportToJson(summary, _uiState.value.selectedPersona)
-                ExportFormat.DOCX -> exportService.exportToMarkdown(summary, _uiState.value.selectedPersona) // Export as markdown, can be converted to DOCX
-            }
-            
-            result.fold(
-                onSuccess = { file ->
-                    _uiState.update { 
-                        it.copy(
-                            isExporting = false,
-                            exportedFile = file,
-                            showExportSuccess = true
-                        ) 
-                    }
-                },
-                onFailure = { error ->
-                    _uiState.update { 
-                        it.copy(
-                            isExporting = false,
-                            exportError = error.message ?: "Export failed"
-                        ) 
-                    }
+
+            try {
+                // Track export with performance monitoring
+                val result = performanceMonitor.traceExport(
+                    format = format.extension,
+                    wordCount = summary.metrics.summaryWordCount
+                ) {
+                    exportSummaryUseCase(summary, format)
                 }
-            )
-        }
-    }
-    
-    
-    fun shareExportedFile(file: File) {
-        val uri = exportService.getFileUri(file)
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = when (file.extension) {
-                "pdf" -> "application/pdf"
-                "png" -> "image/png"
-                "txt" -> "text/plain"
-                "md" -> "text/markdown"
-                else -> "*/*"
+
+                result.fold(
+                    onSuccess = { uri ->
+                        _uiState.update {
+                            it.copy(
+                                isExporting = false,
+                                showExportSuccess = true
+                            )
+                        }
+
+                        // Log successful export
+                        analyticsManager.logExport(
+                            format = format.extension,
+                            success = true,
+                            wordCount = summary.metrics.summaryWordCount
+                        )
+                        crashlyticsManager.logAction("Export summary", "Format: ${format.extension}")
+
+                        android.util.Log.d("ResultViewModel", "Export successful: $uri")
+                    },
+                    onFailure = { error ->
+                        _uiState.update {
+                            it.copy(
+                                isExporting = false,
+                                exportError = error.message ?: "Export failed"
+                            )
+                        }
+
+                        // Log failed export
+                        analyticsManager.logExport(
+                            format = format.extension,
+                            success = false,
+                            wordCount = summary.metrics.summaryWordCount
+                        )
+                        analyticsManager.logError(
+                            errorType = "ExportError",
+                            errorMessage = error.message ?: "Unknown",
+                            context = "export_${format.extension}"
+                        )
+                        crashlyticsManager.logException(error, "Export ${format.extension}")
+
+                        android.util.Log.e("ResultViewModel", "Export failed", error)
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isExporting = false,
+                        exportError = e.message ?: "Export failed"
+                    )
+                }
+                crashlyticsManager.logException(e, "Export exception")
             }
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        
-        val chooser = Intent.createChooser(intent, "Share summary")
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
     }
     
     fun dismissExportSuccess() {

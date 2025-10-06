@@ -25,13 +25,19 @@ class SettingsViewModel @Inject constructor(
     private val summaryRepository: SummaryRepository,
     private val enhancedApiKeyManager: EnhancedApiKeyManager,
     private val apiKeyValidator: ApiKeyValidator,
-    private val apiUsageTracker: com.example.sumup.utils.ApiUsageTracker
+    private val apiUsageTracker: com.example.sumup.utils.ApiUsageTracker,
+    private val analyticsManager: com.example.sumup.analytics.AnalyticsManager,
+    private val crashlyticsManager: com.example.sumup.analytics.CrashlyticsManager
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
-    
+
     init {
+        // Analytics: Log screen view
+        analyticsManager.logScreenView(com.example.sumup.analytics.AnalyticsManager.SCREEN_SETTINGS)
+        crashlyticsManager.setCurrentScreen(com.example.sumup.analytics.AnalyticsManager.SCREEN_SETTINGS)
+
         loadSettings()
         loadUserStats()
         loadAchievements()
@@ -99,13 +105,27 @@ class SettingsViewModel @Inject constructor(
     
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
+            // Analytics: Track theme change
+            analyticsManager.logSettingsChange(
+                setting = "theme_mode",
+                value = mode.name.lowercase()
+            )
+            crashlyticsManager.logAction("Theme changed", "Mode: ${mode.name}")
+
             settingsRepository.setThemeMode(mode)
             _uiState.update { it.copy(showThemeDialog = false) }
         }
     }
-    
+
     fun setDynamicColorEnabled(enabled: Boolean) {
         viewModelScope.launch {
+            // Analytics: Track dynamic color toggle
+            analyticsManager.logSettingsChange(
+                setting = "dynamic_color",
+                value = enabled.toString()
+            )
+            crashlyticsManager.logAction("Dynamic color toggled", "Enabled: $enabled")
+
             settingsRepository.setDynamicColorEnabled(enabled)
             // No need to update UI state - it will flow through the combine
         }
@@ -122,22 +142,36 @@ class SettingsViewModel @Inject constructor(
     
     fun setSummaryViewPreference(preference: SummaryViewPreference) {
         viewModelScope.launch {
+            // Analytics: Track summary view preference
+            analyticsManager.logSettingsChange(
+                setting = "summary_view_preference",
+                value = preference.name.lowercase()
+            )
+            crashlyticsManager.logAction("Summary view changed", "Preference: ${preference.name}")
+
             settingsRepository.updateSummaryViewMode(preference.name)
             _uiState.update { it.copy(showSummaryViewDialog = false) }
         }
     }
-    
+
     // Language management
     fun showLanguageDialog() {
         _uiState.update { it.copy(showLanguageDialog = true) }
     }
-    
+
     fun hideLanguageDialog() {
         _uiState.update { it.copy(showLanguageDialog = false) }
     }
-    
+
     fun setLanguage(language: String) {
         viewModelScope.launch {
+            // Analytics: Track language change
+            analyticsManager.logSettingsChange(
+                setting = "language",
+                value = language
+            )
+            crashlyticsManager.logAction("Language changed", "Language: $language")
+
             settingsRepository.updateLanguage(language)
             _uiState.update { it.copy(showLanguageDialog = false) }
         }
@@ -341,7 +375,11 @@ class SettingsViewModel @Inject constructor(
                 // Add to EnhancedApiKeyManager with a default name
                 val keyName = "API Key ${_uiState.value.apiKeys.size + 1}"
                 enhancedApiKeyManager.addApiKey(keyName, _uiState.value.apiKeyInput)
-                
+
+                // Analytics: Track API key added
+                analyticsManager.logApiKeyAdded(provider = "gemini")
+                crashlyticsManager.logAction("API key added", "Provider: gemini")
+
                 _uiState.update {
                     it.copy(
                         isValidatingApiKey = false,
@@ -354,6 +392,14 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } else {
+                // Analytics: Track validation failure
+                analyticsManager.logError(
+                    errorType = "ApiKeyValidationError",
+                    errorMessage = result.errorMessage ?: "Invalid key",
+                    context = "api_key_settings"
+                )
+                crashlyticsManager.logAction("API key validation failed", "Error: ${result.errorMessage}")
+
                 _uiState.update {
                     it.copy(
                         isValidatingApiKey = false,
@@ -366,6 +412,9 @@ class SettingsViewModel @Inject constructor(
     
     fun clearApiKey() {
         viewModelScope.launch {
+            // Analytics: Track API key removal
+            crashlyticsManager.logAction("API key cleared", "Action confirmed")
+
             // Clear the active key in EnhancedApiKeyManager
             val activeKeyId = enhancedApiKeyManager.activeKeyId.value
             if (activeKeyId != null) {
@@ -384,6 +433,10 @@ class SettingsViewModel @Inject constructor(
     
     fun dismissApiKeySuccess() {
         _uiState.update { it.copy(apiKeyValidationSuccess = false) }
+    }
+
+    fun dismissApiKeyError() {
+        _uiState.update { it.copy(apiKeyError = null) }
     }
     
     // Enhanced API Key Management

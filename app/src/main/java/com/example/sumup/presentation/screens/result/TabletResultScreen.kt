@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.presentation.components.PredictiveBackGestureHandler
+import com.example.sumup.domain.model.ExportFormat
 import com.example.sumup.presentation.screens.result.components.PersonaSelector
 import com.example.sumup.presentation.screens.result.components.SummaryActionBar
 import com.example.sumup.presentation.screens.result.components.SummaryKPICard
-import com.example.sumup.presentation.screens.result.components.ExportFormat
 import com.example.sumup.presentation.utils.AdaptiveLayoutInfo
 import com.example.sumup.presentation.utils.DeviceType
 

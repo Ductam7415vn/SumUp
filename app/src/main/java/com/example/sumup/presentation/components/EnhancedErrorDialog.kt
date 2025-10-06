@@ -313,6 +313,33 @@ fun getEnhancedErrorInfo(error: AppError): EnhancedErrorInfo = when (error) {
         canRetry = false,
         severity = ErrorSeverity.HIGH
     )
+    is AppError.ExportError -> EnhancedErrorInfo(
+        title = "Export Failed",
+        message = error.originalMessage.ifEmpty { "Failed to export summary. Please try again." },
+        illustration = "📤",
+        icon = Icons.Default.ErrorOutline,
+        actionText = "Retry",
+        canRetry = true,
+        severity = ErrorSeverity.MEDIUM
+    )
+    AppError.StoragePermissionError -> EnhancedErrorInfo(
+        title = "Permission Required",
+        message = "Storage permission is needed to save exported files.",
+        illustration = "🔐",
+        icon = Icons.Default.Lock,
+        actionText = "Grant Permission",
+        canRetry = true,
+        severity = ErrorSeverity.HIGH
+    )
+    AppError.DiskFullError -> EnhancedErrorInfo(
+        title = "Disk Full",
+        message = "Not enough storage space to save the exported file. Please free up some space.",
+        illustration = "💿",
+        icon = Icons.Default.Storage,
+        actionText = "Manage Storage",
+        canRetry = false,
+        severity = ErrorSeverity.HIGH
+    )
     is AppError.UnknownError -> EnhancedErrorInfo(
         title = "Unexpected Error",
         message = error.originalMessage.ifEmpty { "Something unexpected happened. Please try again." },
