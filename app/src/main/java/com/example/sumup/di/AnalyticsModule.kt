@@ -1,6 +1,9 @@
 package com.example.sumup.di
 
 import android.content.Context
+import com.example.sumup.analytics.AnalyticsManager
+import com.example.sumup.analytics.CrashlyticsManager
+import com.example.sumup.analytics.PerformanceMonitor
 import com.example.sumup.utils.analytics.AnalyticsHelper
 import com.example.sumup.utils.analytics.FirebaseAnalyticsHelper
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -14,7 +17,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AnalyticsModule {
-    
+
     @Provides
     @Singleton
     fun provideFirebaseAnalytics(
@@ -29,12 +32,30 @@ object AnalyticsModule {
             FirebaseAnalytics.getInstance(context)
         }
     }
-    
+
     @Provides
     @Singleton
     fun provideAnalyticsHelper(
         firebaseAnalytics: FirebaseAnalytics
     ): AnalyticsHelper {
         return FirebaseAnalyticsHelper(firebaseAnalytics)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnalyticsManager(): AnalyticsManager {
+        return AnalyticsManager()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCrashlyticsManager(): CrashlyticsManager {
+        return CrashlyticsManager()
+    }
+
+    @Provides
+    @Singleton
+    fun providePerformanceMonitor(): PerformanceMonitor {
+        return PerformanceMonitor()
     }
 }

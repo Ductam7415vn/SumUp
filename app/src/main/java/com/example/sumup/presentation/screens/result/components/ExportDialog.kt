@@ -24,19 +24,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.sumup.domain.model.ExportFormat as DomainExportFormat
 import kotlinx.coroutines.delay
 
-enum class ExportFormat {
-    PDF,
-    IMAGE,
-    TEXT,
-    MARKDOWN,
-    JSON,
-    DOCX
-}
-
 data class ExportOption(
-    val format: ExportFormat,
+    val format: DomainExportFormat,
     val icon: ImageVector,
     val title: String,
     val description: String,
@@ -47,7 +39,7 @@ data class ExportOption(
 fun ExportDialog(
     isVisible: Boolean,
     onDismiss: () -> Unit,
-    onExport: (ExportFormat) -> Unit,
+    onExport: (DomainExportFormat) -> Unit,
     isExporting: Boolean = false,
     exportProgress: Float? = null,
     exportError: String? = null
@@ -151,52 +143,31 @@ fun ExportDialog(
 
 @Composable
 private fun ExportOptions(
-    onExport: (ExportFormat) -> Unit,
+    onExport: (DomainExportFormat) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val options = remember {
         listOf(
             ExportOption(
-                format = ExportFormat.PDF,
+                format = DomainExportFormat.PDF,
                 icon = Icons.Outlined.PictureAsPdf,
                 title = "PDF Document",
-                description = "Professional format for sharing",
+                description = "Professional format, <1MB, ready to share",
                 color = Color(0xFFE53935)
             ),
             ExportOption(
-                format = ExportFormat.IMAGE,
-                icon = Icons.Outlined.Image,
-                title = "Image (PNG)",
-                description = "Perfect for social media",
-                color = Color(0xFF43A047)
-            ),
-            ExportOption(
-                format = ExportFormat.TEXT,
-                icon = Icons.Outlined.Description,
-                title = "Plain Text",
-                description = "Simple and universal",
-                color = Color(0xFF1E88E5)
-            ),
-            ExportOption(
-                format = ExportFormat.MARKDOWN,
+                format = DomainExportFormat.MARKDOWN,
                 icon = Icons.Outlined.Code,
                 title = "Markdown",
-                description = "For developers and writers",
+                description = "For developers, writers, and GitHub",
                 color = Color(0xFF6A1B9A)
             ),
             ExportOption(
-                format = ExportFormat.DOCX,
-                icon = Icons.Outlined.Article,
-                title = "Word Document",
-                description = "Compatible with MS Word",
-                color = Color(0xFF2196F3)
-            ),
-            ExportOption(
-                format = ExportFormat.JSON,
-                icon = Icons.Outlined.DataObject,
-                title = "JSON Data",
-                description = "For developers and APIs",
-                color = Color(0xFFFF6F00)
+                format = DomainExportFormat.PLAIN_TEXT,
+                icon = Icons.Outlined.Description,
+                title = "Plain Text",
+                description = "Simple, universal, easy to copy",
+                color = Color(0xFF1E88E5)
             )
         )
     }

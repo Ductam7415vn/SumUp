@@ -7,7 +7,9 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -38,9 +40,9 @@ fun HistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val filters by viewModel.filters.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showClearAllDialog by remember { mutableStateOf(false) }
-    var showSearchBar by remember { mutableStateOf(false) }
     
     Scaffold(
         topBar = {
@@ -84,9 +86,6 @@ fun HistoryScreen(
                             Icon(Icons.Default.Delete, contentDescription = "Delete Selected")
                         }
                     } else {
-                        IconButton(onClick = { showSearchBar = !showSearchBar }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
-                        }
                         if (uiState.totalCount > 0) {
                             IconButton(onClick = { showClearAllDialog = true }) {
                                 Icon(Icons.Default.DeleteSweep, contentDescription = "Clear All")
@@ -102,27 +101,79 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search bar
-            AnimatedVisibility(
-                visible = showSearchBar,
-                enter = slideInVertically() + fadeIn(),
-                exit = slideOutVertically() + fadeOut()
-            ) {
-                SearchBar(
-                    query = searchQuery,
-                    onQueryChange = viewModel::updateSearchQuery,
-                    onClose = { 
-                        showSearchBar = false
-                        viewModel.updateSearchQuery("")
-                    },
+            // Enhanced Search Bar with Filter (UC-007)
+            if (!uiState.isSelectionMode && uiState.totalCount > 0) {
+                HistorySearchBar(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = viewModel::updateSearchQuery,
+                    onClearSearch = viewModel::clearSearch,
+                    onFilterClick = viewModel::showFilterBottomSheet,
+                    activeFilterCount = filters.activeFilterCount,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            
-            // Summary count
-            if (uiState.totalCount > 0 && !uiState.isSelectionMode && !showSearchBar) {
+
+            // Active filter chips (UC-007 AC-007.4)
+            if (filters.hasActiveFilters && !uiState.isSelectionMode) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Date filter chip
+                    if (filters.dateFilter != DateFilter.ALL) {
+                        item {
+                            ActiveFilterChip(
+                                label = filters.dateFilter.displayName,
+                                onRemove = { viewModel.updateDateFilter(DateFilter.ALL) }
+                            )
+                        }
+                    }
+
+                    // Persona filter chips
+                    items(filters.selectedPersonas.toList()) { persona ->
+                        ActiveFilterChip(
+                            label = persona.displayName,
+                            onRemove = { viewModel.togglePersonaFilter(persona) }
+                        )
+                    }
+
+                    // Input type filter chips
+                    items(filters.selectedInputTypes.toList()) { type ->
+                        ActiveFilterChip(
+                            label = type.name,
+                            onRemove = { viewModel.toggleInputTypeFilter(type) }
+                        )
+                    }
+
+                    // Favorites chip
+                    if (filters.favoritesOnly) {
+                        item {
+                            ActiveFilterChip(
+                                label = "Favorites",
+                                onRemove = viewModel::toggleFavoritesFilter
+                            )
+                        }
+                    }
+
+                    // Clear all button
+                    if (filters.hasActiveFilters) {
+                        item {
+                            TextButton(onClick = viewModel::clearAllFilters) {
+                                Text("Clear All")
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Result count message (UC-007 AC-007.4)
+            if (uiState.totalCount > 0 && !uiState.isSelectionMode) {
                 Text(
-                    text = "${uiState.totalCount} summaries",
+                    text = uiState.resultCountMessage,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -148,14 +199,19 @@ fun HistoryScreen(
                 },
                 actualContent = {
                     if (uiState.isEmpty) {
-                        if (searchQuery.isNotEmpty()) {
+                        if (uiState.hasActiveSearchOrFilter) {
+                            // No results from search/filter
                             EmptyStateComponent(
                                 type = EmptyStateType.SEARCH_NO_RESULTS,
                                 modifier = Modifier.fillMaxSize(),
-                                actionText = "Clear Search",
-                                onActionClick = { viewModel.updateSearchQuery("") }
+                                actionText = "Clear Filters",
+                                onActionClick = {
+                                    viewModel.clearSearch()
+                                    viewModel.clearAllFilters()
+                                }
                             )
                         } else {
+                            // No summaries at all
                             EmptyStateComponent(
                                 type = EmptyStateType.HISTORY_EMPTY,
                                 modifier = Modifier.fillMaxSize(),
@@ -245,9 +301,49 @@ fun HistoryScreen(
                 }
             )
         }
+
+        // Filter Bottom Sheet (UC-007)
+        FilterBottomSheet(
+            isVisible = uiState.showFilterBottomSheet,
+            currentFilters = filters,
+            onDismiss = viewModel::hideFilterBottomSheet,
+            onDateFilterChange = viewModel::updateDateFilter,
+            onPersonaToggle = viewModel::togglePersonaFilter,
+            onInputTypeToggle = viewModel::toggleInputTypeFilter,
+            onFavoritesToggle = viewModel::toggleFavoritesFilter,
+            onClearAll = viewModel::clearAllFilters
+        )
     }
 }
 
+
+/**
+ * Active filter chip component (UC-007 AC-007.4)
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActiveFilterChip(
+    label: String,
+    onRemove: () -> Unit
+) {
+    InputChip(
+        selected = true,
+        onClick = onRemove,
+        label = { Text(label) },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove filter",
+                modifier = Modifier.size(18.dp)
+            )
+        },
+        shape = RoundedCornerShape(8.dp),
+        colors = InputChipDefaults.inputChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    )
+}
 
 private fun shareSummary(context: android.content.Context, summary: Summary) {
     val shareText = buildString {

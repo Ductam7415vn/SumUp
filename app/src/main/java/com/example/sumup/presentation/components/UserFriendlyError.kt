@@ -243,15 +243,38 @@ private fun getUserFriendlyErrorInfo(error: AppError): UserFriendlyErrorInfo {
             ),
             severity = ErrorSeverity.MEDIUM
         )
-        
-        is AppError.UnknownError -> UserFriendlyErrorInfo(
-            icon = Icons.Default.Warning,
-            title = "Something Went Wrong",
-            message = "An unexpected error occurred. Don't worry, your data is safe.",
+
+        is AppError.ExportError -> UserFriendlyErrorInfo(
+            icon = Icons.Default.Error,
+            title = "Export Failed",
+            message = "Failed to export your summary.",
             suggestions = listOf(
-                "Try again",
-                "Restart the app if the problem persists",
-                "Contact support if this keeps happening"
+                "Try exporting again",
+                "Check available storage space",
+                "Try a different export format"
+            ),
+            severity = ErrorSeverity.MEDIUM
+        )
+
+        AppError.StoragePermissionError -> UserFriendlyErrorInfo(
+            icon = Icons.Default.Lock,
+            title = "Storage Permission Needed",
+            message = "Permission is required to save files.",
+            suggestions = listOf(
+                "Grant storage permission in settings",
+                "Allow file access when prompted"
+            ),
+            severity = ErrorSeverity.HIGH
+        )
+
+        AppError.DiskFullError -> UserFriendlyErrorInfo(
+            icon = Icons.Default.Storage,
+            title = "Storage Full",
+            message = "Not enough space to save the file.",
+            suggestions = listOf(
+                "Free up storage space on your device",
+                "Delete old summaries",
+                "Remove unused files"
             ),
             severity = ErrorSeverity.HIGH
         )

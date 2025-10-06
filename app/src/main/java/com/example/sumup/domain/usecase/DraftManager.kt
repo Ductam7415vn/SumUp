@@ -50,10 +50,14 @@ class DraftManager @Inject constructor(
     }
     
     fun hasDraft(): Boolean {
-        return prefs.contains(KEY_DRAFT_TEXT) && 
+        return prefs.contains(KEY_DRAFT_TEXT) &&
                prefs.getString(KEY_DRAFT_TEXT, "")?.isNotEmpty() == true
     }
-    
+
+    fun getDraftTimestamp(): Long {
+        return prefs.getLong(KEY_DRAFT_TIMESTAMP, 0L)
+    }
+
     suspend fun getHasSeenWelcomeCard(): Boolean {
         return prefs.getBoolean(KEY_HAS_SEEN_WELCOME, false)
     }

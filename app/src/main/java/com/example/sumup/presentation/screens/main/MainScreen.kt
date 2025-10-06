@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -133,6 +134,7 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding() // Only handle status bar at top
         ) {
                 // Modern minimal top bar
                 ModernTopBar(
@@ -268,6 +270,7 @@ fun MainScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding() // Add padding for navigation bar
                         .padding(horizontal = Spacing.screenPadding, vertical = Spacing.screenPadding),
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingMd),
                     verticalAlignment = Alignment.CenterVertically
@@ -410,17 +413,14 @@ fun MainScreen(
                 )
             }
 
-            if (uiState.showDraftRecoveryDialog) {
-                ModernDialog(
-                    icon = Icons.Default.Restore,
-                    title = "Recover Draft",
-                    message = "We found an unsaved draft. Would you like to recover it?",
-                    onDismiss = viewModel::dismissDraftRecovery,
-                    onConfirm = viewModel::recoverDraft,
-                    confirmText = "Recover",
-                    cancelText = "Discard"
-                )
-            }
+            // Enhanced Draft Recovery Dialog
+            DraftRecoveryDialog(
+                isVisible = uiState.showDraftRecoveryDialog,
+                draftText = uiState.recoverableDraftText,
+                draftTimestamp = uiState.draftTimestamp,
+                onRestore = viewModel::recoverDraft,
+                onDiscard = viewModel::dismissDraftRecovery
+            )
 
             // Processing Method Dialog
             ProcessingMethodDialog(

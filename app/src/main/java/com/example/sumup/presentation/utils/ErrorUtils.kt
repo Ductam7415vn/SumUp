@@ -18,6 +18,9 @@ fun getErrorInfo(error: AppError): ErrorInfo = when (error) {
     is AppError.InvalidInputError -> ErrorInfo("Can't Process This", "Text contains too many special characters.", "⚠️")
     is AppError.ApiKeyError -> ErrorInfo("API Key Required", "Add your Gemini API key in settings.", "🔑")
     is AppError.InvalidApiKeyError -> ErrorInfo("Invalid API Key", "Check your API key and try again.", "❌")
+    is AppError.ExportError -> ErrorInfo("Export Failed", error.originalMessage, "📤")
+    AppError.StoragePermissionError -> ErrorInfo("Permission Required", "Storage permission needed to save files.", "🔐")
+    AppError.DiskFullError -> ErrorInfo("Disk Full", "Not enough storage space to save the file.", "💿")
     is AppError.UnknownError -> ErrorInfo("Something Went Wrong", error.originalMessage, "😕")
 }
 
@@ -77,6 +80,9 @@ fun AppError.getUserFriendlyMessage(): String {
         is AppError.StorageFullError -> "Storage full. Please delete old summaries."
         is AppError.ApiKeyError -> "API key required. Add it in settings."
         is AppError.InvalidApiKeyError -> "Invalid API key. Please check and try again."
+        is AppError.ExportError -> "Export failed. ${originalMessage}"
+        AppError.StoragePermissionError -> "Storage permission required to save files."
+        AppError.DiskFullError -> "Not enough storage space. Please free up space."
         is AppError.UnknownError -> originalMessage.ifEmpty { "Something went wrong." }
     }
 }
@@ -96,6 +102,9 @@ fun AppError.getActionText(): String {
         is AppError.StorageFullError -> "Manage Storage"
         is AppError.ApiKeyError -> "Add Key"
         is AppError.InvalidApiKeyError -> "Fix Key"
+        is AppError.ExportError -> "Retry Export"
+        AppError.StoragePermissionError -> "Grant Permission"
+        AppError.DiskFullError -> "Free Space"
         is AppError.UnknownError -> "Retry"
     }
 }

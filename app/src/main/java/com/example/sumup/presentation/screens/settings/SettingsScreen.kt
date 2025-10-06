@@ -190,7 +190,10 @@ fun SettingsScreen(
                             onDeleteKey = viewModel::deleteApiKey,
                             onSetActiveKey = viewModel::setActiveApiKey,
                             onExport = { /* Handle export - needs password dialog */ },
-                            onImport = { /* TODO: Implement file picker */ }
+                            onImport = { /* TODO: Implement file picker */ },
+                            isValidating = uiState.isValidatingApiKey,
+                            validationError = uiState.apiKeyError,
+                            onDismissValidationError = viewModel::dismissApiKeyError
                         )
                         
                         // Show rotation warning badge if needed

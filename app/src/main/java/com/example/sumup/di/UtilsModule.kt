@@ -48,9 +48,46 @@ abstract class UtilsModule {
             sharedPreferences: SharedPreferences,
             enhancedApiKeyManager: com.example.sumup.utils.EnhancedApiKeyManager
         ): com.example.sumup.utils.migration.ApiKeyMigration = com.example.sumup.utils.migration.ApiKeyMigration(
-            context, 
+            context,
             enhancedApiKeyManager,
             sharedPreferences
         )
+
+        // Export functionality providers
+        @Provides
+        @Singleton
+        fun provideTextExporter(): com.example.sumup.domain.usecase.TextExporter {
+            return com.example.sumup.domain.usecase.TextExporter()
+        }
+
+        @Provides
+        @Singleton
+        fun provideMarkdownExporter(): com.example.sumup.domain.usecase.MarkdownExporter {
+            return com.example.sumup.domain.usecase.MarkdownExporter()
+        }
+
+        @Provides
+        @Singleton
+        fun providePdfExporter(
+            @ApplicationContext context: Context
+        ): com.example.sumup.domain.usecase.PdfExporter {
+            return com.example.sumup.domain.usecase.PdfExporter(context)
+        }
+
+        @Provides
+        @Singleton
+        fun provideExportSummaryUseCase(
+            @ApplicationContext context: Context,
+            pdfExporter: com.example.sumup.domain.usecase.PdfExporter,
+            markdownExporter: com.example.sumup.domain.usecase.MarkdownExporter,
+            textExporter: com.example.sumup.domain.usecase.TextExporter
+        ): com.example.sumup.domain.usecase.ExportSummaryUseCase {
+            return com.example.sumup.domain.usecase.ExportSummaryUseCase(
+                context,
+                pdfExporter,
+                markdownExporter,
+                textExporter
+            )
+        }
     }
 }

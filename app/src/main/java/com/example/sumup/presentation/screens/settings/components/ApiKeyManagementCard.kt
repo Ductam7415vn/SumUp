@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +37,10 @@ fun ApiKeyManagementCard(
     onSetActiveKey: (String) -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isValidating: Boolean = false,
+    validationError: String? = null,
+    onDismissValidationError: () -> Unit = {}
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showRotationDialog by remember { mutableStateOf(false) }
@@ -152,12 +156,35 @@ fun ApiKeyManagementCard(
     
     // Add Key Dialog
     if (showAddDialog) {
+        var hasStartedValidation by remember { mutableStateOf(false) }
+
+        // Update validation tracking
+        LaunchedEffect(isValidating) {
+            if (isValidating) {
+                hasStartedValidation = true
+            }
+        }
+
+        // Close dialog on successful validation
+        LaunchedEffect(isValidating, validationError, hasStartedValidation) {
+            if (hasStartedValidation && !isValidating && validationError == null) {
+                // Validation completed successfully
+                showAddDialog = false
+                hasStartedValidation = false
+            }
+        }
+
         AddApiKeyDialog(
-            onDismiss = { showAddDialog = false },
+            onDismiss = {
+                showAddDialog = false
+                hasStartedValidation = false
+                onDismissValidationError()
+            },
             onConfirm = { name, key ->
                 onAddKey(name, key)
-                showAddDialog = false
-            }
+            },
+            isValidating = isValidating,
+            validationError = validationError
         )
     }
     
@@ -425,13 +452,15 @@ private fun EmptyKeysPlaceholder(
 @Composable
 private fun AddApiKeyDialog(
     onDismiss: () -> Unit,
-    onConfirm: (name: String, key: String) -> Unit
+    onConfirm: (name: String, key: String) -> Unit,
+    isValidating: Boolean = false,
+    validationError: String? = null
 ) {
     var keyName by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf("") }
     var showKey by remember { mutableStateOf(false) }
-    
-    Dialog(onDismissRequest = onDismiss) {
+
+    Dialog(onDismissRequest = if (isValidating) ({}) else onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
@@ -449,16 +478,17 @@ private fun AddApiKeyDialog(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 OutlinedTextField(
                     value = keyName,
                     onValueChange = { keyName = it },
                     label = { Text("Key Name") },
                     placeholder = { Text("e.g., Personal Key, Work Key") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    enabled = !isValidating
                 )
-                
+
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it },
@@ -466,11 +496,19 @@ private fun AddApiKeyDialog(
                     placeholder = { Text("Enter your Gemini API key") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    visualTransformation = if (showKey) 
+                    enabled = !isValidating,
+                    isError = validationError != null,
+                    supportingText = validationError?.let { error ->
+                        { Text(error, color = MaterialTheme.colorScheme.error) }
+                    },
+                    visualTransformation = if (showKey)
                         androidx.compose.ui.text.input.VisualTransformation.None
                     else androidx.compose.ui.text.input.PasswordVisualTransformation(),
                     trailingIcon = {
-                        IconButton(onClick = { showKey = !showKey }) {
+                        IconButton(
+                            onClick = { showKey = !showKey },
+                            enabled = !isValidating
+                        ) {
                             Icon(
                                 if (showKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 contentDescription = if (showKey) "Hide" else "Show"
@@ -478,27 +516,38 @@ private fun AddApiKeyDialog(
                         }
                     }
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        enabled = !isValidating
+                    ) {
                         Text("Cancel")
                     }
-                    
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    
+
                     Button(
-                        onClick = { 
+                        onClick = {
                             if (keyName.isNotBlank() && apiKey.isNotBlank()) {
                                 onConfirm(keyName, apiKey)
                             }
                         },
-                        enabled = keyName.isNotBlank() && apiKey.isNotBlank()
+                        enabled = keyName.isNotBlank() && apiKey.isNotBlank() && !isValidating
                     ) {
-                        Text("Add")
+                        if (isValidating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Add")
+                        }
                     }
                 }
             }
