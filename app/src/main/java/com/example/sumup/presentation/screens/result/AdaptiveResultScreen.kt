@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.presentation.screens.result.components.*
 import com.example.sumup.presentation.components.*
+import com.example.sumup.utils.LanguageUtils
 
 /**
  * Adaptive ResultScreen that provides better layout for tablets and foldables
@@ -90,12 +91,13 @@ private fun ResultSummaryPane(
             )
         },
         bottomBar = {
+            val context = androidx.compose.ui.platform.LocalContext.current
             SummaryActionBar(
                 summaryText = uiState.summary?.summaryText ?: "",
-                onCopy = { /* Copy summary */ },
-                onShare = { /* Share summary */ },
-                onSave = { /* Save to history */ },
-                onRegenerate = { /* Regenerate summary */ },
+                onCopy = { viewModel.copySummary(context) },
+                onShare = { viewModel.shareSummary() },
+                onSave = { viewModel.saveSummary() },
+                onRegenerate = { viewModel.regenerateSummary() },
                 modifier = Modifier
                     .navigationBarsPadding()
                     .padding(responsivePadding())
@@ -249,6 +251,8 @@ private fun ResultDetailsPane(
                     ReadingTimeCard(
                         originalWordCount = summary.metrics.originalWordCount,
                         summaryWordCount = summary.metrics.summaryWordCount,
+                        originalText = summary.originalText,
+                        summaryText = summary.summaryText,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -308,12 +312,13 @@ private fun ResultSinglePane(
             )
         },
         bottomBar = {
+            val context = androidx.compose.ui.platform.LocalContext.current
             SummaryActionBar(
                 summaryText = uiState.summary?.summaryText ?: "",
-                onCopy = { /* Copy summary */ },
-                onShare = { /* Share summary */ },
-                onSave = { /* Save to history */ },
-                onRegenerate = { /* Regenerate summary */ },
+                onCopy = { viewModel.copySummary(context) },
+                onShare = { viewModel.shareSummary() },
+                onSave = { viewModel.saveSummary() },
+                onRegenerate = { viewModel.regenerateSummary() },
                 modifier = Modifier.navigationBarsPadding()
             )
         }
@@ -637,6 +642,8 @@ private fun InsightItem(
 private fun ReadingTimeCard(
     originalWordCount: Int,
     summaryWordCount: Int,
+    originalText: String = "",
+    summaryText: String = "",
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -664,8 +671,9 @@ private fun ReadingTimeCard(
                 color = MaterialTheme.colorScheme.onTertiaryContainer
             )
             
-            val originalMinutes = (originalWordCount / 200).coerceAtLeast(1)
-            val summaryMinutes = (summaryWordCount / 200).coerceAtLeast(1)
+            // Use language-aware reading time calculation
+            val originalMinutes = LanguageUtils.calculateReadingTime(originalWordCount, originalText)
+            val summaryMinutes = LanguageUtils.calculateReadingTime(summaryWordCount, summaryText)
             val timeSaved = originalMinutes - summaryMinutes
             
             Text(

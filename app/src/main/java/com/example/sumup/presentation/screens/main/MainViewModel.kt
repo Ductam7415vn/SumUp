@@ -52,6 +52,7 @@ class MainViewModel @Inject constructor(
     private val adaptiveProcessingUseCase: AdaptiveProcessingUseCase,
     private val pdfRepository: PdfRepository,
     private val summaryRepository: SummaryRepository,
+    private val settingsRepository: com.example.sumup.domain.repository.SettingsRepository,
     private val draftManager: DraftManager,
     private val featureDiscovery: FeatureDiscoveryUseCase,
     // private val enhancedFeatureDiscovery: EnhancedFeatureDiscoveryUseCase,
@@ -785,14 +786,18 @@ class MainViewModel @Inject constructor(
                                 
                                 return@launch
                             }
-                            
+
+                            // Get language preference from settings
+                            val language = settingsRepository.language.first()
+                            android.util.Log.d("MainViewModel", "Language from settings: $language")
+
                             // Use adaptive processing
                             adaptiveProcessingUseCase(
                                 text = text,
                                 strategy = strategy,
                                 persona = com.example.sumup.domain.model.SummaryPersona.GENERAL,
                                 targetLengthRatio = _uiState.value.summaryLength.multiplier,
-                                language = "en" // Default to English for now
+                                language = language
                             )
                             .flowOn(Dispatchers.IO)
                             .onEach { delay(50) } // Small delay to prevent too rapid emissions

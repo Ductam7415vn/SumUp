@@ -25,6 +25,7 @@ import com.example.sumup.presentation.components.*
 import com.example.sumup.presentation.utils.AdaptiveLayoutInfo
 import com.example.sumup.presentation.utils.DeviceType
 import com.example.sumup.utils.haptic.rememberHapticFeedback
+import com.example.sumup.utils.InputValidator
 
 /**
  * Adaptive MainScreen that adjusts layout for tablets and foldables
@@ -180,7 +181,7 @@ private fun MainInputPane(
                     TextInputSection(
                         text = uiState.inputText,
                         onTextChange = viewModel::updateText,
-                        isError = uiState.inputText.length > 5000,
+                        isError = uiState.inputText.length > InputValidator.MAX_TEXT_LENGTH,
                         inlineError = when (uiState.error) {
                             is com.example.sumup.domain.model.AppError.TextTooShortError,
                             is com.example.sumup.domain.model.AppError.InvalidInputError -> uiState.error
@@ -204,7 +205,7 @@ private fun MainInputPane(
                     TextInputSection(
                         text = uiState.inputText,
                         onTextChange = viewModel::updateText,
-                        isError = uiState.inputText.length > 5000,
+                        isError = uiState.inputText.length > InputValidator.MAX_TEXT_LENGTH,
                         inlineError = when (uiState.error) {
                             is com.example.sumup.domain.model.AppError.TextTooShortError,
                             is com.example.sumup.domain.model.AppError.InvalidInputError,
@@ -360,7 +361,7 @@ private fun MainSinglePane(
                     TextInputSection(
                         text = uiState.inputText,
                         onTextChange = viewModel::updateText,
-                        isError = uiState.inputText.length > 5000,
+                        isError = uiState.inputText.length > InputValidator.MAX_TEXT_LENGTH,
                         inlineError = when (uiState.error) {
                             is com.example.sumup.domain.model.AppError.TextTooShortError,
                             is com.example.sumup.domain.model.AppError.InvalidInputError -> uiState.error
@@ -384,7 +385,7 @@ private fun MainSinglePane(
                     TextInputSection(
                         text = uiState.inputText,
                         onTextChange = viewModel::updateText,
-                        isError = uiState.inputText.length > 5000,
+                        isError = uiState.inputText.length > InputValidator.MAX_TEXT_LENGTH,
                         inlineError = when (uiState.error) {
                             is com.example.sumup.domain.model.AppError.TextTooShortError,
                             is com.example.sumup.domain.model.AppError.InvalidInputError,

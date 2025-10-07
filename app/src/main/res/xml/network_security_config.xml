@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow all HTTPS connections -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust system certificate store -->
+            <certificates src="system" />
+            <!-- Trust user-installed CA certificates (for debugging) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Specific config for Google APIs -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">googleapis.com</domain>
+        <domain includeSubdomains="true">generativelanguage.googleapis.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Debug config (if needed) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

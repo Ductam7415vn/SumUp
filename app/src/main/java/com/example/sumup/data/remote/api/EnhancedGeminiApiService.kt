@@ -286,6 +286,24 @@ class EnhancedGeminiApiService(
     }
     
     /**
+     * Clean markdown formatting from text
+     */
+    private fun cleanMarkdown(text: String): String {
+        return text
+            // Remove markdown headers (##, ###, etc.)
+            .replace(Regex("^#{1,6}\\s+"), "")
+            // Remove markdown bold/italic
+            .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+            .replace(Regex("\\*([^*]+)\\*"), "$1")
+            // Remove markdown links [text](url)
+            .replace(Regex("\\[([^]]+)]\\([^)]+\\)"), "$1")
+            // Remove markdown code blocks
+            .replace(Regex("```[\\s\\S]*?```"), "")
+            .replace(Regex("`([^`]+)`"), "$1")
+            .trim()
+    }
+
+    /**
      * Intelligent parsing when JSON fails
      */
     private fun parseIntelligentResponse(
@@ -294,37 +312,190 @@ class EnhancedGeminiApiService(
         style: String
     ): SummarizeResponse {
         android.util.Log.d("EnhancedGeminiAPI", "Parsing text response: $text")
+
+        // First, clean markdown from the entire text
+        val cleanedText = text.lines()
+            .map { line ->
+                val trimmed = line.trim()
+                // Remove markdown headers while preserving section labels
+                if (trimmed.matches(Regex("^#{1,6}\\s+.*"))) {
+                    trimmed.replace(Regex("^#{1,6}\\s+"), "")
+                } else {
+                    trimmed
+                }
+            }
+            .filter { it.isNotEmpty() }
+            .joinToString("\n")
+
+        android.util.Log.d("EnhancedGeminiAPI", "Cleaned text: $cleanedText")
+
+        val lines = cleanedText.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
+
+        // Helper function to find section headers (handles both BRIEF: and "BRIEF": formats)
+        fun findSectionIndex(sectionName: String): Int {
+            return lines.indexOfFirst { line ->
+                line.equals("$sectionName:", ignoreCase = true) ||
+                line.startsWith("\"$sectionName\":", ignoreCase = true) ||
+                line.equals(sectionName, ignoreCase = true)
+            }
+        }
+
+        // Find all sections (handles multiple formats)
+        val briefIndex = findSectionIndex("BRIEF")
+        val summaryIndex = findSectionIndex("SUMMARY")
+        val detailedIndex = findSectionIndex("DETAILED")
+        val keyPointsIndex = findSectionIndex("KEY POINTS")
+        val keyInsightsIndex = findSectionIndex("KEY INSIGHTS")
+        val actionItemsIndex = findSectionIndex("ACTION ITEMS")
+        val keywordsIndex = findSectionIndex("KEYWORDS")
         
-        val lines = text.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
-        
-        // Find all sections
-        val briefIndex = lines.indexOfFirst { it.equals("BRIEF:", ignoreCase = true) }
-        val summaryIndex = lines.indexOfFirst { it.equals("SUMMARY:", ignoreCase = true) }
-        val detailedIndex = lines.indexOfFirst { it.equals("DETAILED:", ignoreCase = true) }
-        val keyPointsIndex = lines.indexOfFirst { it.equals("KEY POINTS:", ignoreCase = true) }
-        val keyInsightsIndex = lines.indexOfFirst { it.equals("KEY INSIGHTS:", ignoreCase = true) }
-        val actionItemsIndex = lines.indexOfFirst { it.equals("ACTION ITEMS:", ignoreCase = true) }
-        val keywordsIndex = lines.indexOfFirst { it.equals("KEYWORDS:", ignoreCase = true) }
-        
+        // Helper function to clean extracted text (removes quotes, labels, and markdown)
+        fun cleanExtractedText(text: String): String {
+            return text
+                .removePrefix("\"")
+                .removeSuffix("\"")
+                .removePrefix("'")
+                .removeSuffix("'")
+                .replace(Regex("^\"?(BRIEF|SUMMARY|DETAILED)\"?:\\s*\"?"), "")
+                .replace(Regex("\"?\\s*,?\\s*$"), "")
+                // Remove any markdown headers that slipped through
+                .replace(Regex("^#{1,6}\\s+"), "")
+                // Remove markdown bold/italic
+                .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+                .replace(Regex("\\*([^*]+)\\*"), "$1")
+                // Remove markdown code
+                .replace(Regex("`([^`]+)`"), "$1")
+                .trim()
+        }
+
         // Extract BRIEF (5%)
         val brief = if (briefIndex >= 0 && summaryIndex > briefIndex) {
-            lines.subList(briefIndex + 1, summaryIndex).joinToString(" ").trim()
-        } else null
-        
+            val extracted = lines.subList(briefIndex + 1, summaryIndex).joinToString(" ").trim()
+            cleanExtractedText(extracted)
+        } else if (briefIndex >= 0) {
+            // Check if content is on the same line as label
+            val briefLine = lines[briefIndex]
+            val contentAfterLabel = briefLine
+                .replace(Regex("^\"?BRIEF\"?:\\s*\"?", RegexOption.IGNORE_CASE), "")
+                .removeSuffix("\"")
+                .removeSuffix(",")
+                .trim()
+            if (contentAfterLabel.isNotEmpty() && contentAfterLabel.length > 20) {
+                contentAfterLabel
+            } else {
+                null
+            }
+        } else {
+            // Intelligent fallback: create actual brief summary from content
+            // Skip lines that look like headers or labels
+            val contentLines = lines.filter { line ->
+                line.length > 50
+                && !line.startsWith("-")
+                && !line.startsWith("•")
+                && !line.matches(Regex(".*\\b(Overview|Summary|Analysis|Introduction)\\b.*", RegexOption.IGNORE_CASE))
+                && !line.endsWith(":")
+            }
+
+            val firstParagraph = contentLines.firstOrNull() ?: ""
+            if (firstParagraph.length > 100) {
+                // Take first sentence or first 100 chars
+                val sentences = firstParagraph.split(Regex("[.!?]\\s+"))
+                val firstSentence = sentences.firstOrNull() ?: ""
+                if (firstSentence.isNotEmpty() && firstSentence.length <= 150) {
+                    cleanExtractedText(firstSentence.trim() + if (!firstSentence.endsWith(".")) "." else "")
+                } else {
+                    cleanExtractedText(firstParagraph.take(120).trim() + "...")
+                }
+            } else if (firstParagraph.isNotEmpty()) {
+                cleanExtractedText(firstParagraph)
+            } else {
+                null
+            }
+        }
+
         // Extract SUMMARY (10%)
         val summary = if (summaryIndex >= 0 && detailedIndex > summaryIndex) {
-            lines.subList(summaryIndex + 1, detailedIndex).joinToString(" ").trim()
+            val extracted = lines.subList(summaryIndex + 1, detailedIndex).joinToString(" ").trim()
+            cleanExtractedText(extracted)
+        } else if (summaryIndex >= 0) {
+            // Check if content is on the same line as label
+            val summaryLine = lines[summaryIndex]
+            val contentAfterLabel = summaryLine
+                .replace(Regex("^\"?SUMMARY\"?:\\s*\"?", RegexOption.IGNORE_CASE), "")
+                .removeSuffix("\"")
+                .removeSuffix(",")
+                .trim()
+            if (contentAfterLabel.isNotEmpty() && contentAfterLabel.length > 20) {
+                contentAfterLabel
+            } else {
+                null
+            }
         } else {
-            // Fallback: first substantial paragraph
-            lines.firstOrNull { line ->
-                line.length > 50 && !line.startsWith("-") && !line.startsWith("•")
-            } ?: "Unable to generate summary"
+            null
         }
-        
+
+        val finalSummary = summary ?: run {
+            // Fallback: first substantial paragraph(s)
+            // Filter out headers and labels
+            val paragraphs = lines.filter { line ->
+                line.length > 50
+                && !line.startsWith("-")
+                && !line.startsWith("•")
+                && !line.startsWith("BRIEF")
+                && !line.matches(Regex(".*\\b(Overview|Summary|Analysis|Introduction|Document)\\b.*", RegexOption.IGNORE_CASE))
+                && !line.endsWith(":")
+            }
+            val extracted = paragraphs.take(2).joinToString(" ").ifEmpty { "Unable to generate summary" }
+            cleanExtractedText(extracted)
+        }
+
         // Extract DETAILED (20%)
         val detailed = if (detailedIndex >= 0 && keyPointsIndex > detailedIndex) {
-            lines.subList(detailedIndex + 1, keyPointsIndex).joinToString(" ").trim()
-        } else null
+            val extracted = lines.subList(detailedIndex + 1, keyPointsIndex).joinToString(" ").trim()
+            cleanExtractedText(extracted)
+        } else if (detailedIndex >= 0) {
+            // Check if content is on the same line as label
+            val detailedLine = lines[detailedIndex]
+            val contentAfterLabel = detailedLine
+                .replace(Regex("^\"?DETAILED\"?:\\s*\"?", RegexOption.IGNORE_CASE), "")
+                .removeSuffix("\"")
+                .removeSuffix(",")
+                .trim()
+            if (contentAfterLabel.isNotEmpty() && contentAfterLabel.length > 20) {
+                contentAfterLabel
+            } else {
+                null
+            }
+        } else {
+            null
+        }
+
+        val finalDetailed = detailed ?: run {
+            // Intelligent fallback: create longer detailed version
+            // Filter out headers, labels, and section names
+            val paragraphs = lines.filter { line ->
+                line.length > 30
+                && !line.startsWith("-")
+                && !line.startsWith("•")
+                && !line.startsWith("BRIEF")
+                && !line.startsWith("SUMMARY")
+                && !line.matches(Regex(".*\\b(Overview|Summary|Analysis|Introduction|Document|Comprehensive)\\b.*", RegexOption.IGNORE_CASE))
+                && !line.endsWith(":")
+            }
+            val detailedText = paragraphs.take(4).joinToString(" ")
+            val cleaned = cleanExtractedText(detailedText)
+
+            // Only use as detailed if it's actually longer than summary
+            if (cleaned.length > finalSummary.length * 1.3) {
+                cleaned
+            } else {
+                // Generate expanded version from summary + bullets
+                val bulletText = lines.filter { it.startsWith("•") || it.startsWith("-") }
+                    .take(5)
+                    .joinToString(" ") { cleanExtractedText(it.removePrefix("•").removePrefix("-").trim()) }
+                cleanExtractedText("$finalSummary $bulletText".trim())
+            }
+        }
         
         // Extract KEY POINTS
         val bullets = extractBulletPoints(lines, keyPointsIndex, keyInsightsIndex)
@@ -362,21 +533,56 @@ class EnhancedGeminiApiService(
             bullets.take(7)
         }
         
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed brief: $brief")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed summary: $summary")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed detailed: $detailed")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed bullets: $finalBullets")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed insights: $keyInsights")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed actions: $actionItems")
-        android.util.Log.d("EnhancedGeminiAPI", "Parsed keywords: $keywords")
+        android.util.Log.d("EnhancedGeminiAPI", "=== PARSING RESULTS ===")
+        android.util.Log.d("EnhancedGeminiAPI", "Brief index: $briefIndex, content length: ${brief?.length ?: 0}")
+        android.util.Log.d("EnhancedGeminiAPI", "Summary index: $summaryIndex, content length: ${finalSummary.length}")
+        android.util.Log.d("EnhancedGeminiAPI", "Detailed index: $detailedIndex, content length: ${finalDetailed?.length ?: 0}")
+        android.util.Log.d("EnhancedGeminiAPI", "Brief: $brief")
+        android.util.Log.d("EnhancedGeminiAPI", "Summary: $finalSummary")
+        android.util.Log.d("EnhancedGeminiAPI", "Detailed: $finalDetailed")
+        android.util.Log.d("EnhancedGeminiAPI", "Bullets: $finalBullets")
+
+        // CRITICAL FIX: Ensure Brief and Detailed are NEVER empty
+        val guaranteedBrief = if (brief.isNullOrBlank()) {
+            // Generate brief from first sentence of summary
+            val firstSentence = finalSummary.split(". ").firstOrNull()?.trim() ?: ""
+            if (firstSentence.length > 150) {
+                firstSentence.take(120) + "..."
+            } else if (firstSentence.isNotEmpty()) {
+                firstSentence + if (!firstSentence.endsWith(".")) "." else ""
+            } else {
+                finalSummary.take(100) + "..."
+            }
+        } else {
+            brief
+        }
+
+        val guaranteedDetailed = if (finalDetailed.isNullOrBlank() || finalDetailed.length <= finalSummary.length) {
+            // Generate expanded detailed version
+            val bulletExpansion = finalBullets.take(5).joinToString(" ") { it }
+            val expanded = "$finalSummary\n\n$bulletExpansion"
+            if (expanded.length > finalSummary.length * 1.2) {
+                expanded
+            } else {
+                // If still not long enough, add more context
+                "$finalSummary\n\nKey Points: ${bulletExpansion}\n\nThis summary captures the essential information from the source text."
+            }
+        } else {
+            finalDetailed
+        }
+
+        android.util.Log.d("EnhancedGeminiAPI", "=== GUARANTEED CONTENT ===")
+        android.util.Log.d("EnhancedGeminiAPI", "Guaranteed Brief length: ${guaranteedBrief.length}")
+        android.util.Log.d("EnhancedGeminiAPI", "Summary length: ${finalSummary.length}")
+        android.util.Log.d("EnhancedGeminiAPI", "Guaranteed Detailed length: ${guaranteedDetailed.length}")
         
         return SummarizeResponse(
-            summary = summary,
+            summary = finalSummary,
             bullets = finalBullets,
-            confidence = calculateConfidenceFromParsing(brief, summary, detailed, finalBullets),
+            confidence = calculateConfidenceFromParsing(guaranteedBrief, finalSummary, guaranteedDetailed, finalBullets),
             processingTime = processingTime,
-            briefOverview = brief,
-            detailedSummary = detailed,
+            briefOverview = guaranteedBrief,
+            detailedSummary = guaranteedDetailed,
             keyInsights = keyInsights,
             actionItems = actionItems,
             keywords = keywords
@@ -387,7 +593,16 @@ class EnhancedGeminiApiService(
         return if (startIndex >= 0 && endIndex > startIndex) {
             lines.subList(startIndex + 1, endIndex)
                 .filter { it.startsWith("•") || it.startsWith("-") || it.startsWith("*") }
-                .map { it.removePrefix("•").removePrefix("-").removePrefix("*").trim() }
+                .map {
+                    val cleaned = it.removePrefix("•").removePrefix("-").removePrefix("*").trim()
+                    // Clean markdown from bullet points
+                    cleaned
+                        .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+                        .replace(Regex("\\*([^*]+)\\*"), "$1")
+                        .replace(Regex("`([^`]+)`"), "$1")
+                        .replace(Regex("^#{1,6}\\s+"), "")
+                        .trim()
+                }
                 .filter { it.isNotEmpty() }
         } else {
             emptyList()

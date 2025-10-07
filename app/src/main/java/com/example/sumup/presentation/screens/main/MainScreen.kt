@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -16,6 +17,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -35,6 +38,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.AnnotatedString
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,6 +85,7 @@ import com.example.sumup.ui.theme.extendedColorScheme
 import com.example.sumup.ui.theme.Dimensions
 import com.example.sumup.ui.theme.Spacing
 import com.example.sumup.ui.theme.Accessibility
+import com.example.sumup.utils.InputValidator
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -626,12 +634,18 @@ private fun InputTypeSelectorAnimated(
                 defaultElevation = 2.dp
             )
         ) {
-            Box(
+            // Use BoxWithConstraints to get actual width for responsive offset calculation
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .padding(4.dp)
             ) {
+                // Calculate slider offset based on actual container width
+                val containerWidth = maxWidth
+                val sliderWidth = containerWidth / 2 // 50% width for each option
+                val density = LocalDensity.current
+
                 // Animated slider background
                 val sliderOffset by animateFloatAsState(
                     targetValue = if (selectedType == MainUiState.InputType.TEXT) 0f else 1f,
@@ -641,12 +655,12 @@ private fun InputTypeSelectorAnimated(
                     ),
                     label = "slider"
                 )
-                
+
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(0.5f)
-                        .offset(x = (sliderOffset * 150).dp) // Half of typical selector width
+                        .width(sliderWidth)
+                        .offset(x = sliderWidth * sliderOffset) // Dynamic offset based on actual width
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(
@@ -724,18 +738,40 @@ private fun QuickStatsRow(
         Triple(weekCount.toString(), "This Week", MaterialTheme.colorScheme.primary),
         Triple(formatCount(totalCount), "Total", MaterialTheme.colorScheme.primary)
     )
-    
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        stats.forEach { (value, label, color) ->
-            QuickStatCard(
-                value = value,
-                label = label,
-                color = color,
-                modifier = Modifier.weight(1f)
-            )
+
+    // Responsive layout: vertical for very small screens, horizontal for normal+ screens
+    val configuration = LocalConfiguration.current
+    val useVerticalLayout = configuration.screenWidthDp < 360
+
+    if (useVerticalLayout) {
+        // Vertical layout for very small screens
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            stats.forEach { (value, label, color) ->
+                QuickStatCard(
+                    value = value,
+                    label = label,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    } else {
+        // Horizontal layout for normal+ screens
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            stats.forEach { (value, label, color) ->
+                QuickStatCard(
+                    value = value,
+                    label = label,
+                    color = color,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -885,11 +921,23 @@ private fun EnhancedTextInputSection(
             }
         }
         
-        // Text Input Container - Increased height
+        // Text Input Container - Responsive height based on screen size
+        val configuration = LocalConfiguration.current
+        val screenHeight = configuration.screenHeightDp.dp
+        val textFieldHeight = remember(screenHeight) {
+            when {
+                screenHeight < 600.dp -> screenHeight * 0.30f  // 30% for very small screens
+                screenHeight < 700.dp -> screenHeight * 0.35f  // 35% for small screens
+                screenHeight < 900.dp -> 320.dp                // Fixed 320dp for medium screens
+                else -> 360.dp                                 // Fixed 360dp for large screens
+            }
+        }
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(360.dp), // Increased from 280dp to 360dp
+                .height(textFieldHeight)
+                .heightIn(min = 200.dp, max = 400.dp), // Safety constraints
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -909,10 +957,10 @@ private fun EnhancedTextInputSection(
                     value = text,
                     onValueChange = { newText ->
                         when {
-                            newText.length <= 30000 -> {
+                            newText.length <= InputValidator.MAX_TEXT_LENGTH -> {
                                 onTextChange(newText)
                             }
-                            text.length < 30000 && newText.length > 30000 -> {
+                            text.length < InputValidator.MAX_TEXT_LENGTH && newText.length > InputValidator.MAX_TEXT_LENGTH -> {
                                 // Show warning when user first exceeds limit
                                 showCharLimitWarning = true
                             }
@@ -926,9 +974,9 @@ private fun EnhancedTextInputSection(
                         },
                     placeholder = {
                         Text(
-                            text = if (isOcrMode) 
-                                "Text captured from camera will appear here..." 
-                            else 
+                            text = if (isOcrMode)
+                                "Text captured from camera will appear here..."
+                            else
                                 "Start typing or paste your text here...",
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
@@ -942,7 +990,14 @@ private fun EnhancedTextInputSection(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         fontSize = 15.sp,
                         lineHeight = 24.sp
-                    )
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Default
+                    ),
+                    maxLines = Int.MAX_VALUE,
+                    singleLine = false
                 )
                 
                 // Footer
@@ -960,7 +1015,7 @@ private fun EnhancedTextInputSection(
                         // Improved character limit indicator
                         ImprovedCharacterLimitIndicator(
                             currentLength = text.length,
-                            maxLength = 30000,
+                            maxLength = InputValidator.MAX_TEXT_LENGTH,
                             text = text,
                             modifier = Modifier.weight(1f)
                         )
@@ -991,10 +1046,10 @@ private fun EnhancedTextInputSection(
     CharacterLimitWarningDialog(
         show = showCharLimitWarning,
         currentLength = text.length,
-        maxLength = 30000,
+        maxLength = InputValidator.MAX_TEXT_LENGTH,
         onDismiss = { showCharLimitWarning = false },
         onTruncate = {
-            onTextChange(text.take(30000))
+            onTextChange(text.take(InputValidator.MAX_TEXT_LENGTH))
             showCharLimitWarning = false
         }
     )
@@ -1019,15 +1074,26 @@ private fun ModernPdfUploadSection(
             Log.d("PDF_DEBUG", "PDF picker cancelled or returned null")
         }
     }
-    
+
+    // Responsive PDF upload card height
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val pdfCardMinHeight = remember(screenHeight) {
+        when {
+            screenHeight < 600.dp -> 180.dp  // Reduced for very small screens
+            screenHeight < 700.dp -> 220.dp  // Reduced for small screens
+            else -> 280.dp                   // Standard for medium+ screens
+        }
+    }
+
     HapticCard(
-        onClick = { 
+        onClick = {
             Log.d("PDF_DEBUG", "PDF card clicked, launching picker...")
-            launcher.launch("application/pdf") 
+            launcher.launch("application/pdf")
         },
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 280.dp, max = 320.dp), // Responsive height
+            .heightIn(min = pdfCardMinHeight, max = 340.dp), // Responsive height with safety max
         shape = RoundedCornerShape(Dimensions.radiusXl),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

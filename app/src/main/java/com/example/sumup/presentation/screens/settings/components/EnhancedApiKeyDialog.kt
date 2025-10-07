@@ -7,6 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,6 +25,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
@@ -63,7 +66,16 @@ fun EnhancedApiKeyDialog(
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
+    // Responsive width calculation based on screen size
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.92f  // Phone: 92% of screen width
+        screenWidth < 840.dp -> 480.dp                // Small tablet: Fixed 480dp
+        else -> 600.dp                                 // Large tablet: Fixed 600dp
+    }
+
     // Animation states
     val dialogScale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.8f,
@@ -85,6 +97,8 @@ fun EnhancedApiKeyDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .widthIn(max = dialogMaxWidth)
+                .heightIn(max = configuration.screenHeightDp.dp * 0.9f) // Add height constraint (90% of screen)
                 .graphicsLayer {
                     scaleX = dialogScale
                     scaleY = dialogScale
@@ -99,6 +113,7 @@ fun EnhancedApiKeyDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()) // Add scroll for overflow content
                     .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {

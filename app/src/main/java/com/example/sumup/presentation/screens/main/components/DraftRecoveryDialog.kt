@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +47,15 @@ fun DraftRecoveryDialog(
     onDiscard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Responsive width calculation
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.92f  // Phone: 92%
+        screenWidth < 840.dp -> 480.dp                // Small tablet
+        else -> 550.dp                                 // Large tablet
+    }
+
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(animationSpec = tween(300)) + scaleIn(
@@ -67,7 +77,8 @@ fun DraftRecoveryDialog(
         ) {
             Card(
                 modifier = modifier
-                    .fillMaxWidth(0.92f)
+                    .fillMaxWidth()
+                    .widthIn(max = dialogMaxWidth)
                     .wrapContentHeight(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(

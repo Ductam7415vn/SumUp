@@ -1,12 +1,15 @@
 package com.example.sumup.presentation.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -26,6 +29,16 @@ fun LargePdfWarningDialog(
     onOptionSelected: (PdfProcessingOption, IntRange?) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Responsive height constraint
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val dialogMaxHeight = remember(screenHeight) {
+        when {
+            screenHeight < 600.dp -> screenHeight * 0.85f  // 85% for small screens
+            else -> 500.dp                                  // Fixed 500dp for normal+ screens
+        }
+    }
+
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -36,13 +49,15 @@ fun LargePdfWarningDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
+                .wrapContentHeight()
+                .heightIn(max = dialogMaxHeight), // Add max height constraint
             shape = MaterialTheme.shapes.extraLarge,
             tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()) // Add scroll for overflow
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)

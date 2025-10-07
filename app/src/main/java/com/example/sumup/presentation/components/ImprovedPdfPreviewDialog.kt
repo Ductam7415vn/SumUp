@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -107,115 +108,129 @@ fun ImprovedPdfPreviewDialog(
                 )
                 
                 Divider()
-                
-                // Content
-                Column(
+
+                // Content - Using LazyColumn to avoid nested scroll conflict with LazyVerticalGrid
+                LazyColumn(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                        .padding(Spacing.screenPadding),
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(Spacing.screenPadding),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.spacingMd)
                 ) {
                     // PDF Info Card
-                    PdfInfoCard(
-                        pageCount = pageCount,
-                        estimatedTime = estimatedProcessingTime,
-                        fileSize = "2.5 MB" // TODO: Get actual file size
-                    )
-                    
-                    // Processing Options
-                    Text(
-                        text = "Processing Options",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    
-                    PdfProcessingOptions(
-                        selectedOption = selectedOption,
-                        onOptionSelected = { option ->
-                            hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
-                            selectedOption = option
-                            showPageSelection = option == PdfProcessOption.CUSTOM_PAGES
-                        },
-                        pageCount = pageCount
-                    )
-                    
-                    // Page Selection Grid
-                    AnimatedVisibility(
-                        visible = showPageSelection,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(Dimensions.spacingMd)
+                    item {
+                        PdfInfoCard(
+                            pageCount = pageCount,
+                            estimatedTime = estimatedProcessingTime,
+                            fileSize = "2.5 MB" // TODO: Get actual file size
+                        )
+                    }
+
+                    // Processing Options Header
+                    item {
+                        Text(
+                            text = "Processing Options",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    // Processing Options Cards
+                    item {
+                        PdfProcessingOptions(
+                            selectedOption = selectedOption,
+                            onOptionSelected = { option ->
+                                hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
+                                selectedOption = option
+                                showPageSelection = option == PdfProcessOption.CUSTOM_PAGES
+                            },
+                            pageCount = pageCount
+                        )
+                    }
+
+                    // Page Selection Grid - Wrapped in AnimatedVisibility
+                    item {
+                        AnimatedVisibility(
+                            visible = showPageSelection,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalArrangement = Arrangement.spacedBy(Dimensions.spacingMd)
                             ) {
-                                Text(
-                                    text = "Select Pages (${selectedPages.size} selected)",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingXs)
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Quick selection buttons
-                                    if (pageCount > 10) {
+                                    Text(
+                                        text = "Select Pages (${selectedPages.size} selected)",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Medium
+                                    )
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingXs)
+                                    ) {
+                                        // Quick selection buttons
+                                        if (pageCount > 10) {
+                                            TextButton(
+                                                onClick = {
+                                                    selectedPages = (1..10).toSet()
+                                                    hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
+                                                }
+                                            ) {
+                                                Text("First 10", style = MaterialTheme.typography.labelMedium)
+                                            }
+                                        }
+
                                         TextButton(
                                             onClick = {
-                                                selectedPages = (1..10).toSet()
+                                                selectedPages = if (selectedPages.size == pageCount) {
+                                                    emptySet()
+                                                } else {
+                                                    (1..pageCount).toSet()
+                                                }
                                                 hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
                                             }
                                         ) {
-                                            Text("First 10", style = MaterialTheme.typography.labelMedium)
+                                            Text(
+                                                if (selectedPages.size == pageCount) "Deselect All" else "Select All",
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
                                         }
-                                    }
-                                    
-                                    TextButton(
-                                        onClick = {
-                                            selectedPages = if (selectedPages.size == pageCount) {
-                                                emptySet()
-                                            } else {
-                                                (1..pageCount).toSet()
-                                            }
-                                            hapticManager.performHapticFeedback(HapticFeedbackType.SELECTION_START)
-                                        }
-                                    ) {
-                                        Text(
-                                            if (selectedPages.size == pageCount) "Deselect All" else "Select All",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
                                     }
                                 }
+
+                                Spacer(modifier = Modifier.height(Dimensions.spacingSm))
+
+                                // Page grid as rows to avoid nested LazyVerticalGrid in LazyColumn
+                                PageSelectionRows(
+                                    pages = pages,
+                                    selectedPages = selectedPages,
+                                    onPageToggle = { pageNumber ->
+                                        hapticManager.performHapticFeedback(HapticFeedbackType.TICK)
+                                        selectedPages = if (pageNumber in selectedPages) {
+                                            selectedPages - pageNumber
+                                        } else {
+                                            selectedPages + pageNumber
+                                        }
+                                    }
+                                )
                             }
-                            
-                            PageSelectionGrid(
-                                pages = pages,
-                                selectedPages = selectedPages,
-                                onPageToggle = { pageNumber ->
-                                    hapticManager.performHapticFeedback(HapticFeedbackType.TICK)
-                                    selectedPages = if (pageNumber in selectedPages) {
-                                        selectedPages - pageNumber
-                                    } else {
-                                        selectedPages + pageNumber
-                                    }
-                                }
-                            )
                         }
                     }
-                    
+
                     // Tips - Only show when not selecting pages to save space
                     if (!showPageSelection) {
-                        InfoCard(
-                            icon = Icons.Default.Lightbulb,
-                            title = "Pro Tip",
-                            message = "For best results, select pages with primarily text content. Images and charts may affect summary quality."
-                        )
+                        item {
+                            InfoCard(
+                                icon = Icons.Default.Lightbulb,
+                                title = "Pro Tip",
+                                message = "For best results, select pages with primarily text content. Images and charts may affect summary quality."
+                            )
+                        }
                     }
                 }
                 
@@ -499,6 +514,52 @@ private fun ProcessOptionCard(
     }
 }
 
+/**
+ * Display page selection as rows in a Column (used inside AnimatedVisibility in LazyColumn)
+ * This avoids nested scroll conflicts by using simple Column with Rows instead of LazyVerticalGrid
+ */
+@Composable
+private fun PageSelectionRows(
+    pages: List<PdfPageInfo>,
+    selectedPages: Set<Int>,
+    onPageToggle: (Int) -> Unit
+) {
+    val gridColumns = 4
+    val rows = pages.chunked(gridColumns) // Split pages into rows of 4
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimensions.spacingSm)
+    ) {
+        rows.forEach { rowPages ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.spacingSm)
+            ) {
+                rowPages.forEach { page ->
+                    PageThumbnail(
+                        page = page,
+                        isSelected = page.pageNumber in selectedPages,
+                        onClick = { onPageToggle(page.pageNumber) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Fill empty slots to maintain grid alignment
+                val emptySlotsCount = gridColumns - rowPages.size
+                repeat(emptySlotsCount) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Legacy PageSelectionGrid kept for reference - DO NOT USE in LazyColumn
+ * Use PageSelectionRows instead to avoid nested scroll
+ */
+@Deprecated("Use PageSelectionRows inside LazyColumn to avoid nested scroll conflicts")
 @Composable
 private fun PageSelectionGrid(
     pages: List<PdfPageInfo>,
@@ -507,7 +568,7 @@ private fun PageSelectionGrid(
 ) {
     // Use LazyVerticalGrid for better performance and proper scrolling
     val gridColumns = 4
-    
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(gridColumns),
         modifier = Modifier
@@ -536,16 +597,17 @@ private fun PageSelectionGrid(
 private fun PageThumbnail(
     page: PdfPageInfo,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isSelected) 0.9f else 1f,
         label = "thumbnail_scale"
     )
-    
+
     Card(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(0.7f) // Original aspect ratio
             .scale(scale),
         shape = RoundedCornerShape(Dimensions.radiusSm),
