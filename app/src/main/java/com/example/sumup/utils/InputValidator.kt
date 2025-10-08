@@ -11,8 +11,9 @@ object InputValidator {
     
     // Text input constraints
     const val MIN_TEXT_LENGTH = 50
-    const val MAX_TEXT_LENGTH = 30000
-    const val MAX_TEXT_LENGTH_EXTENDED = 50000 // For premium users
+    const val MAX_TEXT_LENGTH = 30000 // Soft limit - shows processing options
+    const val MAX_TEXT_LENGTH_WITH_CONFIRMATION = 200000 // Hard limit with user confirmation
+    const val MAX_TEXT_LENGTH_EXTENDED = 50000 // For premium users (future use)
     
     // PDF constraints
     const val MAX_PDF_SIZE_MB = 10
@@ -27,12 +28,14 @@ object InputValidator {
     
     /**
      * Validates text input for summarization
+     * Returns Warning for large texts (soft limit) and Error for extremely large texts (hard limit)
      */
     fun validateTextInput(text: String): ValidationResult {
         return when {
             text.isBlank() -> ValidationResult.Error("Please enter some text to summarize")
             text.length < MIN_TEXT_LENGTH -> ValidationResult.Error("Text too short. Please enter at least $MIN_TEXT_LENGTH characters")
-            text.length > MAX_TEXT_LENGTH -> ValidationResult.Error("Text too long. Maximum $MAX_TEXT_LENGTH characters allowed")
+            text.length > MAX_TEXT_LENGTH_WITH_CONFIRMATION -> ValidationResult.Error("Text too long. Maximum $MAX_TEXT_LENGTH_WITH_CONFIRMATION characters allowed")
+            text.length > MAX_TEXT_LENGTH -> ValidationResult.Warning("Large text detected. Processing options will be shown.")
             else -> ValidationResult.Success
         }
     }

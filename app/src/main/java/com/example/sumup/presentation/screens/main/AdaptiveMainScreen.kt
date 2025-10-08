@@ -106,7 +106,21 @@ fun AdaptiveMainScreen(
                 onDismiss = viewModel::dismissInfoDialog
             )
         }
-        
+
+        // Large Text Warning Dialog
+        if (uiState.showProcessingMethodDialog) {
+            com.example.sumup.presentation.components.LargeTextWarningDialog(
+                textLength = uiState.inputText.length,
+                processingOptions = uiState.processingOptions,
+                onOptionSelected = { strategy ->
+                    viewModel.selectProcessingStrategy(strategy)
+                },
+                onDismiss = {
+                    viewModel.dismissProcessingMethodDialog()
+                }
+            )
+        }
+
         if (uiState.showDraftRecoveryDialog) {
             MainScreenDialogs.DraftRecoveryDialog(
                 draftText = uiState.recoverableDraftText,

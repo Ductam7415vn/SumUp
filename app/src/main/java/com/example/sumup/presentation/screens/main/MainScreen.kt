@@ -402,13 +402,13 @@ fun MainScreen(
                     estimatedTime = uiState.largePdfEstimatedTime,
                     onOptionSelected = { option, range ->
                         val largePdfOption = when (option) {
-                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_ALL -> 
+                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_ALL ->
                                 com.example.sumup.domain.model.LargePdfOption.FULL_DOCUMENT
-                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_FIRST_50_PAGES -> 
+                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_FIRST_50_PAGES ->
                                 com.example.sumup.domain.model.LargePdfOption.FIRST_50_PAGES
-                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_CUSTOM_RANGE -> 
+                            com.example.sumup.presentation.components.PdfProcessingOption.PROCESS_CUSTOM_RANGE ->
                                 com.example.sumup.domain.model.LargePdfOption.CUSTOM_RANGE
-                            com.example.sumup.presentation.components.PdfProcessingOption.CANCEL -> 
+                            com.example.sumup.presentation.components.PdfProcessingOption.CANCEL ->
                                 com.example.sumup.domain.model.LargePdfOption.CANCEL
                         }
                         viewModel.onLargePdfOptionSelected(largePdfOption)
@@ -417,6 +417,20 @@ fun MainScreen(
                         viewModel.onLargePdfOptionSelected(
                             com.example.sumup.domain.model.LargePdfOption.CANCEL
                         )
+                    }
+                )
+            }
+
+            // Large Text Warning Dialog
+            if (uiState.showProcessingMethodDialog) {
+                com.example.sumup.presentation.components.LargeTextWarningDialog(
+                    textLength = uiState.inputText.length,
+                    processingOptions = uiState.processingOptions,
+                    onOptionSelected = { strategy ->
+                        viewModel.selectProcessingStrategy(strategy)
+                    },
+                    onDismiss = {
+                        viewModel.dismissProcessingMethodDialog()
                     }
                 )
             }

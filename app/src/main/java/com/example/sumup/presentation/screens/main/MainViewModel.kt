@@ -587,10 +587,10 @@ class MainViewModel @Inject constructor(
     
     private fun checkAndProceedWithProcessing(text: String) {
         val textLength = text.length
-        
+
         // For small texts, proceed directly with SINGLE strategy
         if (textLength < AdaptiveProcessingUseCase.SINGLE_STRATEGY_THRESHOLD) {
-            _uiState.update { 
+            _uiState.update {
                 it.copy(
                     selectedProcessingStrategy = ProcessingStrategy.SINGLE,
                     navigateToProcessing = true
