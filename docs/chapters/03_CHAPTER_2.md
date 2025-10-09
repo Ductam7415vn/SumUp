@@ -1313,115 +1313,63 @@ Drag-drop zone có content description "Drop file here" cho screen readers. File
 
 #### **Design Rationale & Justification - OCR Screen:**
 
-**WHY this design?**
+Màn hình OCR được thiết kế để tối ưu hóa trải nghiệm chụp và nhận dạng văn bản từ hình ảnh, với trọng tâm là độ chính xác cao của OCR và sự tiện lợi trong thao tác một tay. Mỗi quyết định thiết kế đều dựa trên nghiên cứu ergonomics, kiểm thử chất lượng nhận dạng văn bản, và phân tích hành vi người dùng với camera.
 
-**1. Full-screen Camera Preview (vs Viewfinder Frame):**
-- ✅ **Chosen:** Full-screen camera feed within safe area
-- ❌ **Alternative 1:** Small viewfinder frame (e.g., 70% center)
-  - ❌ CON: Constrains framing flexibility, harder to scan large documents
-  - ❌ CON: Users confused about cropping (tested with 12 users, 58% tried to resize frame)
-- ❌ **Alternative 2:** Fixed square frame
-  - ❌ CON: Forces portrait orientation, poor for landscape documents
-- ✅ **Rationale:** Full-screen provides maximum flexibility. Users can frame document at any angle/size. ML Kit processes full image anyway, so artificial frames add no value.
-- 📊 **Usability Testing:** Full-screen = 94% successful captures vs 78% with fixed frame.
+**Thiết kế Camera Preview toàn màn hình:**
 
-**2. Grid Overlay (Rule of Thirds):**
-- ✅ **Chosen:** Optional grid overlay (3x3 lines)
-- ❌ **Alternative 1:** No grid
-  - ❌ CON: 42% of captures had tilted documents (>5° angle)
-- ❌ **Alternative 2:** Always-on grid
-  - ❌ CON: Visual clutter, 23% of users found it distracting
-- ✅ **Rationale:** Grid helps users align documents horizontally/vertically, reducing skewed captures by 67% (42% → 14%). Optional toggle in settings for advanced users.
-- 🎯 **Grid Benefits:**
-  - Horizontal alignment: Reduces text detection errors by 34%
-  - Perspective correction: Easier for ML Kit to process straight text
+Khung hình camera toàn màn hình trong vùng an toàn được chọn sau khi cân nhắc các phương án thay thế. Phương án sử dụng khung ngắm nhỏ (ví dụ 70% trung tâm) bị loại vì hạn chế tính linh hoạt trong việc đóng khung, đặc biệt khó quét các tài liệu lớn. Kiểm thử với 12 người dùng cho thấy 58% cố gắng thay đổi kích thước khung, tạo ra sự nhầm lẫn về cách cắt xén. Phương án khung vuông cố định cũng bị loại vì buộc hướng dọc, không phù hợp với tài liệu nằm ngang.
 
-**3. Camera Controls Position (Bottom):**
-- ✅ **Chosen:** Flash + Camera switch at bottom (above capture button)
-- ❌ **Alternative 1:** Top of screen
-  - ❌ CON: Hard to reach with one hand on large phones (6.5"+ screens)
-  - ❌ CON: Thumb travel time +450ms (measured with Fitts's Law)
-- ❌ **Alternative 2:** Side buttons
-  - ❌ CON: Conflicts with physical volume buttons (accidental presses)
-- ✅ **Rationale:** Bottom placement follows thumb zone ergonomics. All controls within 72mm of thumb pivot point on 6.7" screen.
-- 📊 **Ergonomics:** Bottom controls = 89% one-handed operation vs 34% for top controls (tested on iPhone 14 Pro Max equivalent).
+Thiết kế toàn màn hình cung cấp tính linh hoạt tối đa - người dùng có thể đóng khung tài liệu ở bất kỳ góc độ hoặc kích thước nào. ML Kit xử lý toàn bộ hình ảnh nên các khung nhân tạo không mang lại giá trị bổ sung. Kiểm thử khả năng sử dụng cho thấy tỷ lệ chụp thành công 94% với toàn màn hình so với 78% với khung cố định.
 
-**4. Contextual Tips Display:**
-- ✅ **Chosen:** Always-visible tips below camera preview
-- ❌ **Alternative 1:** No tips
-  - ❌ CON: Low-quality captures increase 3x (good lighting critical for OCR)
-- ❌ **Alternative 2:** Tooltip on first use only
-  - ❌ CON: Users forget tips, quality degrades over time
-- ❌ **Alternative 3:** Tips in dialog before camera
-  - ❌ CON: Adds friction, users dismiss without reading (84% skip rate)
-- ✅ **Rationale:** Always-visible tips improve capture quality:
-  - Good lighting: 87% text detection success vs 62% without tip
-  - Hold steady: Reduces blur by 54%
-  - Avoid shadows: Improves contrast by 3.2x average
-- 🧪 **A/B Testing (n=200):** Tips = 87% success rate vs 62% without tips.
+**Lưới phủ theo quy tắc tam phân:**
 
-**5. Capture Button Size & Position:**
-- ✅ **Chosen:** 72dp diameter, center-bottom (16dp from bottom edge)
-- ❌ **Alternative 1:** 56dp button (Material 3 FAB standard)
-  - ❌ CON: Too small for camera context (high-pressure action)
-  - ❌ CON: Easier to miss in shaky hands
-- ❌ **Alternative 2:** Full-width button
-  - ❌ CON: Unusual for camera apps, breaks mental model
-- ✅ **Rationale:** 72dp = 18mm physical size, optimal for thumb tap (Fitts's Law). Matches native camera apps (consistency principle).
-- 📐 **Touch Target:** 72dp > 48dp minimum (WCAG 2.1), comfortable for all hand sizes.
-- 🎯 **Error Rate:** 72dp button = 2.3% mis-taps vs 8.7% for 56dp button.
+Lưới phủ tùy chọn với chín ô (3×3) được chọn để hỗ trợ căn chỉnh tài liệu. Phương án không có lưới bị loại vì 42% ảnh chụp có tài liệu bị nghiêng hơn 5 độ. Phương án lưới luôn bật cũng bị loại vì 23% người dùng cảm thấy lộn xộn và phân tâm.
 
-**6. Flash Toggle (Off/On/Auto):**
-- ✅ **Chosen:** 3-state toggle (Off → On → Auto → Off)
-- ❌ **Alternative 1:** Binary toggle (Off/On only)
-  - ❌ CON: No Auto mode, users must manually toggle in changing light
-- ❌ **Alternative 2:** Always Auto
-  - ❌ CON: Flash fires unnecessarily in some conditions (e.g., bright light + shadows)
-- ✅ **Rationale:** Auto mode handles 78% of cases correctly. Manual override for edge cases:
-  - Off: Outdoor/bright indoor (68% of scans)
-  - Auto: Mixed lighting (22% of scans)
-  - On: Very dark environments (10% of scans)
-- 📊 **Usage Data:** Auto used 78%, Off 18%, On 4%.
+Lưới giúp người dùng căn chỉnh tài liệu theo chiều ngang và dọc, giảm 67% ảnh chụp bị nghiêng (từ 42% xuống 14%). Tùy chọn bật tắt trong cài đặt phục vụ người dùng nâng cao. Lợi ích cụ thể của lưới bao gồm căn chỉnh ngang giảm 34% lỗi phát hiện văn bản, và hiệu chỉnh phối cảnh dễ dàng hơn cho ML Kit xử lý văn bản thẳng.
 
-**7. Permission Handling Strategy:**
-- ✅ **Chosen:** Request permission on OCR tab access + rationale dialog if denied
-- ❌ **Alternative 1:** Request on app launch
-  - ❌ CON: Premature request, users don't understand context yet
-  - ❌ CON: Higher denial rate (42% vs 18%)
-- ❌ **Alternative 2:** Request without rationale
-  - ❌ CON: Users confused why camera is needed
-- ✅ **Rationale:** Just-in-time permission request with clear rationale:
-  - Timing: When user navigates to OCR tab (clear intent)
-  - Rationale: "Camera needed to scan text from images"
-  - Denial rate: 18% (vs 42% for launch-time request)
-- 🎯 **Android Best Practice:** Material Design guidelines recommend contextual permission requests.
+**Vị trí điều khiển camera ở phía dưới:**
 
-**8. Camera Switch Button (Front/Rear):**
-- ✅ **Chosen:** Include camera switch button
-- ❌ **Alternative:** Rear camera only
-  - ❌ CON: Excludes mirror use case (scan text while looking at screen)
-  - ❌ CON: Accessibility: Some users easier to hold phone facing them
-- ✅ **Rationale:** Front camera useful for:
-  - Whiteboard scanning (can see screen while framing)
-  - Accessibility (easier for some motor impairments)
-  - Mirror reflections (e.g., scanning labels in stores)
-- 📊 **Usage:** 94% use rear camera, but 6% specifically need front camera.
+Nút Flash và chuyển camera được đặt ở phía dưới ngay trên nút chụp thay vì ở đầu màn hình (khó chạm bằng một tay trên điện thoại lớn hơn 6.5 inch, thời gian di chuyển ngón cái tăng 450ms theo định luật Fitts) hoặc các nút bên (xung đột với nút âm lượng vật lý gây chạm nhầm).
 
-**User Research Supporting Decisions:**
-- 🧪 **Usability Testing (n=12):** Full-screen captures 94% success vs 78% with fixed frame
-- 📊 **A/B Testing (n=200):** Tips improve success rate 87% vs 62% without tips
-- 📐 **Ergonomics Testing:** Bottom controls 89% one-handed vs 34% top controls
-- 📈 **Quality Analysis:** Grid overlay reduces skew errors by 67%
-- 🎯 **Touch Target Testing:** 72dp button = 2.3% mis-taps vs 8.7% for 56dp
+Vị trí phía dưới tuân theo ergonomics vùng ngón cái - tất cả điều khiển nằm trong phạm vi 72mm từ điểm xoay ngón cái trên màn hình 6.7 inch. Kiểm thử ergonomics cho thấy điều khiển phía dưới cho phép 89% thao tác một tay so với chỉ 34% với điều khiển phía trên.
 
-**Accessibility Considerations:**
-- ✅ Camera preview has "Camera viewfinder" label for TalkBack
-- ✅ Capture button: "Capture image" with haptic feedback
-- ✅ Flash toggle: "Flash off/on/auto" announced on state change
-- ✅ Camera switch: "Switch to front/rear camera"
-- ✅ Permission rationale explains why camera is needed
-- ✅ Focus indicator visible for users with visual impairments
-- ✅ All touch targets ≥72dp (exceeds 48dp minimum)
+**Hiển thị gợi ý theo ngữ cảnh:**
+
+Các gợi ý luôn hiển thị bên dưới khung hình camera được chọn sau khi so sánh với không có gợi ý (ảnh chất lượng thấp tăng gấp ba lần vì ánh sáng tốt quan trọng cho OCR), gợi ý chỉ hiện lần đầu (người dùng quên, chất lượng giảm theo thời gian), và gợi ý trong hộp thoại trước camera (tạo ma sát, 84% người dùng bỏ qua mà không đọc).
+
+Gợi ý luôn hiển thị cải thiện chất lượng chụp đáng kể: ánh sáng tốt tạo 87% thành công phát hiện văn bản so với 62% không có gợi ý, giữ máy ổn định giảm 54% mờ, và tránh bóng đổ cải thiện độ tương phản trung bình 3.2 lần. Kiểm thử A/B với 200 người dùng xác nhận gợi ý đạt tỷ lệ thành công 87% so với 62% không có gợi ý.
+
+**Kích thước và vị trí nút chụp:**
+
+Nút chụp đường kính 72dp ở trung tâm phía dưới cách cạnh 16dp được chọn thay vì nút 56dp chuẩn Material 3 FAB (quá nhỏ cho ngữ cảnh camera là hành động áp lực cao, dễ bấm nhầm khi tay run) hoặc nút toàn chiều rộng (bất thường cho ứng dụng camera, phá vỡ mô hình tư duy).
+
+Kích thước 72dp tương đương 18mm vật lý là tối ưu cho chạm ngón cái theo định luật Fitts, phù hợp với ứng dụng camera gốc theo nguyên tắc nhất quán. Mục tiêu chạm 72dp vượt mức tối thiểu 48dp theo WCAG 2.1 và thoải mái cho mọi kích cỡ bàn tay. Tỷ lệ chạm nhầm chỉ 2.3% so với 8.7% cho nút 56dp.
+
+**Nút chuyển Flash ba trạng thái:**
+
+Nút chuyển ba trạng thái Tắt-Bật-Tự động được chọn thay vì chuyển nhị phân Tắt/Bật (không có chế độ Tự động, người dùng phải chuyển thủ công khi ánh sáng thay đổi) hoặc luôn Tự động (đèn flash bật không cần thiết trong một số điều kiện như ánh sáng mạnh cộng bóng đổ).
+
+Chế độ Tự động xử lý đúng 78% trường hợp với tùy chọn ghi đè thủ công cho các trường hợp biên: Tắt cho ngoài trời hoặc trong nhà sáng (68% lần quét), Tự động cho ánh sáng hỗn hợp (22%), và Bật cho môi trường rất tối (10%). Dữ liệu sử dụng cho thấy Tự động được dùng 78%, Tắt 18%, Bật 4%.
+
+**Chiến lược xử lý quyền:**
+
+Yêu cầu quyền khi truy cập tab OCR kèm hộp thoại giải thích nếu bị từ chối được chọn thay vì yêu cầu khi khởi động ứng dụng (yêu cầu sớm, người dùng chưa hiểu ngữ cảnh, tỷ lệ từ chối cao hơn 42% so với 18%) hoặc yêu cầu không giải thích (người dùng bối rối tại sao cần camera).
+
+Yêu cầu quyền đúng lúc với giải thích rõ ràng bao gồm thời điểm (khi người dùng điều hướng đến tab OCR cho thấy ý định rõ ràng), giải thích ("Camera cần thiết để quét văn bản từ hình ảnh"), và tỷ lệ từ chối chỉ 18%. Đây cũng là phương pháp hay nhất của Android theo hướng dẫn Material Design khuyến nghị yêu cầu quyền theo ngữ cảnh.
+
+**Nút chuyển camera trước/sau:**
+
+Bao gồm nút chuyển camera thay vì chỉ camera sau (loại trừ trường hợp sử dụng gương quét văn bản trong khi nhìn màn hình, và khả năng tiếp cận cho một số người dùng dễ giữ điện thoại hướng về phía họ hơn).
+
+Camera trước hữu ích cho quét bảng trắng (có thể nhìn màn hình trong khi đóng khung), khả năng tiếp cận (dễ dàng hơn cho một số khiếm khuyết vận động), và phản chiếu gương (ví dụ quét nhãn trong cửa hàng). Dữ liệu sử dụng cho thấy 94% dùng camera sau, nhưng 6% cụ thể cần camera trước.
+
+**Dữ liệu nghiên cứu người dùng hỗ trợ:**
+
+Kiểm thử khả năng sử dụng với 12 người tham gia cho thấy toàn màn hình đạt 94% chụp thành công so với 78% với khung cố định. Kiểm thử A/B với 200 người dùng xác nhận gợi ý cải thiện tỷ lệ thành công từ 62% lên 87%. Kiểm thử ergonomics cho thấy điều khiển phía dưới cho phép 89% thao tác một tay so với 34% cho điều khiển phía trên. Phân tích chất lượng cho thấy lưới phủ giảm 67% lỗi nghiêng. Kiểm thử mục tiêu chạm cho thấy nút 72dp chỉ 2.3% chạm nhầm so với 8.7% cho 56dp.
+
+**Các cân nhắc về khả năng tiếp cận:**
+
+Khung hình camera có nhãn "Camera viewfinder" cho TalkBack. Nút chụp được thông báo "Capture image" với phản hồi xúc giác. Nút Flash được thông báo "Flash off/on/auto" khi thay đổi trạng thái. Nút chuyển camera được thông báo "Switch to front/rear camera". Giải thích quyền giải thích tại sao cần camera. Chỉ báo lấy nét hiển thị cho người dùng khiếm thị. Tất cả mục tiêu chạm tối thiểu 72dp vượt mức tối thiểu 48dp.
 
 ---
 
@@ -1499,131 +1447,63 @@ Drag-drop zone có content description "Drop file here" cho screen readers. File
 
 #### **Design Rationale & Justification - Processing Screen:**
 
-**WHY this design?**
+Màn hình xử lý được thiết kế để quản lý kỳ vọng của người dùng trong thời gian chờ, giảm thiểu cảm giác thời gian trôi qua và cung cấp quyền kiểm soát. Mỗi quyết định thiết kế nhằm mục đích giảm tỷ lệ từ bỏ và tăng sự hài lòng với trải nghiệm chờ đợi.
 
-**1. Progress Transparency (Percentage + Time Estimate):**
-- ✅ **Chosen:** Show progress bar + percentage + time estimate
-- ❌ **Alternative 1:** Indeterminate spinner only
-  - ❌ CON: Users frustrated by unknown wait time (42% abandon rate after 15s)
-  - ❌ CON: Feels "stuck" - no feedback if progressing
-- ❌ **Alternative 2:** Percentage only (no time)
-  - ❌ CON: Users can't plan (e.g., "Can I grab coffee?" = 30s vs 5s)
-- ❌ **Alternative 3:** Time only (no percentage)
-  - ❌ CON: Time estimates often inaccurate (±40%), frustrating when wrong
-- ✅ **Rationale:** Dual feedback (% + time) provides:
-  - **Certainty:** User knows process is advancing (% increases)
-  - **Planning:** User can decide to wait or do something else
-  - **Psychological:** Perceived wait time 31% shorter with progress indicator (Nielsen Norman Group)
-- 📊 **A/B Testing (n=300):**
-  - Indeterminate spinner: 42% abandonment after 15s
-  - Progress bar only: 28% abandonment
-  - Progress + time: 14% abandonment ← **Chosen**
+**Minh bạch tiến trình với phần trăm và ước tính thời gian:**
 
-**2. LinearProgressIndicator (vs Circular):**
-- ✅ **Chosen:** Linear horizontal progress bar
-- ❌ **Alternative 1:** Circular progress indicator (like Material spinner)
-  - ❌ CON: Harder to gauge exact progress (45% vs 55% looks similar)
-  - ❌ CON: Takes more vertical space (80dp circle vs 4dp line)
-- ❌ **Alternative 2:** Segmented progress (e.g., 5 dots)
-  - ❌ CON: Too coarse, loses granularity (20% per segment)
-- ✅ **Rationale:** Linear bar provides:
-  - **Precision:** Easy to see 45% vs 55% visually
-  - **Space efficiency:** 4dp height, doesn't dominate screen
-  - **Familiarity:** Universal pattern (downloads, uploads, installs)
-- 🎯 **Research:** Linear progress 23% faster to estimate completion than circular (eye-tracking study).
+Thiết kế hiển thị thanh tiến trình cùng phần trăm và ước tính thời gian được chọn sau khi so sánh với các phương án khác. Phương án chỉ có vòng quay không xác định bị loại vì người dùng thất vọng với thời gian chờ không rõ ràng (tỷ lệ từ bỏ 42% sau 15 giây) và cảm giác "bị kẹt" khi không có phản hồi về tiến độ. Phương án chỉ có phần trăm không có thời gian bị loại vì người dùng không thể lập kế hoạch (ví dụ "Tôi có thể đi pha cà phê không?" phụ thuộc vào còn 30 giây hay 5 giây). Phương án chỉ có thời gian không có phần trăm cũng bị loại vì ước tính thời gian thường không chính xác (sai số ±40%), gây thất vọng khi sai.
 
-**3. Cancel Button Availability:**
-- ✅ **Chosen:** Provide Cancel button with confirmation
-- ❌ **Alternative 1:** No cancel (force wait)
-  - ❌ CON: User trapped if they change mind or picked wrong file
-  - ❌ CON: Violates Nielsen's "user control and freedom" heuristic
-- ❌ **Alternative 2:** Cancel without confirmation
-  - ❌ CON: Accidental taps waste previous wait time (23% regret canceling)
-- ✅ **Rationale:** Cancel empowers users but confirmation prevents accidents:
-  - **Use cases:**
-    - Wrong file uploaded (happens 12% of the time)
-    - Forgot to select correct persona
-    - Emergency/interruption (phone call, etc.)
-  - **Confirmation dialog:** "Cancel summarization?" prevents accidental taps
-- 📊 **Usability Testing:** 67% of users felt "more in control" with cancel option, even if never used.
+Phản hồi kép (phần trăm và thời gian) cung cấp sự chắc chắn (người dùng biết quá trình đang tiến triển khi phần trăm tăng), khả năng lập kế hoạch (người dùng có thể quyết định chờ hay làm việc khác), và lợi ích tâm lý (thời gian chờ cảm nhận ngắn hơn 31% với chỉ báo tiến trình theo Nielsen Norman Group). Kiểm thử A/B với 300 người dùng cho thấy vòng quay không xác định có 42% từ bỏ sau 15 giây, chỉ thanh tiến trình có 28% từ bỏ, trong khi tiến trình cộng thời gian chỉ có 14% từ bỏ.
 
-**4. Status Text Progression:**
-- ✅ **Chosen:** 3-stage dynamic status ("Analyzing..." → "Generating..." → "Almost done...")
-- ❌ **Alternative 1:** Static "Processing..." throughout
-  - ❌ CON: Feels stagnant, users think app froze (34% reported "app stuck")
-- ❌ **Alternative 2:** Technical details ("Calling API..." → "Parsing JSON...")
-  - ❌ CON: Confusing for non-technical users (78% didn't understand)
-- ✅ **Rationale:** Progressive status text:
-  - **Psychological:** Creates sense of movement and progress
-  - **Clarity:** Non-technical language (analyzing, generating, almost done)
-  - **Reduces "stuck" perception by 67%** (34% → 11% reported feeling stuck)
-- 🧠 **Psychology:** Variable text engages user attention, reduces perceived wait time (Zeigarnik effect).
+**Thanh tiến trình ngang thay vì vòng tròn:**
 
-**5. Animated Icon (Rotation):**
-- ✅ **Chosen:** Rotating app logo/icon (360° loop, 1.5s duration)
-- ❌ **Alternative 1:** Static icon
-  - ❌ CON: Looks frozen, users think app crashed
-- ❌ **Alternative 2:** Complex Lottie animation
-  - ❌ CON: CPU overhead (8-12% on low-end devices), drains battery
-  - ❌ CON: Distracts from progress bar
-- ❌ **Alternative 3:** Pulsing/scaling animation
-  - ❌ CON: Can trigger motion sickness in sensitive users (7% reported discomfort)
-- ✅ **Rationale:** Simple rotation animation:
-  - **Lightweight:** <1% CPU overhead
-  - **Universal:** Rotation = "working" mental model
-  - **Accessibility-friendly:** Doesn't trigger vestibular issues (vs pulsing)
-- 🎨 **Accessibility:** Respects "Reduce Motion" setting (falls back to opacity fade).
+Thanh tiến trình ngang được chọn thay vì chỉ báo tiến trình vòng tròn (khó đánh giá tiến độ chính xác vì 45% và 55% trông giống nhau, chiếm nhiều không gian dọc hơn với vòng tròn 80dp so với thanh 4dp) hoặc tiến trình phân đoạn như năm chấm (quá thô, mất độ chi tiết với 20% mỗi đoạn).
 
-**6. Time Estimate Algorithm:**
-- ✅ **Chosen:** Adaptive estimate based on text length + historical data
-- ❌ **Alternative 1:** Fixed estimate (e.g., "About 10 seconds")
-  - ❌ CON: Inaccurate for short/long texts, loses user trust
-- ❌ **Alternative 2:** No estimate
-  - ❌ CON: Users can't plan, higher abandonment (28% vs 14%)
-- ✅ **Rationale:** Adaptive algorithm:
-  - **Base calculation:** 0.8s per 100 characters (from API benchmarks)
-  - **Adjustments:** +20% for complex personas (Academic), -10% for simple (Quick Brief)
-  - **Historical data:** Uses last 10 API calls to calibrate
-  - **Conservative:** Adds 15% buffer so we usually beat the estimate
-- 📊 **Accuracy:** ±20% of actual time in 87% of cases (measured over 500 requests).
+Thanh ngang cung cấp độ chính xác cao (dễ thấy sự khác biệt giữa 45% và 55% về mặt hình ảnh), hiệu quả không gian (chiều cao 4dp không chiếm ưu thế màn hình), và quen thuộc (mẫu phổ quát cho tải xuống, tải lên, cài đặt). Nghiên cứu theo dõi mắt cho thấy tiến trình ngang nhanh hơn 23% trong ước tính hoàn thành so với vòng tròn.
 
-**7. Auto-navigation on Completion:**
-- ✅ **Chosen:** Auto-navigate to Result screen at 100%
-- ❌ **Alternative 1:** Show success dialog, user taps "View Result"
-  - ❌ CON: Extra tap adds friction, delays gratification
-- ❌ **Alternative 2:** Navigate at 95% (before fully complete)
-  - ❌ CON: Result screen may show loading state, confusing UX
-- ✅ **Rationale:** Immediate navigation at 100%:
-  - **Reduces friction:** 0 extra taps required
-  - **Faster to result:** Saves 1.2s average (tap + animation)
-  - **Clear completion signal:** Navigation = success
-- 🎯 **Animation:** Smooth transition (300ms fade) signals success.
+**Tính khả dụng của nút Hủy:**
 
-**8. Screen Brightness Prevention:**
-- ✅ **Chosen:** Keep screen on during processing (WakeLock)
-- ❌ **Alternative:** Let screen dim naturally
-  - ❌ CON: User unlocks phone → Confused about app state
-  - ❌ CON: Background processing may pause on some devices
-- ✅ **Rationale:** WakeLock ensures:
-  - User sees completion immediately
-  - Processing completes (not paused by OS)
-  - Battery cost negligible for 8-30s average processing time
-- 🔋 **Battery:** WakeLock for 30s = 0.02% battery drain (tested on Pixel 6).
+Cung cấp nút Hủy kèm xác nhận được chọn thay vì không có nút hủy buộc chờ (người dùng bị mắc kẹt nếu đổi ý hoặc chọn nhầm file, vi phạm nguyên tắc "kiểm soát và tự do của người dùng" của Nielsen) hoặc hủy không có xác nhận (chạm nhầm lãng phí thời gian chờ trước đó, 23% hối hận khi hủy).
 
-**User Research Supporting Decisions:**
-- 📊 **A/B Testing (n=300):** Progress + time = 14% abandonment vs 42% for indeterminate spinner
-- 🧪 **Usability Testing (n=12):** 67% felt more in control with cancel button
-- 👁️ **Eye-tracking:** Linear progress 23% faster to estimate completion
-- 📈 **Behavioral Data:** Dynamic status text reduces "stuck" perception by 67%
-- 🎯 **Accuracy Testing:** Time estimates ±20% accurate in 87% of cases
+Nút Hủy trao quyền cho người dùng nhưng xác nhận ngăn tai nạn. Các trường hợp sử dụng bao gồm tải nhầm file (xảy ra 12% thời gian), quên chọn persona đúng, và khẩn cấp/gián đoạn như cuộc gọi điện thoại. Hộp thoại xác nhận "Hủy tóm tắt?" ngăn chạm nhầm. Kiểm thử khả năng sử dụng cho thấy 67% người dùng cảm thấy "kiểm soát nhiều hơn" với tùy chọn hủy ngay cả khi không bao giờ sử dụng.
 
-**Accessibility Considerations:**
-- ✅ Progress bar announced to TalkBack: "Processing, 45 percent complete"
-- ✅ Status text announced on changes: "Generating summary"
-- ✅ Time estimate announced: "Estimated 8 seconds remaining"
-- ✅ Cancel button: "Cancel summarization" with confirmation
-- ✅ Rotation animation respects "Reduce Motion" setting (falls back to fade)
-- ✅ Screen reader announces auto-navigation: "Summary complete, navigating to results"
+**Chuỗi văn bản trạng thái động:**
+
+Trạng thái động ba giai đoạn ("Đang phân tích..." → "Đang tạo..." → "Sắp xong...") được chọn thay vì văn bản tĩnh "Đang xử lý..." suốt quá trình (cảm giác trì trệ, người dùng nghĩ ứng dụng bị đơ với 34% báo cáo "ứng dụng bị kẹt") hoặc chi tiết kỹ thuật như "Đang gọi API..." → "Đang phân tích JSON..." (khó hiểu cho người dùng không chuyên với 78% không hiểu).
+
+Văn bản trạng thái tiến triển tạo cảm giác chuyển động và tiến bộ về mặt tâm lý, sử dụng ngôn ngữ không chuyên (phân tích, tạo, sắp xong), và giảm 67% cảm giác "bị kẹt" (từ 34% xuống 11% báo cáo cảm thấy kẹt). Văn bản thay đổi thu hút sự chú ý của người dùng và giảm thời gian chờ cảm nhận theo hiệu ứng Zeigarnik.
+
+**Biểu tượng động xoay vòng:**
+
+Biểu tượng hoặc logo ứng dụng xoay 360 độ với chu kỳ 1.5 giây được chọn thay vì biểu tượng tĩnh (trông như đóng băng, người dùng nghĩ ứng dụng bị hỏng), hoạt ảnh Lottie phức tạp (tải CPU 8-12% trên thiết bị cấp thấp làm hao pin và gây phân tâm khỏi thanh tiến trình), hoặc hoạt ảnh nhấp nháy/thu phóng (có thể gây say sóng cho người dùng nhạy cảm với 7% báo cáo khó chịu).
+
+Hoạt ảnh xoay đơn giản nhẹ (<1% tải CPU), phổ quát (xoay tương đương với mô hình tư duy "đang hoạt động"), và thân thiện với khả năng tiếp cận (không kích hoạt vấn đề tiền đình khác với nhấp nháy). Hoạt ảnh tôn trọng cài đặt "Giảm chuyển động" với phương án dự phòng là mờ dần độ trong suốt.
+
+**Thuật toán ước tính thời gian:**
+
+Ước tính thích ứng dựa trên độ dài văn bản cộng dữ liệu lịch sử được chọn thay vì ước tính cố định (ví dụ "Khoảng 10 giây" không chính xác cho văn bản ngắn/dài làm mất niềm tin người dùng) hoặc không ước tính (người dùng không thể lập kế hoạch, tỷ lệ từ bỏ cao hơn 28% so với 14%).
+
+Thuật toán thích ứng bao gồm tính toán cơ bản 0.8 giây trên 100 ký tự (từ điểm chuẩn API), điều chỉnh thêm 20% cho persona phức tạp (Academic) và trừ 10% cho đơn giản (Quick Brief), sử dụng 10 lần gọi API cuối để hiệu chỉnh, và bảo thủ với bộ đệm 15% để thường hoàn thành sớm hơn ước tính. Độ chính xác trong vòng ±20% thời gian thực tế ở 87% trường hợp được đo trên 500 yêu cầu.
+
+**Tự động điều hướng khi hoàn thành:**
+
+Tự động điều hướng đến màn hình kết quả ở 100% được chọn thay vì hiển thị hộp thoại thành công yêu cầu người dùng chạm "Xem kết quả" (thêm chạm tạo ma sát, trì hoãn sự hài lòng) hoặc điều hướng ở 95% trước khi hoàn toàn xong (màn hình kết quả có thể hiển thị trạng thái đang tải gây nhầm lẫn UX).
+
+Điều hướng ngay lập tức ở 100% giảm ma sát (không cần thêm chạm), nhanh hơn đến kết quả (tiết kiệm trung bình 1.2 giây từ chạm cộng hoạt ảnh), và tín hiệu hoàn thành rõ ràng (điều hướng tương đương thành công). Chuyển tiếp mượt mà với hiệu ứng mờ 300ms báo hiệu thành công.
+
+**Ngăn màn hình tắt sáng:**
+
+Giữ màn hình bật trong quá trình xử lý bằng WakeLock được chọn thay vì để màn hình tối tự nhiên (người dùng mở khóa điện thoại rồi bối rối về trạng thái ứng dụng, xử lý nền có thể tạm dừng trên một số thiết bị).
+
+WakeLock đảm bảo người dùng thấy hoàn thành ngay lập tức, xử lý hoàn tất (không bị hệ điều hành tạm dừng), và chi phí pin không đáng kể cho thời gian xử lý trung bình 8-30 giây. WakeLock trong 30 giây chỉ hao 0.02% pin được kiểm thử trên Pixel 6.
+
+**Dữ liệu nghiên cứu người dùng hỗ trợ:**
+
+Kiểm thử A/B với 300 người dùng cho thấy tiến trình cộng thời gian có 14% từ bỏ so với 42% cho vòng quay không xác định. Kiểm thử khả năng sử dụng với 12 người tham gia cho thấy 67% cảm thấy kiểm soát nhiều hơn với nút hủy. Nghiên cứu theo dõi mắt cho thấy tiến trình ngang nhanh hơn 23% để ước tính hoàn thành. Dữ liệu hành vi cho thấy văn bản trạng thái động giảm 67% cảm giác "bị kẹt". Kiểm thử độ chính xác cho thấy ước tính thời gian chính xác ±20% trong 87% trường hợp.
+
+**Các cân nhắc về khả năng tiếp cận:**
+
+Thanh tiến trình được thông báo cho TalkBack "Đang xử lý, 45 phần trăm hoàn thành". Văn bản trạng thái được thông báo khi thay đổi "Đang tạo tóm tắt". Ước tính thời gian được thông báo "Ước tính còn 8 giây". Nút Hủy được thông báo "Hủy tóm tắt" với xác nhận. Hoạt ảnh xoay tôn trọng cài đặt "Giảm chuyển động" với phương án dự phòng là mờ dần. Trình đọc màn hình thông báo tự động điều hướng "Tóm tắt hoàn tất, đang điều hướng đến kết quả".
 
 ---
 
@@ -1708,135 +1588,63 @@ Drag-drop zone có content description "Drop file here" cho screen readers. File
 
 #### **Design Rationale & Justification - Result Screen:**
 
-**WHY this design?**
+Màn hình kết quả được thiết kế để cung cấp phản hồi tức thì về chất lượng và hiệu quả của bản tóm tắt, đồng thời tạo điều kiện thuận lợi cho các hành động tiếp theo như chia sẻ, xuất bản hoặc thử nghiệm với các persona khác nhau. Mỗi quyết định thiết kế đều dựa trên nghiên cứu khả năng sử dụng và phân tích hành vi người dùng.
 
-**1. KPI Metrics Cards (2x2 Grid):**
-- ✅ **Chosen:** 4 metrics in 2x2 grid at top
-- ❌ **Alternative 1:** Single row of 4 cards
-  - ❌ CON: Cards too small (narrow width), hard to read numbers
-  - ❌ CON: On small screens (<360dp), text truncates
-- ❌ **Alternative 2:** Vertical list (4 rows)
-  - ❌ CON: Takes 320dp vertical space, pushes content below fold
-  - ❌ CON: Slower to scan (vertical eye movement)
-- ❌ **Alternative 3:** No metrics cards
-  - ❌ CON: Users want quantitative feedback (89% checked metrics in testing)
-- ✅ **Rationale:** 2x2 grid balances readability with space efficiency:
-  - **Scan time:** 1.8s average (eye-tracking) vs 3.2s for vertical list
-  - **Space:** 160dp height vs 320dp for vertical
-  - **Hierarchy:** Equal visual weight for all 4 metrics
-- 📊 **Usability Testing (n=12):** 89% looked at metrics before reading summary, avg 1.8s scan time.
+**Thiết kế KPI Metrics Cards dạng lưới 2×2:**
 
-**2. Metrics Selection (Which 4?):**
-- ✅ **Chosen:** Original words, Summary words, Time saved, Reduction %
-- ❌ **Alternative metrics considered:**
-  - Reading level (Flesch-Kincaid score): Low interest (18% cared)
-  - Character count: Too technical, prefer word count
-  - Sentence count: Not actionable
-- ✅ **Rationale:** These 4 metrics provide:
-  - **Original/Summary words:** Concrete before/after comparison
-  - **Time saved:** Direct value proposition ("saved 4 min")
-  - **Reduction %:** Efficiency indicator (higher = better)
-- 📊 **Survey (n=150):** Metric importance rankings:
-  1. Time saved: 87% find useful
-  2. Reduction %: 78%
-  3. Word counts: 72%
-  4. Reading level: 18% ← Excluded
+Các thẻ hiển thị chỉ số được bố trí theo lưới 2×2 ở đầu màn hình sau khi cân nhắc kỹ lưỡng nhiều phương án thay thế. Phương án hiển thị bốn thẻ theo một hàng ngang bị loại vì chiều rộng của mỗi thẻ quá nhỏ, khiến con số khó đọc, đặc biệt trên các màn hình nhỏ hơn 360dp nơi văn bản thường bị cắt ngắn. Phương án danh sách dọc với bốn hàng cũng bị loại vì chiếm 320dp không gian dọc, đẩy nội dung chính xuống dưới vùng hiển thị ban đầu, đồng thời làm tăng thời gian quét do chuyển động mắt theo chiều dọc chậm hơn. Phương án không hiển thị thẻ chỉ số hoàn toàn bị loại sau khi kiểm thử cho thấy 89% người dùng chủ động kiểm tra các chỉ số này.
 
-**3. FAB Menu (vs TopAppBar Actions):**
-- ✅ **Chosen:** Floating Action Button with speed dial menu
-- ❌ **Alternative 1:** Actions in TopAppBar overflow menu (⋮)
-  - ❌ CON: Low discoverability (64% never found Share in testing)
-  - ❌ CON: 2 taps required (open menu → select action)
-- ❌ **Alternative 2:** Buttons below summary
-  - ❌ CON: Takes vertical space, less content visible
-  - ❌ CON: Pushed below fold for long summaries
-- ❌ **Alternative 3:** Bottom sheet
-  - ❌ CON: Covers content, requires dismiss action
-- ✅ **Rationale:** FAB provides:
-  - **High visibility:** Persistent, doesn't scroll away
-  - **Quick access:** 1 tap to expand, 2 taps total for action
-  - **Thumb-friendly:** Bottom-right position, 80% can reach one-handed
-  - **Discoverability:** 91% found Share vs 64% in overflow menu
-- 🎯 **Position:** Bottom-right (16dp from edges) = optimal thumb zone for right-handed users (78%). Left-handed users can still reach with slight adjustment.
+Lưới 2×2 được chọn vì cân bằng tối ưu giữa khả năng đọc và hiệu quả sử dụng không gian. Nghiên cứu theo dõi mắt cho thấy thời gian quét trung bình là 1.8 giây so với 3.2 giây cho danh sách dọc, trong khi chỉ chiếm 160dp chiều cao so với 320dp. Bố trí này cũng tạo ra phân cấp trực quan cân bằng, khiến cả bốn chỉ số có trọng lượng nhìn tương đương nhau.
 
-**4. Persona Selector on Result Screen:**
-- ✅ **Chosen:** Allow persona change directly on Result screen
-- ❌ **Alternative:** Force user to go back to Main and restart
-  - ❌ CON: Friction: 4 taps + wait time to try different persona
-  - ❌ CON: Loses current summary (user may want to compare)
-- ✅ **Rationale:** Instant persona switching enables:
-  - **Experimentation:** "How does Student vs Professional differ?"
-  - **Iteration:** Quick refinement without losing work
-  - **Comparison:** Can screenshot both and compare
-- 📊 **Usage Data:** 34% of users try 2+ personas per summary. Inline switching reduced friction by 78%.
+**Lựa chọn bốn chỉ số hiển thị:**
 
-**5. Summary Content Presentation:**
-- ✅ **Chosen:** Scrollable card with mixed formatting (bullets + paragraphs)
-- ❌ **Alternative 1:** Plain text only
-  - ❌ CON: No visual hierarchy, wall of text
-- ❌ **Alternative 2:** Always bullets
-  - ❌ CON: Some personas need paragraphs (Academic, Professional)
-- ❌ **Alternative 3:** Non-scrollable (fit to screen)
-  - ❌ CON: Tiny font for long summaries, unreadable
-- ✅ **Rationale:** Flexible formatting allows:
-  - **Persona-appropriate styling:** Student = bullets, Academic = paragraphs
-  - **Readability:** Comfortable line height (1.5x), selectable text
-  - **Hierarchy:** Bold headings, indented bullets, spacing
-- 🎨 **Typography:** BodyLarge (16sp) for comfortable reading on mobile.
+Quyết định hiển thị số từ gốc, số từ tóm tắt, thời gian tiết kiệm và tỷ lệ rút gọn được đưa ra sau khi xem xét nhiều chỉ số thay thế. Các chỉ số như điểm đọc hiểu Flesch-Kincaid bị loại vì chỉ 18% người dùng quan tâm. Số lượng ký tự bị coi là quá kỹ thuật khi người dùng ưa thích đếm theo từ. Số lượng câu không cung cấp thông tin hành động được.
 
-**6. Star Button for Favorites:**
-- ✅ **Chosen:** Prominent star icon in TopAppBar
-- ❌ **Alternative 1:** In FAB menu
-  - ❌ CON: Extra tap, lower discoverability
-- ❌ **Alternative 2:** Only in History screen
-  - ❌ CON: User must remember to favorite later (47% forget)
-- ✅ **Rationale:** Immediate favoriting:
-  - **Convenience:** 1 tap while reviewing summary
-  - **Context:** User knows quality immediately after reading
-  - **Visual feedback:** Star fills on tap, haptic feedback
-- 📊 **Behavioral Data:** 67% of favorites marked on Result screen, 33% from History. Immediate option increases favorite usage by 3.2x.
+Bốn chỉ số được chọn cung cấp giá trị rõ ràng: số từ gốc và tóm tắt tạo ra sự so sánh cụ thể trước và sau, thời gian tiết kiệm thể hiện trực tiếp giá trị mang lại (ví dụ "tiết kiệm 4 phút"), và tỷ lệ rút gọn là chỉ báo hiệu quả. Khảo sát với 150 người dùng xác nhận mức độ quan trọng: 87% cho rằng thời gian tiết kiệm hữu ích, 78% với tỷ lệ rút gọn, 72% với số lượng từ, trong khi chỉ 18% quan tâm đến điểm đọc hiểu.
 
-**7. Regenerate Option:**
-- ✅ **Chosen:** Available in TopAppBar overflow menu
-- ❌ **Alternative 1:** No regenerate (must go back to Main)
-  - ❌ CON: Forces re-input/re-upload, wastes time
-- ❌ **Alternative 2:** Prominent button (like FAB)
-  - ❌ CON: Most users satisfied with first result (78%), button mostly unused
-- ✅ **Rationale:** Overflow menu placement:
-  - **Accessibility:** Available when needed (22% use it)
-  - **No clutter:** Doesn't dominate UI for 78% who don't need it
-  - **Quick:** 2 taps (open menu → regenerate), shows processing screen
-- 💡 **Use Cases for Regenerate:**
-  - API error occurred, want to retry
-  - Summary quality poor, try again with same input
-  - Persona change didn't work, try fresh generation
+**Sử dụng FAB Menu thay vì TopAppBar Actions:**
 
-**8. Copy Action (vs Copy Button):**
-- ✅ **Chosen:** Copy in FAB menu + Long-press selection
-- ❌ **Alternative 1:** Copy button below summary
-  - ❌ CON: Takes space, duplicates Android's built-in selection
-- ❌ **Alternative 2:** Auto-copy on generation
-  - ❌ CON: Overwrites clipboard without consent (user may have important clipboard data)
-- ✅ **Rationale:** Dual copy methods:
-  - **Full copy (FAB):** Copies entire summary + metadata (1 tap)
-  - **Partial copy (long-press):** Native Android selection (select → copy)
-- 📊 **Usage Split:** 62% use FAB (full copy), 38% use long-press (partial).
+Nút hành động nổi (FAB) với menu quay số tốc độ được chọn thay vì các phương án khác. Phương án đặt các hành động trong menu tràn của TopAppBar bị loại vì khả năng phát hiện thấp - 64% người dùng không bao giờ tìm thấy chức năng Chia sẻ trong kiểm thử, đồng thời yêu cầu hai lần chạm. Phương án nút bên dưới tóm tắt bị loại vì chiếm không gian dọc và bị đẩy xuống dưới vùng hiển thị với các bản tóm tắt dài. Phương án trang tính dưới cùng bị loại vì che phủ nội dung và yêu cầu hành động đóng bổ sung.
 
-**User Research Supporting Decisions:**
-- 📊 **Usability Testing (n=12):** 89% checked metrics before reading summary (1.8s avg scan time)
-- 🎯 **Discoverability Testing:** FAB Share = 91% found vs 64% in overflow menu
-- 📈 **Behavioral Data:** 34% try 2+ personas, inline switching reduces friction by 78%
-- 👥 **Survey (n=150):** Metric importance: Time saved (87%), Reduction (78%), Words (72%)
-- 🧠 **Favoriting Behavior:** 67% favorite on Result screen, immediate option increases usage 3.2x
+FAB cung cấp khả năng hiển thị cao do luôn cố định và không cuộn theo, truy cập nhanh chỉ với một lần chạm để mở rộng và hai lần chạm tổng cộng cho hành động, đồng thời thân thiện với ngón cái khi được đặt ở góc dưới bên phải nơi 80% người dùng có thể chạm bằng một tay. Khả năng phát hiện tăng lên đáng kể với 91% tìm thấy chức năng Chia sẻ so với 64% trong menu tràn. Vị trí cách 16dp từ các cạnh là vùng ngón cái tối ưu cho người dùng thuận tay phải (78%), trong khi người thuận tay trái vẫn có thể chạm được với điều chỉnh nhẹ.
 
-**Accessibility Considerations:**
-- ✅ KPI cards have semantic labels: "Original text, 1,245 words"
-- ✅ Metric icons have content descriptions
-- ✅ Persona selector announces current and available options
-- ✅ Summary content is selectable and readable by TalkBack
-- ✅ FAB menu items announced: "Share summary", "Copy to clipboard", "Export summary"
-- ✅ Star button: "Add to favorites" (unfilled) / "Remove from favorites" (filled)
-- ✅ All interactive elements ≥48dp touch targets
+**Bộ chọn Persona trên màn hình kết quả:**
+
+Cho phép thay đổi persona trực tiếp trên màn hình kết quả thay vì buộc người dùng quay lại màn hình chính và bắt đầu lại. Phương án buộc quay lại bị loại vì tạo ma sát với bốn lần chạm cộng thời gian chờ để thử persona khác, đồng thời mất bản tóm tắt hiện tại mà người dùng có thể muốn so sánh.
+
+Chuyển đổi persona ngay lập tức cho phép thử nghiệm ("Sự khác biệt giữa Student và Professional là gì?"), lặp lại nhanh chóng mà không mất công việc, và so sánh bằng cách chụp màn hình cả hai. Dữ liệu sử dụng cho thấy 34% người dùng thử hai persona trở lên mỗi bản tóm tắt, và chuyển đổi trong dòng giảm ma sát 78%.
+
+**Trình bày nội dung tóm tắt:**
+
+Thẻ có thể cuộn với định dạng hỗn hợp (gạch đầu dòng và đoạn văn) được chọn sau khi xem xét các phương án. Văn bản thuần túy bị loại vì không có phân cấp trực quan, tạo ra bức tường văn bản. Luôn dùng gạch đầu dòng bị loại vì một số persona cần đoạn văn (Academic, Professional). Không thể cuộn (vừa màn hình) bị loại vì phông chữ quá nhỏ với các bản tóm tắt dài trở nên không đọc được.
+
+Định dạng linh hoạt cho phép kiểu dáng phù hợp với persona (Student dùng gạch đầu dòng, Academic dùng đoạn văn), khả năng đọc tốt với chiều cao dòng thoải mái (1.5x) và văn bản có thể chọn, cùng với phân cấp thông qua tiêu đề đậm, gạch đầu dòng thụt lề và khoảng cách hợp lý. BodyLarge với cỡ chữ 16sp đảm bảo đọc thoải mái trên thiết bị di động.
+
+**Nút sao cho mục yêu thích:**
+
+Biểu tượng sao nổi bật trong TopAppBar được chọn thay vì đặt trong menu FAB (yêu cầu thêm lần chạm, khả năng phát hiện thấp hơn) hoặc chỉ trong màn hình lịch sử (47% người dùng quên đánh dấu sau này). Đánh dấu yêu thích ngay lập tức mang lại sự tiện lợi với một lần chạm trong khi xem xét bản tóm tắt, người dùng biết chất lượng ngay sau khi đọc, và có phản hồi trực quan khi sao được tô đầy kèm phản hồi xúc giác.
+
+Dữ liệu hành vi cho thấy 67% mục yêu thích được đánh dấu trên màn hình kết quả, 33% từ lịch sử. Tùy chọn ngay lập tức làm tăng việc sử dụng yêu thích lên 3.2 lần.
+
+**Tùy chọn tạo lại:**
+
+Chức năng tạo lại được đặt trong menu tràn của TopAppBar thay vì không có (buộc quay lại màn hình chính, lãng phí thời gian nhập lại/tải lại) hoặc nút nổi bật như FAB (78% người dùng hài lòng với kết quả đầu tiên, nút hầu như không được dùng).
+
+Vị trí trong menu tràn đảm bảo khả năng truy cập khi cần (22% sử dụng nó) mà không làm lộn xộn giao diện cho 78% không cần, đồng thời nhanh chóng với hai lần chạm. Các trường hợp sử dụng bao gồm lỗi API muốn thử lại, chất lượng tóm tắt kém muốn thử lại với cùng đầu vào, hoặc thay đổi persona không hiệu quả cần tạo mới hoàn toàn.
+
+**Hành động sao chép:**
+
+Sao chép trong menu FAB kết hợp với chọn lựa bằng nhấn giữ được chọn thay vì nút sao chép bên dưới tóm tắt (chiếm không gian, trùng lặp với chức năng chọn lựa tích hợp của Android) hoặc tự động sao chép khi tạo (ghi đè clipboard mà không có sự đồng ý, người dùng có thể có dữ liệu quan trọng trong clipboard).
+
+Phương pháp sao chép kép cung cấp sao chép toàn bộ qua FAB (sao chép toàn bộ tóm tắt cộng siêu dữ liệu với một lần chạm) và sao chép một phần qua nhấn giữ (chọn lựa Android gốc). Dữ liệu sử dụng cho thấy 62% dùng FAB (sao chép toàn bộ), 38% dùng nhấn giữ (sao chép một phần).
+
+**Dữ liệu nghiên cứu người dùng hỗ trợ:**
+
+Kiểm thử khả năng sử dụng với 12 người tham gia cho thấy 89% kiểm tra chỉ số trước khi đọc tóm tắt với thời gian quét trung bình 1.8 giây. Kiểm thử khả năng phát hiện xác nhận FAB Share được 91% tìm thấy so với 64% trong menu tràn. Dữ liệu hành vi cho thấy 34% thử hai persona trở lên, chuyển đổi trong dòng giảm ma sát 78%. Khảo sát với 150 người dùng xác nhận mức độ quan trọng của chỉ số: thời gian tiết kiệm 87%, tỷ lệ rút gọn 78%, số từ 72%. Hành vi đánh dấu yêu thích cho thấy 67% đánh dấu trên màn hình kết quả, tùy chọn ngay lập tức tăng mức sử dụng lên 3.2 lần.
+
+**Các cân nhắc về khả năng tiếp cận:**
+
+Các thẻ KPI có nhãn ngữ nghĩa như "Văn bản gốc, 1.245 từ" và các biểu tượng chỉ số có mô tả nội dung. Bộ chọn persona thông báo các tùy chọn hiện tại và có sẵn. Nội dung tóm tắt có thể chọn và đọc được bởi TalkBack. Các mục menu FAB được thông báo là "Chia sẻ tóm tắt", "Sao chép vào clipboard", "Xuất tóm tắt". Nút sao được thông báo là "Thêm vào yêu thích" khi chưa tô hoặc "Xóa khỏi yêu thích" khi đã tô. Tất cả các phần tử tương tác đều có mục tiêu chạm tối thiểu 48dp tuân thủ WCAG 2.1 Level AA.
 
 ---
 
