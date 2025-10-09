@@ -2187,29 +2187,6 @@ Animation:
 - **Duration:** 400ms
 - **Easing:** Ease-in-out
 
-**Code:**
-```kotlin
-SharedTransitionLayout {
-    AnimatedContent(...) {
-        // History Screen
-        Card(
-            modifier = Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState("summary-${id}"),
-                animatedVisibilityScope = this
-            )
-        )
-
-        // Result Screen
-        Column(
-            modifier = Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState("summary-${id}"),
-                animatedVisibilityScope = this
-            )
-        )
-    }
-}
-```
-
 ---
 
 #### 3.4.8. Predictive Back Gesture (Android 14+)
@@ -2253,26 +2230,6 @@ Animation:
 **Reduce Motion:**
 
 Users có thể enable "Reduce motion" in system settings. SumUp respects this:
-
-```kotlin
-val context = LocalContext.current
-val areAnimationsDisabled = remember {
-    Settings.Global.getFloat(
-        context.contentResolver,
-        Settings.Global.ANIMATOR_DURATION_SCALE,
-        1f
-    ) == 0f
-}
-
-AnimatedVisibility(
-    visible = isVisible,
-    enter = if (areAnimationsDisabled) {
-        EnterTransition.None
-    } else {
-        fadeIn() + slideInVertically()
-    }
-)
-```
 
 **Alternative behaviors when reduce motion enabled:**
 - Screen transitions: Instant (no slide)

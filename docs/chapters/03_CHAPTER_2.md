@@ -4,7 +4,8 @@
 
 **Mục đích của Information Architecture (IA):**
 
-Information Architecture là nghệ thuật tổ chức và cấu trúc nội dung một cách có hệ thống, giúp người dùng dễ dàng tìm thấy thông tin và hoàn thành nhiệm vụ. IA tốt là **không nhìn thấy** - người dùng điều hướng tự nhiên mà không phải suy nghĩ.
+Information Architecture là nghệ thuật tổ chức và cấu trúc nội dung một cách có hệ thống, giúp người dùng dễ dàng tìm thấy thông tin và hoàn thành nhiệm vụ.
+IA tốt là **không nhìn thấy**- người dùng điều hướng tự nhiên mà không phải suy nghĩ.
 
 **Nguyên tắc IA áp dụng cho SumUp:**
 
@@ -1479,15 +1480,614 @@ Wireframe là **blueprint** của giao diện - tập trung vào "cái gì ở �
 
 ---
 
-**Tổng kết phần 2.3 - Wireframing:**
+### 2.3.8. Wireframe cho màn hình Onboarding
+
+**Hình 2.14: Wireframe - Onboarding Screen (3 slides)**
+
+**Slide 1: Welcome**
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│                                 │
+│         ┌───────────┐           │
+│         │           │           │
+│         │   [IMG]   │           │ Logo/Illustration
+│         │  SumUp    │           │
+│         │           │           │
+│         └───────────┘           │
+│                                 │
+│    Welcome to SumUp!            │ Heading
+│                                 │
+│  Your AI-powered assistant      │
+│  for instant text               │ Subheading
+│  summarization                  │
+│                                 │
+│                                 │
+│    ○  ○  ○                      │ Page indicators
+│                                 │
+│                                 │
+│         [ Get Started ]         │ CTA Button
+│                                 │
+│         Skip →                  │ Skip link
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Slide 2: Features**
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│         ┌───────────┐           │
+│         │  [📝]     │           │ Icon
+│         └───────────┘           │
+│                                 │
+│    Multiple Input Types         │ Heading
+│                                 │
+│  • Text input                   │
+│  • PDF & DOCX upload            │ Feature list
+│  • Camera OCR scan              │
+│  • 5 formats supported          │
+│                                 │
+│                                 │
+│    ○  ●  ○                      │ Page 2 active
+│                                 │
+│  [ Previous ]  [ Next ]         │ Navigation
+│                                 │
+│         Skip →                  │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Slide 3: Permissions**
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│         ┌───────────┐           │
+│         │  [🔐]     │           │ Security icon
+│         └───────────┘           │
+│                                 │
+│    Setup Required               │ Heading
+│                                 │
+│  We need a few permissions      │
+│  to work properly:              │ Explanation
+│                                 │
+│  📷 Camera (for OCR)            │
+│  📁 Storage (for PDFs)          │ Permission list
+│  🔔 Notifications (optional)   │
+│                                 │
+│  🔑 API Key Required            │ Key requirement
+│    Add your Gemini API key      │
+│    in Settings to start         │
+│                                 │
+│    ○  ○  ●                      │ Page 3
+│                                 │
+│  [ Previous ]  [ Finish ]       │ Complete
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Annotations - Onboarding:**
+
+**Navigation Pattern:**
+- Swipe left/right để chuyển slides
+- Dots indicator show current position
+- "Skip" button ở mọi slide → Navigate to Main
+- "Finish" ở slide cuối → Navigate to Settings (API key setup)
+
+**Design Principles:**
+- Keep it brief: Chỉ 3 slides, mỗi slide 1 concept
+- Visual-heavy: Large illustrations/icons
+- Clear value props: Features người dùng quan tâm
+- Action-oriented: CTA buttons rõ ràng
+
+**Content Strategy:**
+1. Slide 1: Welcome + Value proposition
+2. Slide 2: Key features highlight
+3. Slide 3: Required permissions + API key nudge
+
+**Show Once:**
+- Chỉ hiển thị lần đầu tiên mở app
+- Lưu flag "onboarding_completed" vào SharedPreferences
+- Có option "Show onboarding again" trong Settings
+
+---
+
+### 2.3.9. Wireframes cho Dialogs và Modals
+
+#### **Hình 2.15: Draft Recovery Dialog**
+
+```
+┌─────────────────────────────────┐
+│  ┌───────────────────────────┐ │
+│  │                           │ │
+│  │   📝 Draft Found          │ │ Title
+│  │                           │ │
+│  │   You have an unsaved     │ │
+│  │   draft from 2 hours ago: │ │ Message
+│  │                           │ │
+│  │   ┌───────────────────┐   │ │
+│  │   │ The meeting notes │   │ │
+│  │   │ from yesterday... │   │ │ Preview
+│  │   │ (124 characters)  │   │ │
+│  │   └───────────────────┘   │ │
+│  │                           │ │
+│  │   Created: 10:30 AM       │ │ Metadata
+│  │   Age: 2 hours ago        │ │
+│  │                           │ │
+│  │   [ Discard ]  [ Recover ]│ │ Actions
+│  │                           │ │
+│  └───────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
+**Annotations:**
+- Auto-show khi launch app và có draft <24h
+- "Recover" là Primary action (filled button)
+- "Discard" là Secondary (text button)
+- Preview text truncated sau 50 chars
+- Dismiss on tap outside (Android standard)
+
+---
+
+#### **Hình 2.16: API Key Add/Edit Dialog**
+
+```
+┌─────────────────────────────────┐
+│  ┌───────────────────────────┐ │
+│  │                           │ │
+│  │   🔑 Add API Key          │ │ Title
+│  │                           │ │
+│  │   Enter your Gemini API   │ │
+│  │   key to enable           │ │ Description
+│  │   summarization           │ │
+│  │                           │ │
+│  │   ┌───────────────────┐   │ │
+│  │   │ AIzaSy...     [👁]│   │ │ Password field
+│  │   └───────────────────┘   │ │ (obscured)
+│  │                           │ │
+│  │   ✅ Valid format         │ │ Validation
+│  │                           │ │
+│  │   [ Get API Key ]         │ │ Helper link
+│  │                           │ │
+│  │   ⚠️ Note: Your key will  │ │
+│  │   be stored securely with │ │ Security note
+│  │   AES-256 encryption      │ │
+│  │                           │ │
+│  │   [ Cancel ]    [ Save ]  │ │ Actions
+│  │                           │ │
+│  └───────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
+**Annotations:**
+- Password field với eye icon để toggle visibility
+- Real-time validation (format check)
+- "Get API Key" link → Open browser to Google AI Studio
+- "Save" button disabled nếu invalid format
+- On save → Test API call → Show loading → Success/Error feedback
+
+**Validation States:**
+- ❌ "Invalid format (must start with AIza...)"
+- ⚠️ "Testing API key..."
+- ✅ "API key verified"
+- ❌ "API key invalid or quota exceeded"
+
+---
+
+#### **Hình 2.17: Large PDF Warning Dialog**
+
+```
+┌─────────────────────────────────┐
+│  ┌───────────────────────────┐ │
+│  │                           │ │
+│  │   ⚠️ Large Document       │ │ Title
+│  │                           │ │
+│  │   research_paper.pdf      │ │ File name
+│  │   12.5 MB • 78 pages      │ │ File info
+│  │                           │ │
+│  │   This is a large file    │ │
+│  │   that may take 45-60     │ │ Warning
+│  │   seconds to process.     │ │
+│  │                           │ │
+│  │   How would you like to   │ │
+│  │   proceed?                │ │ Question
+│  │                           │ │
+│  │   ○ Process All Pages     │ │
+│  │     (slower, complete)    │ │ Option 1
+│  │                           │ │
+│  │   ○ Select Pages          │ │
+│  │     (faster, custom)      │ │ Option 2
+│  │                           │ │
+│  │   [ Cancel ]              │ │
+│  │   [ Continue ]            │ │ Actions
+│  │                           │ │
+│  └───────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
+**Annotations:**
+- Trigger: File >50 pages hoặc >10MB
+- Radio buttons cho 2 options
+- "Process All Pages" selected by default
+- "Select Pages" → Navigate to page selector screen
+- Show estimated time based on page count
+- "Cancel" → Return to Document tab
+
+---
+
+#### **Hình 2.18: Export Options Dialog**
+
+```
+┌─────────────────────────────────┐
+│  ┌───────────────────────────┐ │
+│  │                           │ │
+│  │   📤 Export Summary       │ │ Title
+│  │                           │ │
+│  │   Choose format:          │ │ Label
+│  │                           │ │
+│  │   ┌───────────────────┐   │ │
+│  │   │ ● Plain Text      │   │ │ Option 1
+│  │   │   (.txt)          │   │ │
+│  │   └───────────────────┘   │ │
+│  │                           │ │
+│  │   ┌───────────────────┐   │ │
+│  │   │ ○ Markdown        │   │ │ Option 2
+│  │   │   (.md)           │   │ │
+│  │   └───────────────────┘   │ │
+│  │                           │ │
+│  │   ┌───────────────────┐   │ │
+│  │   │ ○ PDF Document    │   │ │ Option 3
+│  │   │   (.pdf)          │   │ │
+│  │   └───────────────────┘   │ │
+│  │                           │ │
+│  │   ✅ Include metrics      │ │ Checkbox
+│  │   ✅ Include timestamp    │ │ options
+│  │                           │ │
+│  │   [ Cancel ]   [ Export ] │ │ Actions
+│  │                           │ │
+│  └───────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
+**Annotations:**
+- Radio group cho format selection
+- Checkboxes cho optional metadata
+- "Export" → Open Android share sheet with generated file
+- Default: Plain Text, include both metadata
+- Preview button (future): Show export preview before saving
+
+---
+
+### 2.3.10. Error State Variations
+
+#### **Hình 2.19: Main Screen - Input Validation Error**
+
+```
+┌─────────────────────────────────┐
+│ ☰  SumUp            [⚙] [👤]   │
+├─────────────────────────────────┤
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │ [Text] [Document] [OCR]   │ │
+│  └───────────────────────────┘ │
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │ This is a short text      │ │ Text input
+│  │                           │ │ (ERROR STATE)
+│  └───────────────────────────┘ │
+│  ⚠️ Text too short (min 50    │ │ Error message
+│     characters)                │ │ (Red color)
+│  📊 35/5,000 characters        │ │ Count (orange)
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │ Persona: [General ▾]      │ │
+│  └───────────────────────────┘ │
+│                                 │
+│      [ Summarize ]              │ DISABLED
+│      (grayed out)               │ state
+│                                 │
+├─────────────────────────────────┤
+│   [🏠]    [📝]      [⚙️]        │
+└─────────────────────────────────┘
+```
+
+**Error States for Text Input:**
+1. **Too Short (<50 chars):**
+   - Message: "Text too short (min 50 characters)"
+   - Count color: Orange
+   - Button: Disabled
+
+2. **Too Long (>5,000 chars):**
+   - Message: "Text too long. Please reduce to 5,000 characters"
+   - Count color: Red
+   - Button: Disabled
+
+3. **No API Key:**
+   - Message: "API key required. Add one in Settings"
+   - Action link: "Go to Settings →"
+   - Button: Disabled
+
+---
+
+#### **Hình 2.20: Processing Screen - Network Error**
+
+```
+┌─────────────────────────────────┐
+│  Processing                [×]  │
+├─────────────────────────────────┤
+│                                 │
+│         ┌──────────┐            │
+│         │    ❌    │            │ Error icon
+│         └──────────┘            │
+│                                 │
+│      Connection Failed          │ Error title
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │ Unable to reach the AI    │ │
+│  │ service. Please check     │ │ Error message
+│  │ your internet connection. │ │
+│  └───────────────────────────┘ │
+│                                 │
+│         [ Try Again ]           │ Primary action
+│                                 │
+│         [ Cancel ]              │ Secondary
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Error Scenarios:**
+1. **Network Error:**
+   - Icon: ❌ or 📡
+   - Message: "Unable to reach the AI service..."
+   - Action: "Try Again" (retry same request)
+
+2. **API Rate Limit:**
+   - Icon: ⏱️
+   - Message: "Daily limit reached. Quota resets at 12:00 AM"
+   - Action: "Add Another Key" or "Cancel"
+
+3. **Invalid API Key:**
+   - Icon: 🔑
+   - Message: "API key is invalid or expired"
+   - Action: "Update Key" → Navigate to Settings
+
+---
+
+#### **Hình 2.21: OCR Screen - No Text Detected Error**
+
+```
+┌─────────────────────────────────┐
+│ ☰  Scan Text            [⚙]    │
+├─────────────────────────────────┤
+│                                 │
+│  ┌───────────────────────────┐ │
+│  │                           │ │
+│  │      ┌─────────┐          │ │
+│  │      │   📷    │          │ │
+│  │      │   ❌    │          │ │ Error overlay
+│  │      └─────────┘          │ │
+│  │                           │ │
+│  │   No Text Detected        │ │ Error title
+│  │                           │ │
+│  │   • Ensure good lighting  │ │
+│  │   • Hold camera steady    │ │ Suggestions
+│  │   • Avoid shadows/glare   │ │
+│  │                           │ │
+│  │   [ Try Again ]           │ │ Retry button
+│  │                           │ │
+│  └───────────────────────────┘ │
+│                                 │
+├─────────────────────────────────┤
+│   [🏠]    [📝]      [⚙️]        │
+└─────────────────────────────────┘
+```
+
+**OCR Error States:**
+1. **No Text Found:**
+   - Overlay trên camera preview
+   - Actionable tips
+   - "Try Again" → Back to camera
+
+2. **Low Confidence:**
+   - Show warning: "Text quality may be poor"
+   - Allow edit before proceed
+   - Highlight low-confidence words
+
+3. **Permission Denied:**
+   - Icon: 🚫
+   - Message: "Camera permission required for OCR"
+   - Action: "Open Settings" → App settings
+
+---
+
+### 2.3.11. Component Specifications
+
+**Bảng 2.7: Component Sizing & Spacing Specifications**
+
+#### **Main Screen Components:**
+
+| Component | Type | Size/Dimensions | Spacing | States |
+|-----------|------|-----------------|---------|--------|
+| **TopAppBar** | Material 3 | Height: 64dp | Padding: 16dp H | Default, Scrolled |
+| **Tab Row** | TabRow | Height: 48dp | Item spacing: 24dp | Inactive, Active, Pressed |
+| **Text Input** | OutlinedTextField | Min: 120dp<br>Max: 60% screen | Padding: 16dp all | Normal, Focus, Error, Disabled |
+| **Character Count** | BodySmall Text | Font: 12sp | Top margin: 8dp | Default, Warning (orange), Error (red) |
+| **Persona Selector** | DropdownMenu | Height: 56dp | Margin: 16dp V | Collapsed, Expanded |
+| **Summarize Button** | FilledButton | Height: 48dp<br>Width: Match parent | Margin: 16dp all | Enabled, Disabled, Pressed, Loading |
+| **Bottom Navigation** | NavigationBar | Height: 80dp | Item min width: 80dp | Selected, Unselected, Pressed |
+
+#### **Dialog Components:**
+
+| Component | Type | Size/Dimensions | Spacing | Notes |
+|-----------|------|-----------------|---------|-------|
+| **Dialog Container** | Surface | Max width: 320dp<br>Min height: 180dp | Padding: 24dp | Corner radius: 28dp (M3) |
+| **Dialog Title** | HeadlineSmall | Font: 24sp | Bottom: 16dp | Bold weight |
+| **Dialog Body** | BodyMedium | Font: 14sp | Vertical: 16dp | Line height: 20sp |
+| **Dialog Actions** | Row | Height: 48dp | Top: 24dp<br>Between: 8dp | Right-aligned |
+| **Text Button** | TextButton | Min height: 40dp | Horizontal: 12dp | Ripple effect |
+| **Filled Button** | Button | Min height: 40dp | Horizontal: 24dp | Elevation: 1dp |
+
+#### **Processing Screen Components:**
+
+| Component | Type | Size/Dimensions | Spacing | Animation |
+|-----------|------|-----------------|---------|-----------|
+| **Loading Icon** | CircularProgress | Diameter: 64dp | Center-aligned | 360° rotation, 1.5s duration |
+| **Status Text** | TitleMedium | Font: 16sp | Top: 24dp | Fade transition 300ms |
+| **Progress Bar** | LinearProgress | Height: 4dp<br>Width: 80% screen | Vertical: 16dp | Smooth fill animation |
+| **Percentage Text** | BodyLarge | Font: 16sp | Top: 8dp | Update every 100ms |
+| **Time Estimate** | BodySmall | Font: 12sp | Top: 4dp | Countdown effect |
+
+#### **Result Screen Components:**
+
+| Component | Type | Size/Dimensions | Spacing | Notes |
+|-----------|------|-----------------|---------|-------|
+| **KPI Card** | ElevatedCard | Height: 80dp<br>Width: 45% parent | Gap: 12dp | 2x2 grid |
+| **Icon (in card)** | Icon | Size: 24dp | Start: 16dp | Material Icons Extended |
+| **Metric Value** | TitleLarge | Font: 22sp | Top: 8dp | Bold, Primary color |
+| **Metric Label** | BodySmall | Font: 12sp | Top: 4dp | Medium opacity |
+| **Summary Content** | OutlinedCard | Min height: 200dp | Padding: 16dp | Scrollable vertical |
+| **FAB** | ExtendedFAB | Size: 56dp (collapsed)<br>Width: auto (expanded) | Bottom: 16dp<br>End: 16dp | Speed dial menu |
+
+---
+
+### 2.3.12. Adaptive Layout Wireframes
+
+#### **Hình 2.22: Main Screen - Tablet Layout (Medium, 600-839dp)**
+
+```
+┌───────────────────────────────────────────────────────┐
+│ ☰  SumUp                            [🔍] [⚙] [👤]     │ TopAppBar (wider)
+├───────────────────────────────────────────────────────┤
+│                                                       │
+│  ┌─────────────────────────────────────────────────┐ │
+│  │    [Text]       [Document]       [OCR]          │ │ Tabs (wider spacing)
+│  └─────────────────────────────────────────────────┘ │
+│                                                       │
+│  ┌───────────────────────────┬─────────────────────┐ │
+│  │                           │                     │ │
+│  │ Type or paste text here.. │  📊 0/5,000         │ │ 2-column layout
+│  │                           │                     │ │ Input | Metadata
+│  │                           │  ┌───────────────┐  │ │
+│  │                           │  │ Persona:      │  │ │
+│  │                           │  │ [General ▾]   │  │ │
+│  │                           │  └───────────────┘  │ │
+│  │                           │                     │ │
+│  │                           │  [ Summarize ]      │ │
+│  │                           │                     │ │
+│  └───────────────────────────┴─────────────────────┘ │
+│                                                       │
+├───────────────────────────────────────────────────────┤
+│        [🏠]           [📝]           [⚙️]             │ Bottom Nav (wider)
+└───────────────────────────────────────────────────────┘
+```
+
+**Tablet Adaptations (600-839dp):**
+- **TopAppBar:** Wider, more spacing between icons
+- **Content:** Max width 840dp, centered if screen wider
+- **Tabs:** Equal width distribution, more padding
+- **Input Area:** 2-column layout:
+  - Left: Text input (65% width)
+  - Right: Metadata panel (35% width) - Character count, Persona, Button
+- **Bottom Nav:** Items evenly distributed, labels always visible
+- **Padding:** Increased from 16dp → 24dp horizontal
+
+---
+
+#### **Hình 2.23: Result Screen - Desktop Layout (Expanded, 840dp+)**
+
+```
+┌─────┬─────────────────────────────────────────────────────┐
+│     │ ← Summary                        [⭐] [⋮]           │
+│ [⚙]├─────────────────────────────────────────────────────┤
+│     │                                                     │
+│[📝] │  ┌───────────────────┬───────────────────────────┐ │
+│     │  │ 📊 Original: 1,245│ 📝 Summary: 248 words    │ │
+│[🏠] │  │    words          │                          │ │
+│     │  └───────────────────┴───────────────────────────┘ │
+│  N  │  ┌───────────────────┬───────────────────────────┐ │
+│  a  │  │ ⏱️ Saved: 4 min   │ 📉 Reduction: 80%        │ │
+│  v  │  │    read           │                          │ │
+│     │  └───────────────────┴───────────────────────────┘ │
+│  R  │                                                     │
+│  a  │  Persona: [Student ▾]          [ Regenerate ]     │
+│  i  │                                                     │
+│  l  │  ┌─────────────────────────────────────────────┐  │
+│     │  │                                             │  │
+│  80 │  │  • Key point 1                              │  │
+│  dp │  │                                             │  │
+│     │  │  • Key point 2                              │  │
+│     │  │                                             │  │
+│     │  │  • Key point 3                              │  │
+│     │  │                                             │  │
+│     │  │  Lorem ipsum dolor sit amet...              │  │
+│     │  │                                             │  │
+│     │  └─────────────────────────────────────────────┘  │
+│     │                                                     │
+│     │           ┌───┐                                    │
+│     │           │ + │  FAB Menu                          │
+│     │           └───┘                                    │
+└─────┴─────────────────────────────────────────────────────┘
+```
+
+**Desktop Adaptations (840dp+):**
+- **Navigation:** Bottom Nav → NavigationRail (80dp width, left side)
+  - Icons only (no labels) - Vertical stacking
+  - Active indicator: Filled container
+  - Tooltips on hover
+- **Content:** Max width 1200dp, margins auto
+- **KPI Cards:** 4 cards in 2x2 grid → 4 cards in 1 row (horizontal)
+- **Actions:** More prominent
+  - "Regenerate" button visible (not in menu)
+  - FAB stays but with more options
+- **Typography:** Slightly larger for readability at distance
+- **Mouse Interactions:**
+  - Hover states for all interactive elements
+  - Context menus on right-click
+  - Keyboard shortcuts displayed
+
+---
+
+**Bảng 2.8: Adaptive Layout Breakpoints Summary**
+
+| Breakpoint | Width | Navigation | Content Layout | Typography | Padding |
+|------------|-------|------------|----------------|------------|---------|
+| **Compact** (Mobile) | 360-599dp | Bottom Navigation Bar | Single column | Default (14-16sp) | 16dp H |
+| **Medium** (Tablet) | 600-839dp | Bottom Navigation Bar (wider) | 2-column (65/35) | Default (14-16sp) | 24dp H |
+| **Expanded** (Desktop) | 840dp+ | NavigationRail (80dp) | Multi-column + Sidebars | Larger (+2sp) | 32dp H |
+
+---
+
+**Tổng kết phần 2.3 - Wireframing (Updated):**
 
 ✅ Đã tạo wireframes cho **7 màn hình chính** với annotations đầy đủ
 
-✅ Cover tất cả states: Normal, loading, error, empty
+✅ **NEW:** Wireframe cho Onboarding (3 slides)
 
-✅ Adaptive layouts cho mobile và tablet
+✅ **NEW:** 4 Dialog wireframes (Draft Recovery, API Key, Large PDF, Export)
 
-✅ Interactive elements được document rõ ràng
+✅ **NEW:** 3 Error state variations (Input, Processing, OCR)
+
+✅ **NEW:** Component specifications table với sizing & spacing chi tiết
+
+✅ **NEW:** Adaptive layout wireframes cho Tablet và Desktop
+
+✅ Cover tất cả states: Normal, loading, error, empty, disabled
+
+✅ Responsive designs cho 3 breakpoints (Compact, Medium, Expanded)
+
+✅ Interactive elements được document rõ ràng với specifications
+
+**Tổng cộng: 20+ wireframes** bao gồm:
+- 7 main screens
+- 1 onboarding (3 slides)
+- 4 dialogs/modals
+- 3 error states
+- 2 adaptive layouts
+- 1 component spec table
+- 1 breakpoint summary table
 
 ---
 
@@ -1495,25 +2095,37 @@ Wireframe là **blueprint** của giao diện - tập trung vào "cái gì ở �
 
 **Kết luận Chương 2:**
 
-Chương 2 đã hoàn thành việc thiết kế **cấu trúc và luồng tương tác** cho ứng dụng SumUp:
+Chương 2 đã hoàn thành việc thiết kế **cấu trúc và luồng tương tác** cho ứng dụng SumUp với độ chi tiết cao:
 
 ✅ **Information Architecture (2.1):**
-- 6 nguyên tắc IA
-- Sơ đồ phân cấp 7 màn hình
-- Hệ thống điều hướng adaptive
-- Ma trận điều hướng
+- 6 nguyên tắc IA (Clarity, Simplicity, Consistency, Findability, Scalability, Hierarchy)
+- Sơ đồ phân cấp 7 màn hình chính
+- Hệ thống điều hướng adaptive (Bottom Nav → NavigationRail)
+- Ma trận điều hướng hoàn chỉnh giữa các màn hình
 
 ✅ **User Flow Diagrams (2.2):**
-- 4 luồng chính với 40+ bước
-- Decision points và system actions
-- Error handling và recovery flows
+- 4 luồng chính với 40+ bước chi tiết
+- Decision points và system actions rõ ràng
+- Error handling và recovery flows đầy đủ
+- Bảng flow steps với actor, action, system response
 
 ✅ **Wireframes (2.3):**
-- 13 wireframes cho tất cả screens
-- Annotations chi tiết
-- All states documented
+- **20+ wireframes** covering all screens, dialogs, and states:
+  - 7 màn hình chính (Main, OCR, Processing, Result, History, Settings, Onboarding)
+  - 4 dialogs/modals quan trọng (Draft Recovery, API Key, Large PDF Warning, Export Options)
+  - 3 error state variations (Input validation, Network error, OCR error)
+  - 2 adaptive layouts (Tablet, Desktop)
+- **Component Specifications:** Sizing & spacing tables với measurements chi tiết
+- **Annotations:** Đầy đủ cho mọi element với states, behaviors, interactions
+- **Adaptive Design:** Breakpoints cho Compact (360-599dp), Medium (600-839dp), Expanded (840dp+)
 
-Với foundation này, **Chương 3** sẽ biến wireframes thành **high-fidelity mockups** với Design System hoàn chỉnh.
+**Metrics:**
+- **Total wireframes:** 20+ (7 main + 1 onboarding + 4 dialogs + 3 errors + 2 adaptive + 3 spec tables)
+- **Total annotations:** 100+ component descriptions
+- **States documented:** Normal, Focus, Disabled, Error, Loading, Hover, Pressed
+- **Responsive breakpoints:** 3 (Mobile, Tablet, Desktop)
+
+Với foundation chi tiết này, **Chương 3** sẽ biến wireframes thành **high-fidelity mockups** với Design System hoàn chỉnh, colors, typography, và interactive prototypes.
 
 ---
 
