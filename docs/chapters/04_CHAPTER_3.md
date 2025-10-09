@@ -67,59 +67,59 @@ Tạo emotional connection với users:
 
 ---
 
-#### **Design Rationale & Justification - Triết lý thiết kế:**
+#### **Lý do thiết kế & Giải thích - Triết lý thiết kế:**
 
-Triết lý thiết kế của SumUp được xây dựng dựa trên nghiên cứu người dùng, industry best practices, và platform guidelines. Mỗi nguyên tắc được chọn có mục đích cụ thể để serve target audience (students, professionals, academics) và optimize cho productivity use case.
+Triết lý thiết kế của SumUp được xây dựng dựa trên nghiên cứu người dùng, các phương pháp tốt nhất trong ngành, và hướng dẫn nền tảng. Mỗi nguyên tắc được chọn đều có mục đích cụ thể để phục vụ đối tượng mục tiêu (sinh viên, chuyên gia, học giả) và tối ưu hóa cho trường hợp sử dụng năng suất.
 
-**1. Material You (Material Design 3) - Tại sao không Custom Design System:**
+**1. Material You (Material Design 3) - Tại sao không xây dựng Hệ thống Thiết kế Riêng:**
 
-Quyết định adopt Material Design 3 (Material You) thay vì xây dựng custom design system from scratch được đưa ra sau khi cân nhắc kỹ lưỡng trade-offs. Phương án custom design system bị loại vì requires significantly more design và development effort (estimated 200-300 hours cho complete system) mà không mang lại differentiation value tương xứng cho productivity app.
+Quyết định áp dụng Material Design 3 (Material You) thay vì xây dựng hệ thống thiết kế riêng từ đầu được đưa ra sau khi cân nhắc kỹ lưỡng các đánh đổi. Phương án hệ thống thiết kế riêng bị loại vì đòi hỏi nhiều nỗ lực thiết kế và phát triển hơn đáng kể (ước tính 200-300 giờ cho hệ thống hoàn chỉnh) mà không mang lại giá trị khác biệt tương xứng cho ứng dụng năng suất.
 
-Material You được chọn vì ba lý do chính. Thứ nhất, **platform consistency** - users đã familiar với Material patterns từ Gmail, Google Drive, Android system apps. Survey với 150 users cho thấy 82% prefer apps that "feel native" trên platform thay vì apps với completely unique design language. Learning curve giảm significantly khi users recognize familiar patterns: floating action buttons, bottom sheets, snackbars.
+Material You được chọn vì ba lý do chính. Thứ nhất, **tính nhất quán với nền tảng** - người dùng đã quen thuộc với các mẫu Material từ Gmail, Google Drive, ứng dụng hệ thống Android. Khảo sát với 150 người dùng cho thấy 82% thích ứng dụng "cảm giác bản địa" trên nền tảng hơn là ứng dụng có ngôn ngữ thiết kế hoàn toàn độc đáo. Đường cong học tập giảm đáng kể khi người dùng nhận ra các mẫu quen thuộc: nút hành động nổi, trang tính dưới cùng, thanh thông báo.
 
-Thứ hai, **development efficiency** - Jetpack Compose Material 3 library cung cấp pre-built components đã optimized cho performance và accessibility. This saves ~120 hours development time so với build từ đầu. Components như TextField, Button, Card đều built-in với proper touch targets (≥48dp), keyboard navigation, và screen reader support. Testing effort cũng reduce vì Material components extensively tested bởi Google.
+Thứ hai, **hiệu quả phát triển** - thư viện Jetpack Compose Material 3 cung cấp các thành phần xây dựng sẵn đã được tối ưu hóa cho hiệu suất và khả năng tiếp cận. Điều này tiết kiệm khoảng 120 giờ phát triển so với xây dựng từ đầu. Các thành phần như TextField, Button, Card đều tích hợp sẵn mục tiêu chạm phù hợp (≥48dp), điều hướng bàn phím và hỗ trợ trình đọc màn hình. Nỗ lực kiểm thử cũng giảm vì các thành phần Material đã được Google kiểm tra kỹ lưỡng.
 
-Thứ ba, **future-proof** - Material Design continuously evolves với Android platform. Material You introduced dynamic color theming (Android 12), predictive back gestures (Android 14), và sẽ có more innovations. By adopting Material 3, SumUp automatically benefits from platform evolution without custom redesign efforts.
+Thứ ba, **đảm bảo tương lai** - Material Design liên tục phát triển cùng nền tảng Android. Material You giới thiệu chủ đề màu động (Android 12), cử chỉ quay lại dự đoán (Android 14), và sẽ có nhiều cải tiến hơn. Bằng cách áp dụng Material 3, SumUp tự động hưởng lợi từ sự phát triển nền tảng mà không cần nỗ lực thiết kế lại riêng.
 
-Dynamic Color feature specifically chosen vì personalization benefit. Analytics từ Google cho thấy users với dynamic color enabled spend 15% more time in apps và report 23% higher satisfaction scores. Fallback to static brand colors ensures consistent experience trên older devices (Android <12), covering 100% user base.
+Tính năng Màu Động được chọn đặc biệt vì lợi ích cá nhân hóa. Phân tích từ Google cho thấy người dùng với màu động được bật dành nhiều thời gian hơn 15% trong ứng dụng và báo cáo điểm hài lòng cao hơn 23%. Dự phòng cho màu thương hiệu tĩnh đảm bảo trải nghiệm nhất quán trên thiết bị cũ hơn (Android <12), bao phủ 100% cơ sở người dùng.
 
-**2. Clean & Minimalist - Tại sao không Feature-Rich Interface:**
+**2. Gọn gàng & Tối giản - Tại sao không Giao diện Giàu Tính năng:**
 
-Minimalist approach được chọn sau usability testing với 12 users comparing two design versions: feature-rich (all options visible) vs minimalist (progressive disclosure). Phương án feature-rich với tất cả 6 personas, 3 summary styles, export options, share buttons visible simultaneously bị loại vì overwhelming - chỉ 34% users successfully completed first summarization trong 2 phút. Minimalist version với progressive disclosure achieved 89% success rate trong average 47 giây.
+Phương pháp tối giản được chọn sau kiểm thử khả năng sử dụng với 12 người dùng so sánh hai phiên bản thiết kế: giàu tính năng (tất cả tùy chọn hiển thị) so với tối giản (tiết lộ tiến bộ). Phương án giàu tính năng với tất cả 6 nhân vật, 3 kiểu tóm tắt, tùy chọn xuất, nút chia sẻ hiển thị đồng thời bị loại vì quá tải - chỉ 34% người dùng hoàn thành thành công tóm tắt đầu tiên trong 2 phút. Phiên bản tối giản với tiết lộ tiến bộ đạt tỷ lệ thành công 89% trong trung bình 47 giây.
 
-White space strategy được validate qua eye-tracking study với 8 participants. Results show generous spacing (16-24dp between sections) reduces cognitive load 45% compared to tight spacing (8dp). Users scan minimalist layouts 2.3x faster (average 5.8 seconds to locate "Summarize" button vs 13.4 seconds với cluttered layout).
+Chiến lược khoảng trắng được xác thực qua nghiên cứu theo dõi mắt với 8 người tham gia. Kết quả cho thấy khoảng cách rộng rãi (16-24dp giữa các phần) giảm tải nhận thức 45% so với khoảng cách chặt chẽ (8dp). Người dùng quét bố cục tối giản nhanh hơn 2.3 lần (trung bình 5.8 giây để định vị nút "Tóm tắt" so với 13.4 giây với bố cục lộn xộn).
 
-Visual hierarchy through typography và color contrast tested với grayscale mockups. Requirement: users phải identify primary action (Summarize button) trong 3 seconds without color cues. Testing: 94% success rate, validating hierarchy works through size (48dp button height vs 16sp body text), weight (Medium vs Normal), và spacing alone.
+Phân cấp trực quan thông qua kiểu chữ và độ tương phản màu được kiểm tra với mô hình xám. Yêu cầu: người dùng phải xác định hành động chính (nút Tóm tắt) trong 3 giây mà không có tín hiệu màu. Kiểm thử: tỷ lệ thành công 94%, xác thực phân cấp hoạt động thông qua kích thước (chiều cao nút 48dp so với văn bản thân 16sp), trọng lượng (Trung bình so với Bình thường), và chỉ khoảng cách.
 
-Progressive disclosure principle applied systematically: default state shows essential controls only (text input, persona, summarize button), advanced features hidden until needed (export in FAB menu after result, filters in bottom sheet). Analytics: only 28% users need advanced features per session, meaning 72% benefit from cleaner default interface.
+Nguyên tắc tiết lộ tiến bộ được áp dụng có hệ thống: trạng thái mặc định chỉ hiển thị các điều khiển thiết yếu (nhập văn bản, nhân vật, nút tóm tắt), các tính năng nâng cao được ẩn cho đến khi cần (xuất trong menu FAB sau kết quả, bộ lọc trong trang tính dưới cùng). Phân tích: chỉ 28% người dùng cần các tính năng nâng cao mỗi phiên, có nghĩa là 72% được lợi từ giao diện mặc định sạch hơn.
 
-**3. Functional & Intuitive - Design for Efficiency:**
+**3. Chức năng & Trực quan - Thiết kế cho Hiệu quả:**
 
-Functionality principle drives every interaction design decision. Affordance testing conducted with paper prototypes before digital mockups. Requirement: 90% users correctly identify clickable vs non-clickable elements without labels. Results: buttons với 12dp corner radius và subtle elevation (2dp) recognized as clickable by 96% participants. Flat elements with sharp corners (0dp radius) only 67% recognition.
+Nguyên tắc chức năng thúc đẩy mọi quyết định thiết kế tương tác. Kiểm thử khả năng thực hiện được tiến hành với nguyên mẫu giấy trước mô hình kỹ thuật số. Yêu cầu: 90% người dùng xác định chính xác các phần tử có thể nhấp so với không thể nhấp mà không có nhãn. Kết quả: các nút với bán kính góc 12dp và độ cao tinh tế (2dp) được 96% người tham gia nhận ra là có thể nhấp. Các phần tử phẳng với góc nhọn (bán kính 0dp) chỉ có 67% nhận ra.
 
-Feedback mechanisms designed based on response time research. Immediate feedback (<100ms) for touch interactions prevents perceived lag. Medium haptic feedback on button taps provides physical confirmation - A/B testing shows 23% reduction in double-taps (users confirming action worked) với haptic vs without. Loading states with progress indicators reduce perceived wait time 34% compared to blank screens.
+Cơ chế phản hồi được thiết kế dựa trên nghiên cứu thời gian phản hồi. Phản hồi ngay lập tức (<100ms) cho các tương tác chạm ngăn chặn độ trễ cảm nhận. Phản hồi xúc giác trung bình khi chạm nút cung cấp xác nhận vật lý - kiểm thử A/B cho thấy giảm 23% các lần chạm đúp (người dùng xác nhận hành động đã hoạt động) với xúc giác so với không có. Trạng thái đang tải với chỉ báo tiến trình giảm thời gian chờ cảm nhận 34% so với màn hình trống.
 
-Consistency enforced through component library với strict naming conventions. All primary actions use FilledButton component (primary color background, white text), secondary actions use OutlinedButton (primary border, primary text), tertiary actions use TextButton (primary text only). Pattern testing: after using app 3 times, 87% users correctly predict which button style appears for given action type.
+Tính nhất quán được thực thi thông qua thư viện thành phần với quy ước đặt tên nghiêm ngặt. Tất cả các hành động chính sử dụng thành phần FilledButton (nền màu chính, văn bản trắng), các hành động phụ sử dụng OutlinedButton (viền chính, văn bản chính), các hành động thứ ba sử dụng TextButton (chỉ văn bản chính). Kiểm thử mẫu: sau khi sử dụng ứng dụng 3 lần, 87% người dùng dự đoán chính xác kiểu nút nào xuất hiện cho loại hành động nhất định.
 
-**4. Emotional & Delightful - Productivity ≠ Boring:**
+**4. Cảm xúc & Thú vị - Năng suất ≠ Nhàm chán:**
 
-Emotional design principle challenges assumption that productivity apps must be sterile. Competitor analysis của 8 summarization apps (Resoomer, TLDR This, Scholarcy, etc.) revealed 75% use purely functional designs với minimal personality. Opportunity identified: differentiate through thoughtful delight without sacrificing usability.
+Nguyên tắc thiết kế cảm xúc thách thức giả định rằng các ứng dụng năng suất phải vô trùng. Phân tích đối thủ cạnh tranh của 8 ứng dụng tóm tắt (Resoomer, TLDR This, Scholarcy, v.v.) tiết lộ 75% sử dụng thiết kế hoàn toàn chức năng với cá tính tối thiểu. Cơ hội được xác định: phân biệt thông qua niềm vui chu đáo mà không hy sinh khả năng sử dụng.
 
-Animation philosophy: purposeful, not decorative. Every animation serves functional purpose - easing users between states, providing feedback, indicating relationships. Example: FAB expanding into speed dial menu uses staggered animation (50ms delay between items) to show spatial relationship. Tested against simultaneous animation: staggered version 45% easier to understand according to preference testing với 100 users.
+Triết lý hoạt hình: có mục đích, không phải trang trí. Mọi hoạt hình đều phục vụ mục đích chức năng - làm dễ người dùng giữa các trạng thái, cung cấp phản hồi, chỉ ra mối quan hệ. Ví dụ: FAB mở rộng thành menu quay số nhanh sử dụng hoạt hình xếp tầng (độ trễ 50ms giữa các mục) để hiển thị mối quan hệ không gian. Được kiểm tra so với hoạt hình đồng thời: phiên bản xếp tầng dễ hiểu hơn 45% theo kiểm thử sở thích với 100 người dùng.
 
-Color vibrancy calibrated carefully. Primary color (#6366F1) chosen with 60% saturation - vibrant enough to feel modern nhưng not overwhelming for extended use. Testing với prolonged exposure (30 minute sessions): highly saturated colors (80%+) caused eye strain for 67% users, while 60% saturation comfortable for 94% users.
+Độ sống động màu sắc được hiệu chỉnh cẩn thận. Màu chính (#6366F1) được chọn với độ bão hòa 60% - đủ sống động để cảm thấy hiện đại nhưng không quá tải cho việc sử dụng kéo dài. Kiểm thử với tiếp xúc kéo dài (phiên 30 phút): màu sắc bão hòa cao (80%+) gây mỏi mắt cho 67% người dùng, trong khi độ bão hòa 60% thoải mái cho 94% người dùng.
 
-Illustrations in empty states và error screens humanize experience. Friendly line art style với rounded shapes (vs sharp geometric) tested warmer - semantic differential scale rating: friendly (+2.8), approachable (+3.1), professional (+2.4) on 5-point scale. Character illustrations avoided (no mascots) to maintain professional tone appropriate for academic/business use cases.
+Minh họa trong trạng thái trống và màn hình lỗi nhân bản hóa trải nghiệm. Phong cách nghệ thuật đường thân thiện với hình dạng tròn (so với hình học nhọn) được kiểm tra ấm hơn - đánh giá thang đo khác biệt ngữ nghĩa: thân thiện (+2.8), dễ tiếp cận (+3.1), chuyên nghiệp (+2.4) trên thang điểm 5. Minh họa nhân vật tránh (không có linh vật) để duy trì giai điệu chuyên nghiệp phù hợp với các trường hợp sử dụng học thuật/doanh nghiệp.
 
-Micro-interactions discovered most effective when subtle. Hover state opacity change tested at multiple levels: 8% change barely noticeable (34% detection rate), 20% change too dramatic (feels "jumpy"), 12% change optimal (87% detection rate without jarring effect). Ripple effect on touch standardized at 300ms duration - faster (200ms) feels abrupt, slower (400ms) feels laggy.
+Vi tương tác được phát hiện hiệu quả nhất khi tinh tế. Thay đổi độ mờ trạng thái di chuột được kiểm tra ở nhiều cấp độ: thay đổi 8% hầu như không nhận thấy (tỷ lệ phát hiện 34%), thay đổi 20% quá kịch tính (cảm thấy "nhảy"), thay đổi 12% tối ưu (tỷ lệ phát hiện 87% mà không có hiệu ứng gây khó chịu). Hiệu ứng gợn khi chạm được chuẩn hóa ở thời lượng 300ms - nhanh hơn (200ms) cảm thấy đột ngột, chậm hơn (400ms) cảm thấy chậm chạp.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Material You adoption: 82% users prefer native-feeling apps, dynamic color increases engagement 15% và satisfaction 23%. Minimalist design: 89% task completion vs 34% với feature-rich, scanning 2.3x faster. White space strategy: 45% cognitive load reduction. Progressive disclosure: 72% users benefit from cleaner defaults. Affordance testing: 96% clickability recognition với rounded buttons+elevation. Haptic feedback: 23% reduction in double-taps. Animation staggering: 45% easier to understand. Color saturation 60%: comfortable for 94% users in prolonged sessions. Micro-interaction 12% opacity: 87% detection without jarring.
+Áp dụng Material You: 82% người dùng thích ứng dụng cảm giác bản địa, màu động tăng sự tham gia 15% và hài lòng 23%. Thiết kế tối giản: 89% hoàn thành nhiệm vụ so với 34% với giàu tính năng, quét nhanh hơn 2.3 lần. Chiến lược khoảng trắng: giảm 45% tải nhận thức. Tiết lộ tiến bộ: 72% người dùng được lợi từ mặc định sạch hơn. Kiểm thử khả năng thực hiện: 96% nhận ra khả năng nhấp với các nút tròn + độ cao. Phản hồi xúc giác: giảm 23% lần chạm đúp. Xếp tầng hoạt hình: dễ hiểu hơn 45%. Độ bão hòa màu 60%: thoải mái cho 94% người dùng trong các phiên kéo dài. Vi tương tác độ mờ 12%: phát hiện 87% mà không gây khó chịu.
 
-**Các cân nhắc về accessibility:**
+**Các cân nhắc về khả năng tiếp cận:**
 
-Material Design 3 components built-in accessibility: minimum 48×48dp touch targets, semantic structure for screen readers, keyboard navigation support. Color contrast automatically validated - all text/background combinations meet WCAG 2.1 Level AA (≥4.5:1 for normal text, ≥3.0:1 for large text). Visual hierarchy does not rely solely on color - size, weight, spacing provide redundant encoding. Animations respect system reduce-motion preference - users với motion sensitivity see simplified transitions. Haptic feedback honors system settings - can be disabled globally. Focus indicators visible for keyboard/switch navigation (2dp outline, high contrast).
+Các thành phần Material Design 3 có khả năng tiếp cận tích hợp: mục tiêu chạm tối thiểu 48×48dp, cấu trúc ngữ nghĩa cho trình đọc màn hình, hỗ trợ điều hướng bàn phím. Độ tương phản màu được xác thực tự động - tất cả các kết hợp văn bản/nền đáp ứng WCAG 2.1 Cấp độ AA (≥4.5:1 cho văn bản bình thường, ≥3.0:1 cho văn bản lớn). Phân cấp trực quan không chỉ dựa vào màu sắc - kích thước, trọng lượng, khoảng cách cung cấp mã hóa dự phòng. Hoạt hình tôn trọng tùy chọn giảm chuyển động hệ thống - người dùng với độ nhạy chuyển động thấy các chuyển đổi đơn giản hóa. Phản hồi xúc giác tôn vinh cài đặt hệ thống - có thể bị vô hiệu hóa toàn cầu. Các chỉ báo tiêu điểm hiển thị cho điều hướng bàn phím/công tắc (đường viền 2dp, độ tương phản cao).
 
 ---
 
@@ -257,77 +257,77 @@ val colorScheme = when {
 
 ---
 
-#### **Design Rationale & Justification - Color Palette:**
+#### **Lý do thiết kế & Giải thích - Bảng màu:**
 
-Color palette được thiết kế dựa trên color psychology, accessibility requirements, brand identity considerations, và extensive A/B testing với target users. Mỗi color choice có scientific rationale đằng sau.
+Bảng màu được thiết kế dựa trên tâm lý học màu sắc, yêu cầu khả năng tiếp cận, cân nhắc nhận diện thương hiệu, và kiểm thử A/B kỹ lưỡng với người dùng mục tiêu. Mỗi lựa chọn màu sắc đều có cơ sở khoa học đằng sau.
 
-**1. Primary Color #6366F1 (Brand Blue) - Tại sao không Red/Green:**
+**1. Màu Chính #6366F1 (Xanh Thương hiệu) - Tại sao không Đỏ/Xanh lá:**
 
-Primary color #6366F1 (indigo blue) được chọn sau testing 5 candidate colors với 150 users. Phương án red (#EF4444) bị loại vì too aggressive - semantic association với errors/warnings causes anxiety trong productivity context. Testing: red primary button increased perceived stress levels 34% theo self-reported questionnaires.
+Màu chính #6366F1 (xanh chàm) được chọn sau khi kiểm thử 5 màu ứng viên với 150 người dùng. Phương án đỏ (#EF4444) bị loại vì quá hung hăng - liên kết ngữ nghĩa với lỗi/cảnh báo gây lo lắng trong bối cảnh năng suất. Kiểm thử: nút chính màu đỏ tăng mức độ căng thẳng cảm nhận 34% theo bảng câu hỏi tự báo cáo.
 
-Phương án green (#10B981) cũng bị loại vì conflict với semantic meaning. Green universally understood as "success/complete", using it for primary actions (which initiate processes, not complete them) creates cognitive dissonance. Testing: 42% users confused về button semantics khi green used for "Summarize" action.
+Phương án xanh lá (#10B981) cũng bị loại vì xung đột với ý nghĩa ngữ nghĩa. Xanh lá được hiểu phổ biến là "thành công/hoàn thành", sử dụng nó cho các hành động chính (khởi động quy trình, không hoàn thành chúng) tạo ra sự bất hòa nhận thức. Kiểm thử: 42% người dùng bối rối về ngữ nghĩa nút khi xanh lá được sử dụng cho hành động "Tóm tắt".
 
-Blue chosen vì three reasons. Thứ nhất, color psychology: blue associated với trust (78%), productivity (65%), intelligence (58%) theo cross-cultural color association study. Perfect match cho summarization app emphasizing accuracy. Thứ hai, accessibility: blue works well trên both light và dark backgrounds - contrast testing shows #6366F1 achieves 4.8:1 ratio on white, 6.2:1 on dark gray. Thứ ba, brand differentiation: competitor analysis của 12 summarization apps reveals 67% use orange/yellow primaries, blue provides visual distinction.
+Xanh dương được chọn vì ba lý do. Thứ nhất, tâm lý học màu sắc: xanh dương liên kết với niềm tin (78%), năng suất (65%), trí thông minh (58%) theo nghiên cứu liên kết màu sắc đa văn hóa. Phù hợp hoàn hảo cho ứng dụng tóm tắt nhấn mạnh độ chính xác. Thứ hai, khả năng tiếp cận: xanh dương hoạt động tốt trên cả nền sáng và tối - kiểm thử độ tương phản cho thấy #6366F1 đạt tỷ lệ 4.8:1 trên trắng, 6.2:1 trên xám tối. Thứ ba, phân biệt thương hiệu: phân tích đối thủ của 12 ứng dụng tóm tắt tiết lộ 67% sử dụng màu chính cam/vàng, xanh dương cung cấp sự phân biệt trực quan.
 
-Specific hue #6366F1 (indigo with slight purple tint) chosen over pure blue (#2196F3) vì warmer undertone feels more approachable. A/B testing với 200 users: indigo blue rated +1.8 "approachable" và +2.1 "modern" on 5-point semantic differential scale vs pure blue (+0.9 và +1.2 respectively).
+Sắc độ cụ thể #6366F1 (chàm với chút tím) được chọn thay vì xanh dương thuần (#2196F3) vì sắc thái ấm hơn cảm thấy dễ tiếp cận hơn. Kiểm thử A/B với 200 người dùng: xanh chàm được đánh giá +1.8 "dễ tiếp cận" và +2.1 "hiện đại" trên thang đo khác biệt ngữ nghĩa 5 điểm so với xanh dương thuần (+0.9 và +1.2 tương ứng).
 
-Saturation 60% calibrated for prolonged usage. Highly saturated blues (80%+) cause eye fatigue - testing với 30-minute sessions shows 67% users report discomfort. 60% saturation balances vibrancy (feels modern, energetic) với comfort (suitable for extended reading).
+Độ bão hòa 60% được hiệu chỉnh cho việc sử dụng kéo dài. Màu xanh bão hòa cao (80%+) gây mỏi mắt - kiểm thử với phiên 30 phút cho thấy 67% người dùng báo cáo khó chịu. Độ bão hòa 60% cân bằng sự sống động (cảm thấy hiện đại, năng động) với sự thoải mái (phù hợp cho đọc kéo dài).
 
-**2. Secondary/Tertiary Colors - Complementary Harmony:**
+**2. Màu Phụ/Thứ ba - Hài hòa Bổ sung:**
 
-Secondary #FF6B6B (coral pink) và Tertiary #5B5FDE (purple) form triadic color harmony với primary blue. Phương án analogous scheme (blue + cyan + teal) bị loại vì too monotonous - lacks visual interest, feels cold. Phương án complementary (blue + orange) creates too much contrast - jarring khi used side-by-side.
+Màu phụ #FF6B6B (hồng san hô) và thứ ba #5B5FDE (tím) tạo thành hài hòa màu tam giác với xanh dương chính. Phương án lược đồ tương tự (xanh dương + cyan + xanh ngọc) bị loại vì quá đơn điệu - thiếu sự thú vị trực quan, cảm thấy lạnh. Phương án bổ sung (xanh dương + cam) tạo ra quá nhiều tương phản - chói tai khi sử dụng cạnh nhau.
 
-Triadic harmony provides visual variety while maintaining cohesion. Color wheel analysis: 120° separation ensures colors don't clash. Usage strategy: primary blue dominates (60% of colored elements), secondary pink accents (25%), tertiary purple highlights (15%). This 60-25-15 ratio creates balanced visual weight validated through gestalt perception testing.
+Hài hòa tam giác cung cấp sự đa dạng trực quan trong khi duy trì sự gắn kết. Phân tích vòng tròn màu: khoảng cách 120° đảm bảo các màu không xung đột. Chiến lược sử dụng: xanh dương chính chiếm ưu thế (60% các yếu tố có màu), điểm nhấn hồng phụ (25%), đánh dấu tím thứ ba (15%). Tỷ lệ 60-25-15 này tạo ra trọng lượng trực quan cân bằng được xác thực thông qua kiểm thử nhận thức gestalt.
 
-Pink (#FF6B6B) specifically chosen for warmth - counters blue's coolness. Testing shows blue-only palettes perceived as "sterile" (−1.4 on warmth scale), adding pink warms overall perception (+0.8 warmth rating). Purple (#5B5FDE) bridges blue và pink, creating smooth color transitions trong UI.
+Hồng (#FF6B6B) được chọn đặc biệt cho sự ấm áp - đối lại sự lạnh của xanh dương. Kiểm thử cho thấy bảng màu chỉ xanh dương được cảm nhận là "vô trùng" (−1.4 trên thang độ ấm), thêm hồng làm ấm nhận thức tổng thể (+0.8 đánh giá ấm). Tím (#5B5FDE) nối xanh dương và hồng, tạo ra chuyển đổi màu mượt mà trong giao diện.
 
-**3. Semantic Colors - Universal Conventions:**
+**3. Màu Ngữ nghĩa - Quy ước Phổ quát:**
 
-Semantic colors follow established conventions to leverage learned associations. Success green (#4CAF50) matches traffic light green - instant recognition, no learning curve. Warning orange (#FF9800) mimics caution signs - universally understood as "pay attention". Error red (#BA1A1A) maps to stop signals - clear danger indication.
+Màu ngữ nghĩa theo các quy ước đã thiết lập để tận dụng các liên kết đã học. Xanh lá thành công (#4CAF50) khớp với đèn giao thông xanh - nhận ra ngay lập tức, không có đường cong học tập. Cam cảnh báo (#FF9800) bắt chước các dấu hiệu thận trọng - được hiểu phổ biến là "chú ý". Đỏ lỗi (#BA1A1A) ánh xạ tới tín hiệu dừng - chỉ báo nguy hiểm rõ ràng.
 
-Specific hues chosen for color-blind accessibility. Success green (#4CAF50) và error red (#BA1A1A) tested with deuteranopia/protanopia simulations - sufficient luminance contrast (3.2:1) ensures distinguishability even when hue information lost. Icon shapes (✓ vs ✗) và text labels provide redundant encoding beyond color alone.
+Các sắc độ cụ thể được chọn cho khả năng tiếp cận mù màu. Xanh lá thành công (#4CAF50) và đỏ lỗi (#BA1A1A) được kiểm thử với mô phỏng deuteranopia/protanopia - độ tương phản độ sáng đủ (3.2:1) đảm bảo khả năng phân biệt ngay cả khi thông tin sắc độ bị mất. Hình dạng biểu tượng (✓ so với ✗) và nhãn văn bản cung cấp mã hóa dự phòng ngoài màu sắc.
 
-Saturation adjusted for semantic clarity. Success green 70% saturation (vs 60% for primary) makes checkmarks "pop" confirming completion. Error red 65% saturation with darker luminance (#BA1A1A vs #EF4444) reduces alarm - serious but not panic-inducing. Testing: darker error red reduces user anxiety 28% while maintaining 94% error detection rate.
+Độ bão hòa được điều chỉnh cho độ rõ ràng ngữ nghĩa. Xanh lá thành công 70% độ bão hòa (so với 60% cho chính) làm cho dấu kiểm "nổi bật" xác nhận hoàn thành. Đỏ lỗi 65% độ bão hòa với độ sáng tối hơn (#BA1A1A so với #EF4444) giảm báo động - nghiêm trọng nhưng không gây hoảng loạn. Kiểm thử: đỏ lỗi tối hơn giảm lo lắng của người dùng 28% trong khi duy trì tỷ lệ phát hiện lỗi 94%.
 
-Container colors (light tints) provide subtle backgrounds for semantic messages. Success Container #E8F5E9 (12% green opacity on white) creates gentle highlight without overwhelming content. Math: target 8-12% opacity ensures readability (contrast ratio >4.5:1 for body text) while providing sufficient background differentiation.
+Màu vùng chứa (sắc nhẹ) cung cấp nền tinh tế cho thông điệp ngữ nghĩa. Vùng chứa thành công #E8F5E9 (12% độ mờ xanh lá trên trắng) tạo ra đánh dấu nhẹ nhàng mà không áp đảo nội dung. Toán học: mục tiêu 8-12% độ mờ đảm bảo khả năng đọc (tỷ lệ tương phản >4.5:1 cho văn bản thân) trong khi cung cấp sự khác biệt nền đủ.
 
-**4. Surface Colors - Depth Hierarchy:**
+**4. Màu Bề mặt - Phân cấp Độ sâu:**
 
-Surface elevation system using subtle gray tints creates depth perception without heavy shadows. Background #F8F9FE (off-white with blue tint) vs Surface #FFFFFF (pure white) provides 1.02:1 luminance contrast - barely perceptible consciously nhưng subconscious cues establish layers. Testing với grayscale conversion: users still perceive depth hierarchy through subtle luminance differences.
+Hệ thống độ cao bề mặt sử dụng sắc thái xám tinh tế tạo ra nhận thức độ sâu mà không có bóng đổ nặng. Nền #F8F9FE (trắng lệch với sắc xanh dương) so với Bề mặt #FFFFFF (trắng thuần) cung cấp độ tương phản độ sáng 1.02:1 - hầu như không thể cảm nhận có ý thức nhưng tín hiệu tiềm thức thiết lập các lớp. Kiểm thử với chuyển đổi thang độ xám: người dùng vẫn cảm nhận phân cấp độ sâu thông qua sự khác biệt độ sáng tinh tế.
 
-Off-white background (#F8F9FE) chosen over pure white (#FFFFFF) reduces eye strain. Pure white surfaces reflect 100% light intensity - uncomfortable in dark rooms. Off-white (98% brightness) reduces glare 15% theo lux meter measurements while maintaining "clean" perception. Survey: 72% users prefer off-white backgrounds for extended reading (>15 minutes).
+Nền trắng lệch (#F8F9FE) được chọn thay vì trắng thuần (#FFFFFF) giảm mỏi mắt. Bề mặt trắng thuần phản chiếu 100% cường độ ánh sáng - khó chịu trong phòng tối. Trắng lệch (98% độ sáng) giảm lóa 15% theo đo lường lux meter trong khi duy trì nhận thức "sạch". Khảo sát: 72% người dùng thích nền trắng lệch cho đọc kéo dài (>15 phút).
 
-Surface Variant #F3F4F6 (light gray) for secondary surfaces creates clear hierarchy. Contrast ratio 1.04:1 vs pure white ensures distinguishability. Use case: disabled states, secondary cards, inactive tabs. Gray saturation kept neutral (no color tint) to avoid chromatic afterimages during prolonged viewing.
+Biến thể bề mặt #F3F4F6 (xám nhạt) cho các bề mặt phụ tạo ra phân cấp rõ ràng. Tỷ lệ tương phản 1.04:1 so với trắng thuần đảm bảo khả năng phân biệt. Trường hợp sử dụng: trạng thái bị vô hiệu hóa, thẻ phụ, tab không hoạt động. Độ bão hòa xám được giữ trung tính (không có sắc thái màu) để tránh hình ảnh sau màu trong khi xem kéo dài.
 
-Neutral palette (10 shades) provides fine-grained control for text opacity và borders. Neutral50 (#73788C) for secondary text achieves 4.52:1 contrast on white - just exceeds WCAG AA minimum. Neutral60 (#8E93A7) for borders (3.8:1 contrast) sufficient for non-text elements per WCAG guidelines.
+Bảng màu trung tính (10 sắc thái) cung cấp kiểm soát chi tiết cho độ mờ văn bản và viền. Neutral50 (#73788C) cho văn bản phụ đạt độ tương phản 4.52:1 trên trắng - vượt quá tối thiểu WCAG AA một chút. Neutral60 (#8E93A7) cho viền (độ tương phản 3.8:1) đủ cho các yếu tố không phải văn bản theo hướng dẫn WCAG.
 
-**5. Dark Theme Adjustments - Not Simple Inversion:**
+**5. Điều chỉnh Chủ đề Tối - Không phải Đảo ngược Đơn giản:**
 
-Dark theme không phải simple color inversion - requires careful adjustments for readability và eye comfort. Primary shifts from #6366F1 (light theme) to #5B5FDE (dark theme) - slightly lighter với more purple to maintain vibrancy against dark background. Pure blue appears muted on black, purple tint compensates.
+Chủ đề tối không phải là đảo ngược màu đơn giản - đòi hỏi điều chỉnh cẩn thận cho khả năng đọc và sự thoải mái của mắt. Chính chuyển từ #6366F1 (chủ đề sáng) sang #5B5FDE (chủ đề tối) - sáng hơn một chút với nhiều tím hơn để duy trì sự sống động trên nền tối. Xanh dương thuần xuất hiện mờ nhạt trên đen, sắc thái tím bù đắp.
 
-Background #121212 (near-black, not pure black #000000) chosen for OLED efficiency while reducing eye strain. Pure black creates harsh contrast với white text - eye fatigue after 20 minutes reported by 78% users. #121212 (7% brightness) provides softer contrast while saving 85% OLED power vs white backgrounds.
+Nền #121212 (gần đen, không phải đen thuần #000000) được chọn cho hiệu quả OLED trong khi giảm mỏi mắt. Đen thuần tạo ra độ tương phản khắc nghiệt với văn bản trắng - mỏi mắt sau 20 phút được báo cáo bởi 78% người dùng. #121212 (7% độ sáng) cung cấp độ tương phản mềm hơn trong khi tiết kiệm 85% năng lượng OLED so với nền trắng.
 
-Semantic colors lightened for dark theme (#66BB6A green vs #4CAF50 light theme) ensures sufficient contrast on dark surfaces. Math: light theme green 4.5:1 on white, dark theme green must achieve 4.5:1 on #1E1E1E surface, requiring ~15% luminance increase. Automated testing validates all color/background combinations meet WCAG AA.
+Màu ngữ nghĩa được làm sáng cho chủ đề tối (xanh lá #66BB6A so với #4CAF50 chủ đề sáng) đảm bảo độ tương phản đủ trên bề mặt tối. Toán học: xanh lá chủ đề sáng 4.5:1 trên trắng, xanh lá chủ đề tối phải đạt 4.5:1 trên bề mặt #1E1E1E, yêu cầu tăng độ sáng ~15%. Kiểm thử tự động xác thực tất cả các kết hợp màu/nền đáp ứng WCAG AA.
 
-Surface elevation in dark mode uses lighter shades (#1E1E1E → #2A2A2A) instead of shadows - shadows disappear on dark backgrounds. Lighter surfaces create "floating" effect - Material Design elevation principle adapted for dark environments. Each elevation level increases background luminance by ~5% maintaining perceptible hierarchy.
+Độ cao bề mặt trong chế độ tối sử dụng các sắc thái sáng hơn (#1E1E1E → #2A2A2A) thay vì bóng đổ - bóng đổ biến mất trên nền tối. Bề mặt sáng hơn tạo ra hiệu ứng "nổi" - nguyên tắc độ cao Material Design được điều chỉnh cho môi trường tối. Mỗi mức độ cao tăng độ sáng nền khoảng ~5% duy trì phân cấp có thể cảm nhận.
 
-**6. Dynamic Color Integration - Personalization vs Consistency:**
+**6. Tích hợp Màu Động - Cá nhân hóa so với Tính nhất quán:**
 
-Dynamic Color feature (Android 12+) extracts colors from user wallpaper creating personalized themes. Trade-off: personalization benefits vs brand consistency loss. Solution: bounded adaptation - allow dynamic colors but ensure sufficient brand presence.
+Tính năng Màu Động (Android 12+) trích xuất màu sắc từ hình nền người dùng tạo ra chủ đề cá nhân hóa. Đánh đổi: lợi ích cá nhân hóa so với mất tính nhất quán thương hiệu. Giải pháp: thích ứng có giới hạn - cho phép màu động nhưng đảm bảo sự hiện diện thương hiệu đủ.
 
-Implementation: primary button uses extracted dynamic color, but app icon, illustrations, và key brand moments retain static #6366F1. Testing: 67% users enable dynamic color appreciate personalization, 33% prefer static brand colors value consistency. Providing toggle setting accommodates both preferences.
+Triển khai: nút chính sử dụng màu động được trích xuất, nhưng biểu tượng ứng dụng, minh họa, và các khoảnh khắc thương hiệu chính giữ lại #6366F1 tĩnh. Kiểm thử: 67% người dùng bật màu động đánh giá cao cá nhân hóa, 33% thích màu thương hiệu tĩnh đánh giá cao tính nhất quán. Cung cấp cài đặt chuyển đổi đáp ứng cả hai sở thích.
 
-Accessibility safeguard: dynamic color extraction algorithm ensures generated palette meets WCAG contrast requirements. If wallpaper colors produce insufficient contrast, fallback to static brand palette. Automatic testing validates contrast ratios before applying dynamic scheme.
+Biện pháp bảo vệ khả năng tiếp cận: thuật toán trích xuất màu động đảm bảo bảng màu được tạo ra đáp ứng yêu cầu độ tương phản WCAG. Nếu màu hình nền tạo ra độ tương phản không đủ, dự phòng cho bảng màu thương hiệu tĩnh. Kiểm thử tự động xác thực tỷ lệ tương phản trước khi áp dụng lược đồ động.
 
-Fallback strategy for pre-Android 12 devices seamless - static brand palette provides identical UX, just without personalization. Analytics: 45% users on Android 12+, 55% on older versions - supporting both ensures universal experience.
+Chiến lược dự phòng cho thiết bị trước Android 12 liền mạch - bảng màu thương hiệu tĩnh cung cấp UX giống hệt, chỉ không có cá nhân hóa. Phân tích: 45% người dùng trên Android 12+, 55% trên các phiên bản cũ hơn - hỗ trợ cả hai đảm bảo trải nghiệm phổ quát.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Primary blue testing: 78% associate blue với trust, indigo rated +1.8 approachable vs pure blue. Red primary: 34% increased stress perception. Green primary: 42% confused button semantics. Saturation 60%: comfortable for 94% users in 30-min sessions. Triadic harmony: 60-25-15 ratio validates through gestalt testing. Semantic green/red: 3.2:1 luminance contrast color-blind accessible, 94% error detection rate. Off-white background: 72% prefer for reading >15min, 15% glare reduction. Dark theme #121212: 78% report less eye fatigue vs #000000, 85% OLED power savings. Dynamic color: 67% users enable appreciate personalization.
+Kiểm thử xanh dương chính: 78% liên kết xanh dương với niềm tin, chàm được đánh giá +1.8 dễ tiếp cận so với xanh dương thuần. Đỏ chính: tăng 34% nhận thức căng thẳng. Xanh lá chính: 42% bối rối ngữ nghĩa nút. Độ bão hòa 60%: thoải mái cho 94% người dùng trong phiên 30 phút. Hài hòa tam giác: tỷ lệ 60-25-15 xác thực thông qua kiểm thử gestalt. Xanh lá/đỏ ngữ nghĩa: độ tương phản độ sáng 3.2:1 có thể tiếp cận mù màu, tỷ lệ phát hiện lỗi 94%. Nền trắng lệch: 72% thích cho đọc >15 phút, giảm 15% lóa. Chủ đề tối #121212: 78% báo cáo ít mỏi mắt hơn so với #000000, tiết kiệm 85% năng lượng OLED. Màu động: 67% người dùng bật đánh giá cao cá nhân hóa.
 
-**Các cân nhắc về accessibility:**
+**Các cân nhắc về khả năng tiếp cận:**
 
-All color combinations tested for WCAG 2.1 Level AA compliance - minimum 4.5:1 contrast normal text, 3.0:1 large text. Semantic colors distinguishable through luminance contrast for color-blind users. Icons và text labels provide redundant encoding beyond color. Dark theme reduces eye strain for light-sensitive users. Dynamic color extraction validates contrast before applying. Neutral palette ensures readable text at all opacity levels. Surface hierarchy perceptible through luminance differences, not just color.
+Tất cả các kết hợp màu được kiểm tra cho sự tuân thủ WCAG 2.1 Cấp độ AA - tối thiểu độ tương phản 4.5:1 văn bản bình thường, 3.0:1 văn bản lớn. Màu ngữ nghĩa có thể phân biệt thông qua độ tương phản độ sáng cho người dùng mù màu. Biểu tượng và nhãn văn bản cung cấp mã hóa dự phòng ngoài màu sắc. Chủ đề tối giảm mỏi mắt cho người dùng nhạy cảm với ánh sáng. Trích xuất màu động xác thực độ tương phản trước khi áp dụng. Bảng màu trung tính đảm bảo văn bản có thể đọc được ở tất cả các mức độ mờ. Phân cấp bề mặt có thể cảm nhận thông qua sự khác biệt độ sáng, không chỉ màu sắc.
 
 ---
 
@@ -454,89 +454,89 @@ Typography scales có **letter spacing** và **line height** tối ưu cho reada
 
 ---
 
-#### **Design Rationale & Justification - Typography:**
+#### **Lý do thiết kế & Giải thích - Kiểu chữ:**
 
-Typography system được thiết kế dựa trên legibility research, accessibility standards, và extensive readability testing với summary content. Mỗi font size, weight, và line height được calibrated cho optimal reading experience trong productivity context.
+Hệ thống kiểu chữ được thiết kế dựa trên nghiên cứu về khả năng đọc, tiêu chuẩn khả năng tiếp cận, và kiểm thử khả năng đọc sâu rộng với nội dung tóm tắt. Mỗi kích thước phông chữ, trọng lượng, và chiều cao dòng được hiệu chỉnh cho trải nghiệm đọc tối ưu trong bối cảnh năng suất.
 
-**1. Material 3 Typography Scale - Tại sao 13 Levels:**
+**1. Thang Kiểu chữ Material 3 - Tại sao 13 Cấp độ:**
 
-Material 3's 13-level typography scale được chọn thay vì simpler 5-level systems (như iOS) hoặc complex 20+ level custom scales. Phương án 5-level system bị loại vì insufficient granularity - không đủ options để create clear hierarchy trong information-dense screens. Result Screen cần 6+ different text styles (title, metrics, headings, body, labels, timestamps) - 5 levels forcing compromises.
+Thang kiểu chữ 13 cấp độ của Material 3 được chọn thay vì các hệ thống 5 cấp độ đơn giản hơn (như iOS) hoặc các thang tùy chỉnh phức tạp 20+ cấp độ. Phương án hệ thống 5 cấp độ bị loại vì độ chi tiết không đủ - không đủ tùy chọn để tạo phân cấp rõ ràng trong các màn hình dày đặc thông tin. Màn hình Kết quả cần 6+ kiểu văn bản khác nhau (tiêu đề, số liệu, đầu đề, thân, nhãn, dấu thời gian) - 5 cấp độ buộc phải타협타협.
 
-Phương án 20+ level custom scale cũng bị loại vì too complex - increases design decisions và development overhead without proportional UX benefit. Testing: users cannot perceive differences <2sp trong typical viewing distances (30-40cm). Having 24sp và 25sp styles creates false precision.
+Phương án thang tùy chỉnh 20+ cấp độ cũng bị loại vì quá phức tạp - tăng quyết định thiết kế và chi phí phát triển mà không có lợi ích UX tương xứng. Kiểm thử: người dùng không thể cảm nhận sự khác biệt <2sp ở khoảng cách xem điển hình (30-40cm). Có kiểu 24sp và 25sp tạo ra độ chính xác giả.
 
-Material 3's 13 levels provide optimal balance: sufficient variety (Display, Headline, Title, Body, Label categories) without overwhelming complexity. Each level serves distinct purpose validated through usage mapping across all screens. No unused styles - all 13 levels actively used trong app.
+13 cấp độ của Material 3 cung cấp sự cân bằng tối ưu: đủ đa dạng (các danh mục Display, Headline, Title, Body, Label) mà không có sự phức tạp quá tải. Mỗi cấp độ phục vụ mục đích riêng biệt được xác thực thông qua ánh xạ sử dụng trên tất cả các màn hình. Không có kiểu không sử dụng - tất cả 13 cấp độ được sử dụng tích cực trong ứng dụng.
 
-**2. Body Large 16sp - Sweet Spot for Reading:**
+**2. Body Large 16sp - Điểm Ngọt cho Đọc:**
 
-Body Large 16sp chosen as primary content size after testing range 14-18sp với 100 users reading 300-word summaries. Phương án 14sp bị loại despite being common Android default vì too small for extended reading. Testing: 14sp body text caused 34% users squint or zoom after 5 minutes reading. Accessibility consideration: users 45+ particularly struggled, reporting eye strain 67% of the time.
+Body Large 16sp được chọn làm kích thước nội dung chính sau khi kiểm thử phạm vi 14-18sp với 100 người dùng đọc bản tóm tắt 300 từ. Phương án 14sp bị loại mặc dù là mặc định Android phổ biến vì quá nhỏ cho đọc kéo dài. Kiểm thử: văn bản thân 14sp khiến 34% người dùng nheo mắt hoặc phóng to sau 5 phút đọc. Cân nhắc khả năng tiếp cận: người dùng 45+ đặc biệt gặp khó khăn, báo cáo mỏi mắt 67% thời gian.
 
-Phương án 18sp provided excellent readability (98% comfortable) but reduced content density too much. Math: 18sp body text với 1.5 line height = 27sp line spacing. On 640dp height screen, only 23 lines visible vs 32 lines với 16sp. Survey: 72% users prefer seeing more content at once over slightly larger text, especially on mobile.
+Phương án 18sp cung cấp khả năng đọc xuất sắc (98% thoải mái) nhưng giảm mật độ nội dung quá nhiều. Toán học: văn bản thân 18sp với chiều cao dòng 1.5 = khoảng cách dòng 27sp. Trên màn hình chiều cao 640dp, chỉ 23 dòng hiển thị so với 32 dòng với 16sp. Khảo sát: 72% người dùng thích xem nhiều nội dung cùng lúc hơn văn bản lớn hơn một chút, đặc biệt trên di động.
 
-16sp emerged as sweet spot: comfortable for 94% users including older demographics, sufficient content density (28-32 lines on standard phone), meets WCAG AA minimum (14sp+) with margin. Tested across 6 languages (English, Vietnamese, Spanish, Chinese, Japanese, Arabic) - 16sp maintains readability across different character densities.
+16sp nổi lên là điểm ngọt: thoải mái cho 94% người dùng bao gồm nhân khẩu học lớn tuổi, mật độ nội dung đủ (28-32 dòng trên điện thoại tiêu chuẩn), đáp ứng tối thiểu WCAG AA (14sp+) với biên. Được kiểm tra trên 6 ngôn ngữ (Anh, Việt, Tây Ban Nha, Trung, Nhật, Ả Rập) - 16sp duy trì khả năng đọc trên các mật độ ký tự khác nhau.
 
-Line height 24sp (1.5 ratio) calculated for optimal leading. Tighter line height 1.3 (20.8sp) caused lines blend together - measured 28% increase in reading errors (skipping lines, re-reading). Looser 1.7 (27.2sp) reduced errors but wasted vertical space - only 24 lines visible vs 28 with 1.5. Ratio 1.5 balances error prevention (12% skip rate) với content density.
+Chiều cao dòng 24sp (tỷ lệ 1.5) được tính toán cho khoảng cách dẫn đầu tối ưu. Chiều cao dòng chặt hơn 1.3 (20.8sp) khiến các dòng hòa trộn với nhau - đo được tăng 28% lỗi đọc (bỏ qua dòng, đọc lại). Lỏng hơn 1.7 (27.2sp) giảm lỗi nhưng lãng phí không gian dọc - chỉ 24 dòng hiển thị so với 28 với 1.5. Tỷ lệ 1.5 cân bằng ngăn ngừa lỗi (tỷ lệ bỏ qua 12%) với mật độ nội dung.
 
-**3. Headline Hierarchy - Size Jumps for Clear Distinction:**
+**3. Phân cấp Tiêu đề - Bước Nhảy Kích thước cho Phân biệt Rõ ràng:**
 
-Headline Large 32sp vs Medium 28sp vs Small 24sp creates 4sp jumps providing perceptual contrast. Phương án smaller jumps (32-30-28sp) tested but insufficient differentiation - users couldn't distinguish hierarchy in quick scans. Eye-tracking: fixation duration identical (280ms) across 2sp differences, but 4sp jumps show distinct patterns (headline: 340ms, body: 240ms).
+Headline Large 32sp so với Medium 28sp so với Small 24sp tạo ra bước nhảy 4sp cung cấp tương phản cảm nhận. Phương án bước nhảy nhỏ hơn (32-30-28sp) được kiểm thử nhưng không đủ sự khác biệt - người dùng không thể phân biệt phân cấp trong quét nhanh. Theo dõi mắt: thời lượng cố định giống hệt (280ms) trên sự khác biệt 2sp, nhưng bước nhảy 4sp hiển thị các mẫu riêng biệt (tiêu đề: 340ms, thân: 240ms).
 
-SemiBold weight (600) for headlines chosen over Bold (700) after testing visual weight balance. Bold headlines overwhelming on mobile screens - semantic differential testing rated Bold −1.4 "aggressive", SemiBold +0.8 "authoritative". Bold appropriate for print/desktop where viewing distance greater, but too heavy at 30cm mobile viewing distance.
+Trọng lượng SemiBold (600) cho tiêu đề được chọn thay vì Bold (700) sau khi kiểm thử cân bằng trọng lượng trực quan. Tiêu đề đậm quá tải trên màn hình di động - kiểm thử khác biệt ngữ nghĩa đánh giá Bold −1.4 "hung hăng", SemiBold +0.8 "có thẩm quyền". Bold phù hợp cho in ấn/máy tính để bàn nơi khoảng cách xem lớn hơn, nhưng quá nặng ở khoảng cách xem di động 30cm.
 
-32sp maximum for Headline Large prevents headlines dominating screens. Testing: 36sp+ headlines reduced body text visibility - users scroll before reading, abandonment rate 23% higher. 32sp keeps headlines above fold on 90% of devices while showing 2-3 lines of body text simultaneously.
+32sp tối đa cho Headline Large ngăn tiêu đề thống trị màn hình. Kiểm thử: tiêu đề 36sp+ giảm khả năng hiển thị văn bản thân - người dùng cuộn trước khi đọc, tỷ lệ từ bỏ cao hơn 23%. 32sp giữ tiêu đề trên nếp gấp trên 90% thiết bị trong khi hiển thị 2-3 dòng văn bản thân đồng thời.
 
-**4. Title Medium 16sp - Same Size as Body Large, Different Weight:**
+**4. Title Medium 16sp - Cùng Kích thước với Body Large, Trọng lượng Khác:**
 
-Controversial decision: Title Medium (16sp Medium weight) same size as Body Large (16sp Normal weight) but differentiated by weight only. Phương án making titles 18sp (larger) bị loại after testing list items in History screen. 18sp titles với 14sp metadata created cramped feeling - only 4 items visible vs 6 with 16sp titles.
+Quyết định gây tranh cãi: Title Medium (16sp trọng lượng Medium) cùng kích thước với Body Large (16sp trọng lượng Normal) nhưng được phân biệt chỉ bằng trọng lượng. Phương án làm tiêu đề 18sp (lớn hơn) bị loại sau khi kiểm thử các mục danh sách trong màn hình Lịch sử. Tiêu đề 18sp với siêu dữ liệu 14sp tạo ra cảm giác chật chội - chỉ 4 mục hiển thị so với 6 với tiêu đề 16sp.
 
-Weight differentiation tested sufficient for hierarchy. Medium weight (500) vs Normal weight (400) provides 25% stroke thickness increase - perceptible in scans. Gestalt testing: users correctly identified titles vs body text 89% of the time based on weight alone. Adding size difference would be redundant và waste space.
+Phân biệt trọng lượng được kiểm thử đủ cho phân cấp. Trọng lượng Medium (500) so với trọng lượng Normal (400) cung cấp tăng 25% độ dày nét - có thể cảm nhận trong quét. Kiểm thử Gestalt: người dùng xác định chính xác tiêu đề so với văn bản thân 89% thời gian chỉ dựa trên trọng lượng. Thêm sự khác biệt kích thước sẽ dư thừa và lãng phí không gian.
 
-This approach follows newspaper typography principles - headlines/titles often same size as body but Bold/SemiBold. Efficient use of vertical space while maintaining clear hierarchy through weight, positioning, và spacing instead of size alone.
+Phương pháp này theo các nguyên tắc kiểu chữ báo chí - tiêu đề/tiêu đề thường cùng kích thước với thân nhưng Bold/SemiBold. Sử dụng hiệu quả không gian dọc trong khi duy trì phân cấp rõ ràng thông qua trọng lượng, vị trí, và khoảng cách thay vì chỉ kích thước.
 
-**5. Label Styles - Optimized for UI Controls:**
+**5. Kiểu Label - Tối ưu hóa cho Điều khiển UI:**
 
-Label Large 14sp for buttons chosen after touch target testing. Buttons need minimum 48dp height (accessibility), padding 12dp top/bottom leaves 24dp for text. 14sp với 20sp line height fits comfortably within 24dp content area. Testing 16sp: text either truncates on longer labels ("Summarize Document" → "Summa...") hoặc requires 56dp button height - unnecessarily large.
+Label Large 14sp cho các nút được chọn sau kiểm thử mục tiêu chạm. Các nút cần chiều cao tối thiểu 48dp (khả năng tiếp cận), đệm 12dp trên/dưới để lại 24dp cho văn bản. 14sp với chiều cao dòng 20sp vừa vặn trong vùng nội dung 24dp. Kiểm thử 16sp: văn bản bị cắt ngắn trên nhãn dài hơn ("Summarize Document" → "Summa...") hoặc yêu cầu chiều cao nút 56dp - lớn không cần thiết.
 
-Medium weight (500) for labels increases legibility on interactive elements. Buttons, tabs, chips are often small surface areas với colored backgrounds - Medium weight ensures text remains readable even on lower-contrast color combinations. Testing: Medium weight maintains readability at 3.8:1 contrast, Normal weight requires 4.5:1.
+Trọng lượng Medium (500) cho nhãn tăng khả năng đọc trên các phần tử tương tác. Các nút, tab, chip thường là khu vực bề mặt nhỏ với nền có màu - trọng lượng Medium đảm bảo văn bản vẫn có thể đọc được ngay cả trên các kết hợp màu tương phản thấp hơn. Kiểm thử: trọng lượng Medium duy trì khả năng đọc ở độ tương phản 3.8:1, trọng lượng Normal yêu cầu 4.5:1.
 
-Letter spacing 0.1sp for Label Large improves character distinction at small sizes. Tighter spacing (0sp) caused characters merge visually - particularly problematic for "ill", "iii" sequences. Testing: 0.1sp letter spacing improved character recognition 18% at 14sp size.
+Khoảng cách chữ 0.1sp cho Label Large cải thiện phân biệt ký tự ở kích thước nhỏ. Khoảng cách chặt hơn (0sp) khiến các ký tự hòa trộn trực quan - đặc biệt có vấn đề cho chuỗi "ill", "iii". Kiểm thử: khoảng cách chữ 0.1sp cải thiện nhận dạng ký tự 18% ở kích thước 14sp.
 
-**6. System Font (Roboto) - Performance vs Custom Fonts:**
+**6. Phông Hệ thống (Roboto) - Hiệu suất so với Phông Tùy chỉnh:**
 
-Using Android system font (Roboto) instead of custom web fonts (Inter, SF Pro, custom brand font) was deliberate optimization decision. Phương án custom fonts (via downloadable fonts or bundled TTF) bị loại vì performance cost và limited benefit.
+Sử dụng phông hệ thống Android (Roboto) thay vì phông web tùy chỉnh (Inter, SF Pro, phông thương hiệu tùy chỉnh) là quyết định tối ưu hóa có chủ đích. Phương án phông tùy chỉnh (qua phông có thể tải xuống hoặc TTF đi kèm) bị loại vì chi phí hiệu suất và lợi ích hạn chế.
 
-Performance measurements: custom fonts add 200-400kb bundle size (all weights + italics) + 50-150ms initial load time + 20-40ms per screen với first-time font usage. Roboto preloaded by system - 0ms load time, 0kb bundle impact. Across all app launches, saves cumulative 2.5 hours loading time per 1000 users annually.
+Đo lường hiệu suất: phông tùy chỉnh thêm 200-400kb kích thước gói (tất cả trọng lượng + in nghiêng) + 50-150ms thời gian tải ban đầu + 20-40ms mỗi màn hình với sử dụng phông lần đầu. Roboto được tải sẵn bởi hệ thống - 0ms thời gian tải, 0kb tác động gói. Trên tất cả các lần khởi chạy ứng dụng, tiết kiệm tích lũy 2.5 giờ thời gian tải mỗi 1000 người dùng hàng năm.
 
-Visual differentiation minimal - blind testing với mockups shows 68% users cannot distinguish Roboto vs Inter vs SF Pro at body text sizes (14-16sp). Custom fonts provide brand differentiation primarily at display sizes (36sp+) which SumUp uses sparingly (only Result Screen metrics).
+Phân biệt trực quan tối thiểu - kiểm thử mù với mô hình cho thấy 68% người dùng không thể phân biệt Roboto so với Inter so với SF Pro ở kích thước văn bản thân (14-16sp). Phông tùy chỉnh cung cấp phân biệt thương hiệu chủ yếu ở kích thước hiển thị (36sp+) mà SumUp sử dụng tiết kiệm (chỉ số liệu Màn hình Kết quả).
 
-Multi-language support automatic with Roboto - Google maintains extensive character sets (Latin, Cyrillic, Greek, Vietnamese, etc.). Custom fonts often lack full Vietnamese support (missing diacritics) requiring fallback chains - creates inconsistent rendering. Roboto ensures uniform rendering across all target languages.
+Hỗ trợ đa ngôn ngữ tự động với Roboto - Google duy trì các bộ ký tự rộng rãi (Latin, Cyrillic, Hy Lạp, Việt, v.v.). Phông tùy chỉnh thường thiếu hỗ trợ tiếng Việt đầy đủ (thiếu dấu) yêu cầu chuỗi dự phòng - tạo ra kết xuất không nhất quán. Roboto đảm bảo kết xuất đồng nhất trên tất cả các ngôn ngữ mục tiêu.
 
-Roboto Flex (variable font on Android 12+) provides additional benefit - optical sizing adjustments for different sizes automatically applied. Display text slightly lighter stroke, body text slightly heavier - improving readability across scale without manual weight adjustments.
+Roboto Flex (phông biến thiên trên Android 12+) cung cấp lợi ích bổ sung - điều chỉnh kích thước quang học cho các kích thước khác nhau được áp dụng tự động. Văn bản hiển thị nét nhẹ hơn một chút, văn bản thân nét nặng hơn một chút - cải thiện khả năng đọc trên quy mô mà không cần điều chỉnh trọng lượng thủ công.
 
-**7. Line Height Ratios - Reading Efficiency vs Density:**
+**7. Tỷ lệ Chiều cao Dòng - Hiệu quả Đọc so với Mật độ:**
 
-Line height ratios calibrated per category: Display 1.12, Headline 1.25, Body 1.5, Label 1.43. Not arbitrary - each ratio serves specific purpose based on content type và reading pattern.
+Các tỷ lệ chiều cao dòng được hiệu chỉnh theo danh mục: Display 1.12, Headline 1.25, Body 1.5, Label 1.43. Không tùy tiện - mỗi tỷ lệ phục vụ mục đích cụ thể dựa trên loại nội dung và mẫu đọc.
 
-Display text (large numbers, hero titles) uses tight 1.12 ratio vì single-line content doesn't need inter-line spacing. Large sizes already have built-in white space from character height. Testing: looser ratios (1.3+) made large text feel disconnected from associated labels.
+Văn bản Display (số lớn, tiêu đề anh hùng) sử dụng tỷ lệ chặt 1.12 vì nội dung một dòng không cần khoảng cách giữa các dòng. Kích thước lớn đã có khoảng trắng tích hợp từ chiều cao ký tự. Kiểm thử: tỷ lệ lỏng hơn (1.3+) làm cho văn bản lớn cảm thấy ngắt kết nối khỏi các nhãn liên kết.
 
-Body text 1.5 ratio follows WCAG best practices và dyslexia-friendly design guidelines. Studies show 1.5 line height reduces reading time 15% và comprehension errors 23% compared to tighter 1.2 ratio. Particularly important for summary content (200-500 words) where sustained reading required.
+Tỷ lệ văn bản Body 1.5 theo các phương pháp tốt nhất WCAG và hướng dẫn thiết kế thân thiện với chứng khó đọc. Các nghiên cứu cho thấy chiều cao dòng 1.5 giảm thời gian đọc 15% và lỗi hiểu 23% so với tỷ lệ chặt hơn 1.2. Đặc biệt quan trọng cho nội dung tóm tắt (200-500 từ) nơi cần đọc liên tục.
 
-Label text 1.43 ratio balances single-line fitting với multi-line scenarios. Buttons typically single-line, but longer labels (Vietnamese translations ~30% longer than English) sometimes wrap. 1.43 ensures adequate spacing if wrapping occurs without excessive padding when single-line.
+Tỷ lệ văn bản Label 1.43 cân bằng vừa vặn một dòng với các tình huống nhiều dòng. Các nút thường là một dòng, nhưng nhãn dài hơn (bản dịch tiếng Việt dài hơn ~30% so với tiếng Anh) đôi khi ngắt dòng. 1.43 đảm bảo khoảng cách đủ nếu ngắt dòng xảy ra mà không có đệm quá mức khi một dòng.
 
-**8. Letter Spacing - Optical Adjustments:**
+**8. Khoảng cách Chữ - Điều chỉnh Quang học:**
 
-Letter spacing varies by size: Display -0.2sp (tighter), Body +0.5sp (looser). Counter-intuitive but optically correct - large text appears looser due to character size, benefits from tighter spacing. Small text appears tighter, benefits from added spacing.
+Khoảng cách chữ thay đổi theo kích thước: Display -0.2sp (chặt hơn), Body +0.5sp (lỏng hơn). Phản trực giác nhưng quang học chính xác - văn bản lớn xuất hiện lỏng hơn do kích thước ký tự, được lợi từ khoảng cách chặt hơn. Văn bản nhỏ xuất hiện chặt hơn, được lợi từ khoảng cách được thêm vào.
 
-Tested with blur filter simulating reading at typical distances: -0.2sp on Display text improved perceived density without sacrificing readability. +0.5sp on Body text reduced character crowding - particularly helpful for similar-shaped characters (rn vs m, cl vs d).
+Kiểm thử với bộ lọc mờ mô phỏng đọc ở khoảng cách điển hình: -0.2sp trên văn bản Display cải thiện mật độ cảm nhận mà không hy sinh khả năng đọc. +0.5sp trên văn bản Body giảm tắc nghẽn ký tự - đặc biệt hữu ích cho các ký tự có hình dạng tương tự (rn so với m, cl so với d).
 
-Vietnamese text specifically benefits from +0.5sp body spacing - diacritical marks (á, ă, â, etc.) need clearance to prevent overlapping with adjacent characters. Testing với Vietnamese content: default spacing caused diacritic collisions 12% of the time, +0.5sp reduced to 2%.
+Văn bản tiếng Việt đặc biệt được lợi từ khoảng cách thân +0.5sp - các dấu phụ (á, ă, â, v.v.) cần khoảng trống để ngăn chồng chéo với các ký tự liền kề. Kiểm thử với nội dung tiếng Việt: khoảng cách mặc định gây va chạm dấu phụ 12% thời gian, +0.5sp giảm xuống 2%.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Material 3 13-level scale: maps to all use cases without unused styles. Body Large 16sp: comfortable for 94% users including 45+, balances readability/density. 14sp: 34% users squint after 5min. 18sp: 72% prefer more content density. Line height 1.5: reduces reading time 15% và errors 23% vs 1.2 ratio. Headline 4sp jumps: eye-tracking shows distinct fixation patterns. Title Medium weight: 89% correctly identify hierarchy by weight alone. Label Large 14sp: fits 48dp buttons without truncation. Roboto vs custom: 68% cannot distinguish, saves 200-400kb + load time. Letter spacing +0.5sp: reduces Vietnamese diacritic collisions from 12% to 2%.
+Thang 13 cấp độ Material 3: ánh xạ tới tất cả các trường hợp sử dụng mà không có kiểu không sử dụng. Body Large 16sp: thoải mái cho 94% người dùng bao gồm 45+, cân bằng khả năng đọc/mật độ. 14sp: 34% người dùng nheo mắt sau 5 phút. 18sp: 72% thích mật độ nội dung nhiều hơn. Chiều cao dòng 1.5: giảm thời gian đọc 15% và lỗi 23% so với tỷ lệ 1.2. Bước nhảy Headline 4sp: theo dõi mắt cho thấy các mẫu cố định riêng biệt. Trọng lượng Title Medium: 89% xác định chính xác phân cấp chỉ bằng trọng lượng. Label Large 14sp: vừa vặn các nút 48dp mà không cắt ngắn. Roboto so với tùy chỉnh: 68% không thể phân biệt, tiết kiệm 200-400kb + thời gian tải. Khoảng cách chữ +0.5sp: giảm va chạm dấu phụ tiếng Việt từ 12% xuống 2%.
 
-**Các cân nhắc về accessibility:**
+**Các cân nhắc về khả năng tiếp cận:**
 
-All text sizes ≥12sp meeting WCAG minimum (except non-text UI). Body text 16sp exceeds 14sp recommendation. Line height 1.5 follows WCAG best practices và dyslexia guidelines. Medium weight labels ensure readability on colored backgrounds at 3.8:1 contrast. System font guarantees multi-language character coverage. Letter spacing improvements benefit users with visual processing difficulties. Typography hierarchy communicates meaning through size, weight, spacing - not color alone. Screen readers announce text based on semantic markup (heading levels, labels) independent of visual typography.
+Tất cả kích thước văn bản ≥12sp đáp ứng tối thiểu WCAG (ngoại trừ UI không phải văn bản). Văn bản thân 16sp vượt quá khuyến nghị 14sp. Chiều cao dòng 1.5 theo các phương pháp tốt nhất WCAG và hướng dẫn chứng khó đọc. Nhãn trọng lượng Medium đảm bảo khả năng đọc trên nền có màu ở độ tương phản 3.8:1. Phông hệ thống đảm bảo phạm vi ký tự đa ngôn ngữ. Cải thiện khoảng cách chữ mang lại lợi ích cho người dùng có khó khăn xử lý thị giác. Phân cấp kiểu chữ truyền đạt ý nghĩa thông qua kích thước, trọng lượng, khoảng cách - không chỉ màu sắc. Trình đọc màn hình thông báo văn bản dựa trên đánh dấu ngữ nghĩa (cấp độ tiêu đề, nhãn) độc lập với kiểu chữ trực quan.
 
 ---
 
@@ -697,93 +697,93 @@ Material 3 sử dụng **tonal elevation** (color shifts) thay vì shadows trong
 
 ---
 
-#### **Design Rationale & Justification - Grid & Spacing:**
+#### **Lý do thiết kế & Giải thích - Lưới & Khoảng cách:**
 
-Grid và spacing system được thiết kế dựa trên mathematical consistency, visual rhythm principles, và ergonomic research. Mỗi spacing value được chọn để create harmonious layouts và support efficient development workflow.
+Hệ thống lưới và khoảng cách được thiết kế dựa trên tính nhất quán toán học, các nguyên tắc nhịp điệu trực quan, và nghiên cứu công thái học. Mỗi giá trị khoảng cách được chọn để tạo ra bố cục hài hòa và hỗ trợ quy trình làm việc phát triển hiệu quả.
 
-**1. 8dp Grid System - Tại sao không 4dp hay 10dp:**
+**1. Hệ thống Lưới 8dp - Tại sao không 4dp hay 10dp:**
 
-8dp grid system được chọn sau comparing alternatives: 4dp, 5dp, 8dp, và 10dp base units. Phương án 4dp grid bị loại vì too granular - tạo quá nhiều spacing options (4, 8, 12, 16, 20, 24...) leading to inconsistent decisions. Testing với designers: 4dp grid resulted in 23 different spacing values being used across designs vs 9 values với 8dp grid. More options = less consistency.
+Hệ thống lưới 8dp được chọn sau khi so sánh các phương án: 4dp, 5dp, 8dp, và 10dp làm đơn vị cơ sở. Phương án lưới 4dp bị loại vì quá chi tiết - tạo ra quá nhiều tùy chọn khoảng cách (4, 8, 12, 16, 20, 24...) dẫn đến quyết định không nhất quán. Kiểm thử với các nhà thiết kế: lưới 4dp dẫn đến 23 giá trị khoảng cách khác nhau được sử dụng trên các thiết kế so với 9 giá trị với lưới 8dp. Nhiều tùy chọn hơn = ít nhất quán hơn.
 
-Phương án 10dp grid cũng bị loại vì awkward math với common component sizes. Button heights typically 48dp (accessibility minimum) - với 10dp grid, padding becomes 14dp (awkward) thay vì 16dp (clean multiple of 8). Touch targets 48dp align perfectly với 8dp grid (48 = 8 × 6) but not 10dp grid (48 = 10 × 4.8).
+Phương án lưới 10dp cũng bị loại vì toán học khó xử với kích thước thành phần phổ biến. Chiều cao nút thường là 48dp (tối thiểu khả năng tiếp cận) - với lưới 10dp, đệm trở thành 14dp (khó xử) thay vì 16dp (bội số sạch của 8). Mục tiêu chạm 48dp căn chỉnh hoàn hảo với lưới 8dp (48 = 8 × 6) nhưng không với lưới 10dp (48 = 10 × 4.8).
 
-8dp chosen vì three reasons. Thứ nhất, **mathematical elegance** - most common dimensions divisible by 8: 16, 24, 32, 48, 56, 64, 80dp. Creates clean ratios (2:1, 3:1, 4:1) instead of fractional relationships. Thứ hai, **platform consistency** - Material Design, iOS Human Interface Guidelines, và Bootstrap all recommend 8pt/8px grids. Shared convention reduces learning curve. Thứ ba, **density scaling** - 8dp = 8px @ mdpi, 12px @ hdpi, 16px @ xhdpi, 24px @ xxhdpi. Powers of 2 ensure crisp rendering across density buckets without sub-pixel rounding.
+8dp được chọn vì ba lý do. Thứ nhất, **sự thanh lịch toán học** - hầu hết các kích thước phổ biến chia hết cho 8: 16, 24, 32, 48, 56, 64, 80dp. Tạo ra tỷ lệ sạch (2:1, 3:1, 4:1) thay vì mối quan hệ phân số. Thứ hai, **tính nhất quán nền tảng** - Material Design, iOS Human Interface Guidelines, và Bootstrap đều khuyến nghị lưới 8pt/8px. Quy ước chung giảm đường cong học tập. Thứ ba, **chia tỷ lệ mật độ** - 8dp = 8px @ mdpi, 12px @ hdpi, 16px @ xhdpi, 24px @ xxhdpi. Lũy thừa của 2 đảm bảo kết xuất sắc nét trên các nhóm mật độ mà không cần làm tròn dưới pixel.
 
-Testing với implementations: 8dp grid reduced design-to-development handoff issues 67%. Developers easily calculate spacing (2 × 8 = 16, 3 × 8 = 24) without referencing specs constantly.
+Kiểm thử với triển khai: lưới 8dp giảm 67% vấn đề bàn giao từ thiết kế sang phát triển. Các nhà phát triển dễ dàng tính toán khoảng cách (2 × 8 = 16, 3 × 8 = 24) mà không cần tham khảo thông số kỹ thuật liên tục.
 
-**2. Spacing Tokens - Semantic Naming vs Numeric:**
+**2. Token Khoảng cách - Đặt tên Ngữ nghĩa so với Số:**
 
-Spacing tokens use semantic names (spacingMd, spacingLg) instead of numeric (spacing16, spacing24). Phương án numeric naming bị loại vì inflexible - changing 16dp standard spacing to 20dp requires renaming all instances of "spacing16" in code. Semantic names (spacingMd) allow values change without code refactoring.
+Các token khoảng cách sử dụng tên ngữ nghĩa (spacingMd, spacingLg) thay vì số (spacing16, spacing24). Phương án đặt tên số bị loại vì không linh hoạt - thay đổi khoảng cách tiêu chuẩn 16dp thành 20dp yêu cầu đổi tên tất cả các thể hiện của "spacing16" trong mã. Tên ngữ nghĩa (spacingMd) cho phép các giá trị thay đổi mà không cần tái cấu trúc mã.
 
-9 spacing levels (None, Xxs, Xs, Sm, Md, Lg, Xl, Xxl, Xxxl) provide comprehensive coverage without overwhelming. Testing mapped all spacing needs across 7 screens - 9 tokens cover 94% of use cases. Remaining 6% handled by composing tokens (spacingMd + spacingSm = 24dp equivalent).
+9 cấp độ khoảng cách (None, Xxs, Xs, Sm, Md, Lg, Xl, Xxl, Xxxl) cung cấp phạm vi toàn diện mà không quá tải. Kiểm thử ánh xạ tất cả nhu cầu khoảng cách trên 7 màn hình - 9 token bao phủ 94% trường hợp sử dụng. 6% còn lại được xử lý bằng cách kết hợp các token (spacingMd + spacingSm = tương đương 24dp).
 
-spacingMd 16dp chosen as "standard" spacing after testing 12dp, 16dp, và 20dp với layout density. 12dp too tight - elements feel cramped, scannability reduced 28% in eye-tracking tests. 20dp too loose - content density suffers, users scroll 34% more. 16dp balances breathing room (comfortable scanning) với content density (efficient space usage).
+spacingMd 16dp được chọn làm khoảng cách "tiêu chuẩn" sau khi kiểm thử 12dp, 16dp, và 20dp với mật độ bố cục. 12dp quá chặt - các phần tử cảm thấy chật chội, khả năng quét giảm 28% trong các bài kiểm tra theo dõi mắt. 20dp quá lỏng - mật độ nội dung bị ảnh hưởng, người dùng cuộn nhiều hơn 34%. 16dp cân bằng không gian thở (quét thoải mái) với mật độ nội dung (sử dụng không gian hiệu quả).
 
-Section spacing 24dp (spacingLg) creates clear visual breaks. Math: 24dp = 1.5 × standard spacing, provides perceptible jump. Testing: 20dp spacing insufficient to signal section boundaries - users mentally grouped unrelated content 23% of the time. 24dp clear demarcation, reduces grouping errors to 6%.
+Khoảng cách phần 24dp (spacingLg) tạo ra các ngắt trực quan rõ ràng. Toán học: 24dp = 1.5 × khoảng cách tiêu chuẩn, cung cấp bước nhảy có thể cảm nhận. Kiểm thử: khoảng cách 20dp không đủ để báo hiệu ranh giới phần - người dùng nhóm nội dung không liên quan về mặt tinh thần 23% thời gian. 24dp phân định rõ ràng, giảm lỗi nhóm xuống 6%.
 
-**3. Screen Padding 16dp - Horizontal Margins:**
+**3. Đệm Màn hình 16dp - Lề Ngang:**
 
-Horizontal screen padding 16dp standardized across all screens after testing 8dp, 12dp, 16dp, 20dp. Phương án 8dp bị loại vì content too close to edges - testing với OLED displays showed edge-to-edge content causes discomfort (feeling of "falling off screen"). Phương án 12dp marginally better but still cramped on compact devices.
+Đệm màn hình ngang 16dp được chuẩn hóa trên tất cả các màn hình sau khi kiểm thử 8dp, 12dp, 16dp, 20dp. Phương án 8dp bị loại vì nội dung quá gần các cạnh - kiểm thử với màn hình OLED cho thấy nội dung từ cạnh đến cạnh gây khó chịu (cảm giác "rơi khỏi màn hình"). Phương án 12dp tốt hơn chút ít nhưng vẫn chật chội trên các thiết bị nhỏ gọn.
 
-20dp padding comfortable but reduces usable width significantly. Math: 360dp device width - (20dp × 2) = 320dp content width. Với 16dp padding: 328dp content width. 8dp difference = ~2.5% more content area. For text-heavy app, meaningful difference - average 3-4 more characters per line.
+Đệm 20dp thoải mái nhưng giảm chiều rộng có thể sử dụng đáng kể. Toán học: chiều rộng thiết bị 360dp - (20dp × 2) = chiều rộng nội dung 320dp. Với đệm 16dp: chiều rộng nội dung 328dp. Chênh lệch 8dp = ~2.5% diện tích nội dung nhiều hơn. Đối với ứng dụng nặng văn bản, sự khác biệt có ý nghĩa - trung bình 3-4 ký tự nhiều hơn mỗi dòng.
 
-16dp emerges as optimal: sufficient margin prevents edge discomfort (meets thumb zone ergonomics - thumbs naturally rest 15-18dp from edges) while maximizing content area. Survey: 83% users rate 16dp padding "comfortable", vs 67% for 12dp và 76% for 20dp.
+16dp nổi lên là tối ưu: lề đủ ngăn chặn khó chịu cạnh (đáp ứng công thái học vùng ngón cái - ngón cái tự nhiên nghỉ 15-18dp từ các cạnh) trong khi tối đa hóa diện tích nội dung. Khảo sát: 83% người dùng đánh giá đệm 16dp "thoải mái", so với 67% cho 12dp và 76% cho 20dp.
 
-Vertical padding varies by context: 16dp between related elements, 24dp between sections, 48dp for screen top/bottom. Asymmetric spacing creates rhythm - consistent horizontal (always 16dp) với varied vertical (contextual) balances predictability và flexibility.
+Đệm dọc thay đổi theo ngữ cảnh: 16dp giữa các phần tử liên quan, 24dp giữa các phần, 48dp cho trên/dưới màn hình. Khoảng cách bất đối xứng tạo ra nhịp điệu - ngang nhất quán (luôn luôn 16dp) với dọc đa dạng (theo ngữ cảnh) cân bằng khả năng dự đoán và linh hoạt.
 
-**4. Component Heights - Multiples of 8dp:**
+**4. Chiều cao Thành phần - Bội số của 8dp:**
 
-All component heights are multiples of 8dp: buttons 48dp, text fields 56dp, chips 32dp, nav bar 80dp. Phương án arbitrary heights (45dp button, 52dp text field) bị loại vì breaks grid alignment. When stacking components, arbitrary heights create awkward gaps requiring custom spacing adjustments.
+Tất cả chiều cao thành phần là bội số của 8dp: nút 48dp, trường văn bản 56dp, chip 32dp, thanh điều hướng 80dp. Phương án chiều cao tùy tiện (nút 45dp, trường văn bản 52dp) bị loại vì phá vỡ căn chỉnh lưới. Khi xếp chồng các thành phần, chiều cao tùy tiện tạo ra khoảng trống khó xử yêu cầu điều chỉnh khoảng cách tùy chỉnh.
 
-Button height 48dp specifically chosen for accessibility (WCAG minimum touch target) AND grid alignment. Math: 48dp = 8dp × 6. With 8dp vertical padding, leaves 32dp for text (16sp × 2 line height fits perfectly). Alternative 44dp (not grid-aligned) requires 6dp padding leaving 32dp content - same result but awkward math.
+Chiều cao nút 48dp được chọn đặc biệt cho khả năng tiếp cận (mục tiêu chạm tối thiểu WCAG) VÀ căn chỉnh lưới. Toán học: 48dp = 8dp × 6. Với đệm dọc 8dp, để lại 32dp cho văn bản (16sp × 2 chiều cao dòng vừa vặn hoàn hảo). Phương án thay thế 44dp (không căn chỉnh lưới) yêu cầu đệm 6dp để lại nội dung 32dp - kết quả giống nhau nhưng toán học khó xử.
 
-TextField 56dp height provides comfortable text entry. Testing: 48dp fields feel cramped for typing, especially with auto-correct suggestions appearing above keyboard. 56dp allows 16sp text + generous padding (20dp top/bottom) improving typing accuracy 18% (fewer backspace corrections).
+Chiều cao TextField 56dp cung cấp nhập văn bản thoải mái. Kiểm thử: trường 48dp cảm thấy chật chội cho việc gõ, đặc biệt với các gợi ý tự động sửa xuất hiện phía trên bàn phím. 56dp cho phép văn bản 16sp + đệm rộng rãi (20dp trên/dưới) cải thiện độ chính xác gõ 18% (ít sửa backspace hơn).
 
-Top AppBar 64dp (Material 3 standard, up from 56dp in M2) chosen for better touch targets on large phones. Survey: 64% users have phones >6", where 56dp app bar icons feel small relative to screen size. 64dp provides better visual proportion on modern devices while maintaining backwards compatibility.
+Top AppBar 64dp (tiêu chuẩn Material 3, tăng từ 56dp trong M2) được chọn cho mục tiêu chạm tốt hơn trên điện thoại lớn. Khảo sát: 64% người dùng có điện thoại >6", nơi các biểu tượng thanh ứng dụng 56dp cảm thấy nhỏ so với kích thước màn hình. 64dp cung cấp tỷ lệ trực quan tốt hơn trên các thiết bị hiện đại trong khi duy trì khả năng tương thích ngược.
 
-**5. Border Radius - Rounded Corners Strategy:**
+**5. Bán kính Viền - Chiến lược Góc Tròn:**
 
-Border radius values range 4-28dp creating hierarchy through roundedness. Small elements (chips) use 8dp radius, medium elements (buttons/cards) use 12dp, large elements (dialogs) use 16dp, very large (FAB/bottom sheets) use 28dp. Progression not arbitrary - each jump perceptible visually.
+Các giá trị bán kính viền dao động 4-28dp tạo ra phân cấp thông qua độ tròn. Các phần tử nhỏ (chip) sử dụng bán kính 8dp, phần tử trung bình (nút/thẻ) sử dụng 12dp, phần tử lớn (hộp thoại) sử dụng 16dp, rất lớn (FAB/trang tính dưới) sử dụng 28dp. Tiến trình không tùy tiện - mỗi bước nhảy có thể cảm nhận trực quan.
 
-12dp radius for buttons chosen after testing 8dp, 12dp, 16dp. 8dp too subtle - buttons barely distinguishable from rectangular cards. 16dp too round - feels "toy-like", reduces perceived professionalism. Testing với semantic differential scales: 12dp rated optimal balance (+2.1 "modern", +1.8 "professional", +1.6 "approachable").
+Bán kính 12dp cho các nút được chọn sau khi kiểm thử 8dp, 12dp, 16dp. 8dp quá tinh tế - các nút hầu như không thể phân biệt với các thẻ hình chữ nhật. 16dp quá tròn - cảm thấy "giống đồ chơi", giảm tính chuyên nghiệp cảm nhận. Kiểm thử với các thang đo khác biệt ngữ nghĩa: 12dp được đánh giá cân bằng tối ưu (+2.1 "hiện đại", +1.8 "chuyên nghiệp", +1.6 "dễ tiếp cận").
 
-28dp radius for FAB follows Material 3 guidelines - highly rounded shape signals importance và actionability. Circle would be 1000dp radius but true circles waste corner space. 28dp provides almost-circular appearance (imperceptible difference at 56dp size) while allowing better icon positioning.
+Bán kính 28dp cho FAB theo hướng dẫn Material 3 - hình dạng rất tròn báo hiệu tầm quan trọng và khả năng hành động. Vòng tròn sẽ là bán kính 1000dp nhưng vòng tròn thực sự lãng phí không gian góc. 28dp cung cấp vẻ ngoài gần như tròn (sự khác biệt không thể cảm nhận ở kích thước 56dp) trong khi cho phép định vị biểu tượng tốt hơn.
 
-radiusFull (1000dp = effectively circular) used sparingly: avatar images, pill-shaped chips, circular progress indicators. True circles have semantic meaning (profile photos, infinite/continuous processes) distinguished from rounded rectangles (interactive surfaces).
+radiusFull (1000dp = hiệu quả là tròn) được sử dụng một cách tiết kiệm: hình ảnh avatar, chip hình viên thuốc, chỉ báo tiến trình tròn. Vòng tròn thực có ý nghĩa ngữ nghĩa (ảnh hồ sơ, quy trình vô hạn/liên tục) được phân biệt với hình chữ nhật tròn (bề mặt tương tác).
 
-**6. Elevation System - Shadows vs Tonal Elevation:**
+**6. Hệ thống Độ cao - Bóng đổ so với Độ cao Âm:**
 
-Elevation uses 6 levels (0, 2, 4, 8, 12, 16dp) creating depth hierarchy. Light theme uses shadow blur; dark theme uses tonal elevation (lighter surfaces = higher elevation). Phương án flat design (no elevation) tested but users struggled identifying interactive vs static elements - tap attempts on static cards increased 45%.
+Độ cao sử dụng 6 cấp độ (0, 2, 4, 8, 12, 16dp) tạo ra phân cấp độ sâu. Chủ đề sáng sử dụng mờ bóng đổ; chủ đề tối sử dụng độ cao âm (bề mặt sáng hơn = độ cao cao hơn). Phương án thiết kế phẳng (không có độ cao) được kiểm thử nhưng người dùng gặp khó khăn trong việc xác định các phần tử tương tác so với tĩnh - các lần thử chạm trên thẻ tĩnh tăng 45%.
 
-Level 1 (2dp) for cards at rest creates subtle lift. Testing: 1dp elevation imperceptible on many displays, 3dp excessive for resting state. 2dp provides noticeable depth without heavy shadow. Shadow blur radius 4dp (2 × elevation value) creates soft appearance matching Material 3 aesthetic.
+Cấp độ 1 (2dp) cho các thẻ ở trạng thái nghỉ tạo ra nâng tinh tế. Kiểm thử: độ cao 1dp không thể cảm nhận trên nhiều màn hình, 3dp quá mức cho trạng thái nghỉ. 2dp cung cấp độ sâu đáng chú ý mà không có bóng đổ nặng. Bán kính mờ bóng 4dp (2 × giá trị độ cao) tạo ra vẻ ngoài mềm mại phù hợp với thẩm mỹ Material 3.
 
-Level 5 (16dp) for dialogs ensures they appear above all other content. Math: max elevation differential 16dp (dialog) - 0dp (surface) creates clear z-axis separation. Users never confused about dialog vs underlying content with 16dp elevation - 0% modal confusion rate in testing.
+Cấp độ 5 (16dp) cho các hộp thoại đảm bảo chúng xuất hiện phía trên tất cả nội dung khác. Toán học: chênh lệch độ cao tối đa 16dp (hộp thoại) - 0dp (bề mặt) tạo ra sự tách biệt trục z rõ ràng. Người dùng không bao giờ nhầm lẫn giữa hộp thoại so với nội dung bên dưới với độ cao 16dp - tỷ lệ nhầm lẫn modal 0% trong kiểm thử.
 
-Dark theme tonal elevation adds 5% luminance per level: Level 0 (#1E1E1E) → Level 1 (#232323) → Level 5 (#2D2D2D). Subtle shifts sufficient for depth perception without relying on shadows (which don't work well on dark backgrounds). Testing: 89% users correctly identify elevated surfaces in dark theme based on tonal differences alone.
+Độ cao âm chủ đề tối thêm 5% độ sáng mỗi cấp độ: Cấp độ 0 (#1E1E1E) → Cấp độ 1 (#232323) → Cấp độ 5 (#2D2D2D). Sự thay đổi tinh tế đủ cho nhận thức độ sâu mà không dựa vào bóng đổ (không hoạt động tốt trên nền tối). Kiểm thử: 89% người dùng xác định chính xác các bề mặt nâng cao trong chủ đề tối chỉ dựa trên sự khác biệt âm.
 
-**7. Grid Layout Patterns - Consistency Across Screens:**
+**7. Mẫu Bố cục Lưới - Tính nhất quán Trên các Màn hình:**
 
-Grid layouts follow consistent patterns: single-column for compact devices, multi-column for expanded devices. 16dp horizontal padding universal across all breakpoints (adjusted to 24dp on tablets, 32dp on desktop for proportional margins).
+Bố cục lưới theo các mẫu nhất quán: cột đơn cho các thiết bị nhỏ gọn, nhiều cột cho các thiết bị mở rộng. Đệm ngang 16dp phổ quát trên tất cả các điểm ngắt (được điều chỉnh thành 24dp trên máy tính bảng, 32dp trên máy tính để bàn cho lề tỷ lệ).
 
-Content max-width 1200dp prevents lines becoming too long on ultra-wide displays. Typography research shows optimal line length 50-75 characters. At 16sp body text, 1200dp accommodates ~65 characters - optimal reading comfort. Lines longer than 80 characters cause 34% more line-skipping errors in reading tests.
+Chiều rộng nội dung tối đa 1200dp ngăn các dòng trở nên quá dài trên màn hình siêu rộng. Nghiên cứu kiểu chữ cho thấy độ dài dòng tối ưu 50-75 ký tự. Ở văn bản thân 16sp, 1200dp chứa ~65 ký tự - sự thoải mái đọc tối ưu. Các dòng dài hơn 80 ký tự gây ra lỗi bỏ qua dòng nhiều hơn 34% trong các bài kiểm tra đọc.
 
-Metrics grid (2×2 on Result Screen) uses 8dp gaps between cards. Testing: 16dp gaps too wide - metrics feel disconnected. 4dp gaps too tight - cards merge visually. 8dp provides clear separation while maintaining grouped perception (Gestalt proximity principle).
+Lưới số liệu (2×2 trên Màn hình Kết quả) sử dụng khoảng cách 8dp giữa các thẻ. Kiểm thử: khoảng cách 16dp quá rộng - số liệu cảm thấy ngắt kết nối. Khoảng cách 4dp quá chặt - thẻ hòa trộn trực quan. 8dp cung cấp sự tách biệt rõ ràng trong khi duy trì nhận thức được nhóm (nguyên tắc gần Gestalt).
 
-**8. Spacing Consistency - Developer Experience:**
+**8. Tính nhất quán Khoảng cách - Trải nghiệm Nhà phát triển:**
 
-Consistent spacing tokens reduce development complexity. Code example: `Spacer(modifier = Modifier.height(spacingMd))` universally understood as 16dp standard spacing. Alternative approach with magic numbers (`Spacer(16.dp)`) requires developers memorize what "16" means in each context.
+Các token khoảng cách nhất quán giảm độ phức tạp phát triển. Ví dụ mã: `Spacer(modifier = Modifier.height(spacingMd))` được hiểu phổ biến là khoảng cách tiêu chuẩn 16dp. Phương pháp thay thế với các số ma thuật (`Spacer(16.dp)`) yêu cầu các nhà phát triển ghi nhớ "16" có nghĩa gì trong mỗi ngữ cảnh.
 
-Design-to-development handoff efficiency: designers spec "spacingLg between sections", developers apply token directly - no conversion needed. Testing với dev team: token-based approach reduced implementation time 42% vs numeric specs requiring interpretation.
+Hiệu quả bàn giao thiết kế sang phát triển: các nhà thiết kế chỉ định "spacingLg giữa các phần", các nhà phát triển áp dụng token trực tiếp - không cần chuyển đổi. Kiểm thử với nhóm phát triển: phương pháp dựa trên token giảm 42% thời gian triển khai so với thông số kỹ thuật số yêu cầu diễn giải.
 
-Runtime flexibility: changing spacingMd from 16dp to 18dp propagates throughout app automatically. Manual numeric values require find-replace across hundreds of occurrences risking errors. Token approach enables rapid iteration during beta testing - spacing adjustments completed in minutes vs hours.
+Tính linh hoạt thời gian chạy: thay đổi spacingMd từ 16dp thành 18dp lan truyền trong toàn bộ ứng dụng tự động. Các giá trị số thủ công yêu cầu tìm-thay thế trên hàng trăm lần xuất hiện có nguy cơ lỗi. Phương pháp token cho phép lặp lại nhanh chóng trong kiểm thử beta - điều chỉnh khoảng cách hoàn thành trong vài phút so với vài giờ.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-8dp grid reduces design inconsistencies 67%, aligns with platform standards. 9 spacing tokens cover 94% use cases. 16dp standard spacing balances comfort (83% rate comfortable) with density. 12dp too tight (28% reduced scannability), 20dp too loose (34% more scrolling). Section spacing 24dp reduces grouping errors from 23% to 6%. Screen padding 16dp optimal (83% comfortable vs 67% for 12dp, 76% for 20dp). Button 48dp meets accessibility + grid alignment. TextField 56dp improves typing accuracy 18%. Border radius 12dp rated optimal (+2.1 modern, +1.8 professional). Elevation 2dp for cards noticeable without heaviness. Dark theme tonal elevation: 89% identify elevated surfaces correctly. Max-width 1200dp maintains 65 character lines (optimal readability, 34% fewer line-skipping errors).
+Lưới 8dp giảm 67% sự không nhất quán thiết kế, căn chỉnh với các tiêu chuẩn nền tảng. 9 token khoảng cách bao phủ 94% trường hợp sử dụng. Khoảng cách tiêu chuẩn 16dp cân bằng sự thoải mái (83% đánh giá thoải mái) với mật độ. 12dp quá chặt (giảm 28% khả năng quét), 20dp quá lỏng (cuộn nhiều hơn 34%). Khoảng cách phần 24dp giảm lỗi nhóm từ 23% xuống 6%. Đệm màn hình 16dp tối ưu (83% thoải mái so với 67% cho 12dp, 76% cho 20dp). Nút 48dp đáp ứng khả năng tiếp cận + căn chỉnh lưới. TextField 56dp cải thiện độ chính xác gõ 18%. Bán kính viền 12dp được đánh giá tối ưu (+2.1 hiện đại, +1.8 chuyên nghiệp). Độ cao 2dp cho thẻ đáng chú ý mà không nặng. Độ cao âm chủ đề tối: 89% xác định chính xác các bề mặt nâng cao. Chiều rộng tối đa 1200dp duy trì 65 dòng ký tự (khả năng đọc tối ưu, ít lỗi bỏ qua dòng hơn 34%).
 
-**Các cân nhắc về accessibility:**
+**Các cân nhắc về khả năng tiếp cận:**
 
-All spacing supports accessibility goals. 16dp horizontal padding creates thumb-safe zones (ergonomic). Minimum 48dp touch targets meet WCAG 2.1 Level AA. Generous spacing (24dp sections) benefits users with motor difficulties - larger targets easier to tap. Visual rhythm through consistent spacing helps users with cognitive disabilities predict layouts. Elevation differentials assist users with low vision distinguish interactive from static elements. Grid alignment ensures predictable tab order for keyboard navigation. Spacing tokens applied consistently create familiar patterns reducing cognitive load for all users.
+Tất cả khoảng cách hỗ trợ mục tiêu khả năng tiếp cận. Đệm ngang 16dp tạo ra các vùng an toàn ngón cái (công thái học). Mục tiêu chạm tối thiểu 48dp đáp ứng WCAG 2.1 Cấp độ AA. Khoảng cách rộng rãi (phần 24dp) mang lại lợi ích cho người dùng có khó khăn vận động - mục tiêu lớn hơn dễ chạm hơn. Nhịp điệu trực quan thông qua khoảng cách nhất quán giúp người dùng có khuyết tật nhận thức dự đoán bố cục. Chênh lệch độ cao hỗ trợ người dùng có thị lực kém phân biệt các phần tử tương tác so với tĩnh. Căn chỉnh lưới đảm bảo thứ tự tab có thể dự đoán cho điều hướng bàn phím. Các token khoảng cách được áp dụng nhất quán tạo ra các mẫu quen thuộc giảm tải nhận thức cho tất cả người dùng.
 
 ---
 
@@ -910,77 +910,77 @@ if (isFavorite) {
 
 ---
 
-#### **Design Rationale & Justification - Iconography:**
+#### **Lý do thiết kế & Giải thích - Biểu tượng:**
 
-Icon system được thiết kế dựa trên recognition research, semantic consistency principles, và platform convention adherence. Mỗi icon choice và usage pattern optimized cho instant comprehension và universal accessibility.
+Hệ thống biểu tượng được thiết kế dựa trên nghiên cứu nhận dạng, các nguyên tắc nhất quán ngữ nghĩa, và tuân thủ quy ước nền tảng. Mỗi lựa chọn biểu tượng và mẫu sử dụng được tối ưu hóa cho hiểu biết ngay lập tức và khả năng tiếp cận phổ quát.
 
-**1. Material Icons Extended - Tại sao không Custom Icons:**
+**1. Material Icons Extended - Tại sao không Biểu tượng Tùy chỉnh:**
 
-Material Icons Extended (2400+ icons) được chọn thay vì custom-designed icon set hoặc third-party libraries (FontAwesome, Feather, etc.). Phương án custom icons bị loại vì enormous design effort (estimated 80+ hours to design, test, và refine 50+ icons needed) với limited brand differentiation benefit. Icon recognition testing shows users cannot distinguish brand-specific icon styles at small sizes (16-24dp) - differentiation only visible at large display sizes (64dp+).
+Material Icons Extended (2400+ biểu tượng) được chọn thay vì bộ biểu tượng tùy chỉnh hoặc thư viện bên thứ ba (FontAwesome, Feather, v.v.). Phương án biểu tượng tùy chỉnh bị loại vì nỗ lực thiết kế khổng lồ (ước tính 80+ giờ để thiết kế, kiểm thử, và tinh chỉnh 50+ biểu tượng cần thiết) với lợi ích phân biệt thương hiệu hạn chế. Kiểm thử nhận dạng biểu tượng cho thấy người dùng không thể phân biệt các kiểu biểu tượng cụ thể thương hiệu ở kích thước nhỏ (16-24dp) - sự phân biệt chỉ hiển thị ở kích thước hiển thị lớn (64dp+).
 
-Phương án FontAwesome (7000+ icons) considered but rejected vì licensing restrictions (Pro version required for React/Android native use, $99/year) và style mismatch. FontAwesome designed for web (sharp corners, heavier strokes) while Material Icons optimized for mobile (rounded corners, balanced stroke weight at small sizes). Testing: Material Icons rated +1.8 "legible" on mobile screens vs FontAwesome +0.9.
+Phương án FontAwesome (7000+ biểu tượng) được xem xét nhưng bị từ chối vì hạn chế cấp phép (phiên bản Pro cần thiết cho sử dụng bản địa React/Android, $99/năm) và không khớp kiểu. FontAwesome được thiết kế cho web (góc nhọn, nét nặng hơn) trong khi Material Icons được tối ưu hóa cho di động (góc tròn, trọng lượng nét cân bằng ở kích thước nhỏ). Kiểm thử: Material Icons được đánh giá +1.8 "có thể đọc" trên màn hình di động so với FontAwesome +0.9.
 
-Material Icons Extended chosen vì four reasons. Thứ nhất, **platform consistency** - Android users familiar với Material Icons từ system apps (Settings, Gmail, Drive). Recognition study: 94% users correctly identify common Material Icons (Search, Menu, Settings) without labels vs 67% for custom icons. Thứ hai, **comprehensive coverage** - 2400+ icons cover all SumUp needs without designing custom glyphs. Thứ ba, **native integration** - Material Icons bundled with Compose, 0kb additional bundle size, instant loading. Custom icons require asset loading (50-150kb SVG bundle) + parsing overhead. Thứ tư, **dual styles** - Filled/Outlined variants built-in, enabling filled-for-selected pattern without custom design work.
+Material Icons Extended được chọn vì bốn lý do. Thứ nhất, **tính nhất quán nền tảng** - người dùng Android quen thuộc với Material Icons từ các ứng dụng hệ thống (Cài đặt, Gmail, Drive). Nghiên cứu nhận dạng: 94% người dùng xác định chính xác các Material Icons phổ biến (Tìm kiếm, Menu, Cài đặt) mà không có nhãn so với 67% cho biểu tượng tùy chỉnh. Thứ hai, **phạm vi toàn diện** - 2400+ biểu tượng bao phủ tất cả nhu cầu SumUp mà không cần thiết kế biểu tượng tùy chỉnh. Thứ ba, **tích hợp bản địa** - Material Icons đi kèm với Compose, 0kb kích thước gói bổ sung, tải ngay lập tức. Biểu tượng tùy chỉnh yêu cầu tải tài sản (50-150kb gói SVG) + chi phí phân tích. Thứ tư, **kiểu kép** - các biến thể Filled/Outlined tích hợp sẵn, cho phép mẫu filled-for-selected mà không cần công việc thiết kế tùy chỉnh.
 
-Testing icon recognition across age groups: Material Icons maintain 85%+ recognition rate for users 18-65+. Custom icons drop to 62% recognition for 55+ demographic, indicating learned familiarity with Material system.
+Kiểm thử nhận dạng biểu tượng trên các nhóm tuổi: Material Icons duy trì tỷ lệ nhận dạng 85%+ cho người dùng 18-65+. Biểu tượng tùy chỉnh giảm xuống 62% nhận dạng cho nhân khẩu học 55+, chỉ ra sự quen thuộc đã học với hệ thống Material.
 
-**2. Filled vs Outlined - State Communication:**
+**2. Filled so với Outlined - Truyền đạt Trạng thái:**
 
-Dual style system (Filled icons for active/selected, Outlined for inactive) chosen after testing alternative approaches. Phương án color-only differentiation (same icon, different colors) bị loại vì insufficient for color-blind users. Testing với deuteranopia simulation: color-only distinction only 45% recognizable, filled vs outlined 89% recognizable.
+Hệ thống kiểu kép (biểu tượng Filled cho hoạt động/đã chọn, Outlined cho không hoạt động) được chọn sau khi kiểm thử các phương pháp thay thế. Phương án phân biệt chỉ màu (cùng biểu tượng, màu khác nhau) bị loại vì không đủ cho người dùng mù màu. Kiểm thử với mô phỏng deuteranopia: phân biệt chỉ màu chỉ nhận ra 45%, filled so với outlined nhận ra 89%.
 
-Phương án single style (always Filled or always Outlined) simpler but loses powerful state communication. A/B testing trong History Screen: favorite stars using filled/outlined toggle resulted in 34% faster favoriting actions (users instantly see current state) vs color-only approach where users must parse color meaning.
+Phương án kiểu đơn (luôn Filled hoặc luôn Outlined) đơn giản hơn nhưng mất truyền đạt trạng thái mạnh mẽ. Kiểm thử A/B trong Màn hình Lịch sử: sao yêu thích sử dụng chuyển đổi filled/outlined dẫn đến các hành động yêu thích nhanh hơn 34% (người dùng ngay lập tức thấy trạng thái hiện tại) so với phương pháp chỉ màu nơi người dùng phải phân tích ý nghĩa màu.
 
-Filled icons have semantic meaning - "this is active/enabled/selected". Outlined icons signal "this is available but not active". Example: Bottom Navigation uses filled icon for active tab, outlined for inactive - users instantly locate current position. Testing: tab switching accuracy improved 28% (fewer misclicks) với filled/outlined system vs uniform icon style.
+Biểu tượng Filled có ý nghĩa ngữ nghĩa - "điều này đang hoạt động/được bật/đã chọn". Biểu tượng Outlined báo hiệu "điều này có sẵn nhưng không hoạt động". Ví dụ: Điều hướng Dưới cùng sử dụng biểu tượng filled cho tab hoạt động, outlined cho không hoạt động - người dùng ngay lập tức xác định vị trí hiện tại. Kiểm thử: độ chính xác chuyển tab cải thiện 28% (ít nhấp nhầm hơn) với hệ thống filled/outlined so với kiểu biểu tượng đồng nhất.
 
-Filled icons also provide visual weight hierarchy. Filled icons darker/heavier, drawing eye naturally. Heat map analysis: filled icons receive 2.3x more initial eye fixations than outlined icons - useful for emphasizing primary actions. Favorite button in History uses filled red star (high visual weight) ensuring users notice favorited items.
+Biểu tượng Filled cũng cung cấp phân cấp trọng lượng trực quan. Biểu tượng Filled tối hơn/nặng hơn, tự nhiên thu hút mắt. Phân tích bản đồ nhiệt: biểu tượng filled nhận được cố định mắt ban đầu nhiều hơn 2.3 lần so với biểu tượng outlined - hữu ích cho việc nhấn mạnh các hành động chính. Nút yêu thích trong Lịch sử sử dụng sao đỏ filled (trọng lượng trực quan cao) đảm bảo người dùng nhận thấy các mục đã yêu thích.
 
-**3. Icon Size 24dp Standard - Recognizability Balance:**
+**3. Kích thước Biểu tượng 24dp Tiêu chuẩn - Cân bằng Khả năng Nhận dạng:**
 
-24dp chosen as standard icon size after extensive testing range 16-32dp. Phương án 16dp bị loại vì too small for reliable tap targeting và visual distinction. Testing: 16dp icons required 1.8x longer recognition time (average 420ms vs 230ms for 24dp). Icon details (like distinction between Edit vs Create icons) lost at 16dp, causing 23% mis-identification rate.
+24dp được chọn làm kích thước biểu tượng tiêu chuẩn sau khi kiểm thử sâu rộng phạm vi 16-32dp. Phương án 16dp bị loại vì quá nhỏ cho mục tiêu chạm đáng tin cậy và phân biệt trực quan. Kiểm thử: biểu tượng 16dp yêu cầu thời gian nhận dạng dài hơn 1.8 lần (trung bình 420ms so với 230ms cho 24dp). Chi tiết biểu tượng (như sự khác biệt giữa biểu tượng Chỉnh sửa so với Tạo) bị mất ở 16dp, gây ra tỷ lệ nhận dạng sai 23%.
 
-Phương án 32dp provides excellent recognition (98% accuracy, 180ms recognition time) but consumes excessive space. Math: Navigation icons at 32dp require 40dp spacing = 120dp width for 3 tabs. With 24dp icons + 32dp spacing = 96dp width, saving 20% horizontal space. On compact 360dp screens, 20% meaningful difference.
+Phương án 32dp cung cấp nhận dạng xuất sắc (độ chính xác 98%, thời gian nhận dạng 180ms) nhưng tiêu thụ không gian quá mức. Toán học: Biểu tượng điều hướng ở 32dp yêu cầu khoảng cách 40dp = chiều rộng 120dp cho 3 tab. Với biểu tượng 24dp + khoảng cách 32dp = chiều rộng 96dp, tiết kiệm 20% không gian ngang. Trên màn hình nhỏ gọn 360dp, sự khác biệt 20% có ý nghĩa.
 
-24dp aligns perfectly với 8dp grid (24 = 8 × 3) và fits comfortably trong 48dp touch targets (24dp icon + 12dp padding all sides). Material Design guideline: icons should occupy 50-60% of touch target area. 24dp icon / 48dp target = 50% optimal ratio. 32dp icon would require 64dp touch target (too large) or feel cramped in 48dp target.
+24dp căn chỉnh hoàn hảo với lưới 8dp (24 = 8 × 3) và vừa vặn thoải mái trong mục tiêu chạm 48dp (biểu tượng 24dp + đệm 12dp tất cả các bên). Hướng dẫn Material Design: biểu tượng nên chiếm 50-60% diện tích mục tiêu chạm. Biểu tượng 24dp / mục tiêu 48dp = tỷ lệ tối ưu 50%. Biểu tượng 32dp sẽ yêu cầu mục tiêu chạm 64dp (quá lớn) hoặc cảm thấy chật chội trong mục tiêu 48dp.
 
-Inline icons (with text) use 16dp size - smaller but acceptable vì adjacent text provides context. Example: "📄 document.pdf" - even if PDF icon unclear, filename provides meaning. Testing: 16dp inline icons achieve 91% recognition with text context vs 67% in isolation.
+Biểu tượng inline (với văn bản) sử dụng kích thước 16dp - nhỏ hơn nhưng chấp nhận được vì văn bản liền kề cung cấp ngữ cảnh. Ví dụ: "📄 document.pdf" - ngay cả khi biểu tượng PDF không rõ ràng, tên tệp cung cấp ý nghĩa. Kiểm thử: biểu tượng inline 16dp đạt 91% nhận dạng với ngữ cảnh văn bản so với 67% riêng lẻ.
 
-**4. Icon Color Patterns - Semantic Consistency:**
+**4. Mẫu Màu Biểu tượng - Tính nhất quán Ngữ nghĩa:**
 
-Icon colors follow strict semantic patterns: Primary for active/selected, Neutral for default, Error/Success/Warning for states, 38% opacity for disabled. Phương án varied colors for visual interest bị loại vì creates confusion. Testing: using multiple colors arbitrarily (blue share icon, green download, purple edit) reduced task completion 18% - users spent time parsing color meaning instead of reading icon shapes.
+Màu biểu tượng tuân theo các mẫu ngữ nghĩa nghiêm ngặt: Chính cho hoạt động/đã chọn, Trung tính cho mặc định, Lỗi/Thành công/Cảnh báo cho các trạng thái, độ mờ 38% cho bị vô hiệu hóa. Phương án màu đa dạng cho sự thú vị trực quan bị loại vì tạo ra nhầm lẫn. Kiểm thử: sử dụng nhiều màu tùy tiện (biểu tượng chia sẻ xanh dương, tải xuống xanh lá, chỉnh sửa tím) giảm hoàn thành nhiệm vụ 18% - người dùng dành thời gian phân tích ý nghĩa màu thay vì đọc hình dạng biểu tượng.
 
-Consistent color semantics enable instant meaning: Primary color signals "this is important/selected", gray signals "default available action", red signals "error/delete", green signals "success/confirm". Survey: 92% users correctly interpret semantic color meanings without training.
+Ngữ nghĩa màu nhất quán cho phép ý nghĩa ngay lập tức: màu Chính báo hiệu "điều này quan trọng/đã chọn", xám báo hiệu "hành động có sẵn mặc định", đỏ báo hiệu "lỗi/xóa", xanh lá báo hiệu "thành công/xác nhận". Khảo sát: 92% người dùng giải thích chính xác ý nghĩa màu ngữ nghĩa mà không cần đào tạo.
 
-Disabled state uses 38% opacity (not 50% or 60%) based on WCAG guidance. 38% opacity ensures disabled state clearly distinguishable (users don't attempt to tap) while remaining visible enough for UI understanding (users know feature exists, just temporarily unavailable). Testing: 50% opacity frequently mistaken for loading state, 38% clearly signals disabled.
+Trạng thái bị vô hiệu hóa sử dụng độ mờ 38% (không phải 50% hoặc 60%) dựa trên hướng dẫn WCAG. Độ mờ 38% đảm bảo trạng thái bị vô hiệu hóa có thể phân biệt rõ ràng (người dùng không cố gắng chạm) trong khi vẫn hiển thị đủ cho hiểu biết UI (người dùng biết tính năng tồn tại, chỉ tạm thời không khả dụng). Kiểm thử: độ mờ 50% thường bị nhầm với trạng thái đang tải, 38% rõ ràng báo hiệu bị vô hiệu hóa.
 
-Icon color inheritance: icons default to inheriting text color (`tint = LocalContentColor.current`) ensuring automatic theme compatibility. Custom-colored icons (red favorite, green success checkmark) explicitly override for semantic importance.
+Kế thừa màu biểu tượng: biểu tượng mặc định kế thừa màu văn bản (`tint = LocalContentColor.current`) đảm bảo khả năng tương thích chủ đề tự động. Biểu tượng có màu tùy chỉnh (yêu thích đỏ, dấu kiểm thành công xanh lá) ghi đè rõ ràng cho tầm quan trọng ngữ nghĩa.
 
-**5. Icon Categories - Organized Inventory:**
+**5. Danh mục Biểu tượng - Kho Có tổ chức:**
 
-Icons organized into 8 categories (Navigation, Content, File/Document, Action, Communication, Toggle, Image/Media, Device, Social) for design/development efficiency. Phương án flat list của tất cả icons bị loại vì difficult to locate needed icon - designers spend 3-5 minutes searching. Categorized structure reduces search time to under 30 seconds.
+Biểu tượng được tổ chức thành 8 danh mục (Điều hướng, Nội dung, Tệp/Tài liệu, Hành động, Giao tiếp, Chuyển đổi, Hình ảnh/Phương tiện, Thiết bị, Xã hội) cho hiệu quả thiết kế/phát triển. Phương án danh sách phẳng của tất cả biểu tượng bị loại vì khó xác định biểu tượng cần thiết - các nhà thiết kế dành 3-5 phút tìm kiếm. Cấu trúc phân loại giảm thời gian tìm kiếm xuống dưới 30 giây.
 
-Category naming semantic không technical: "Navigation" not "Directional", "Content" not "CRUD Operations". User-centered terminology matches designer mental models. Testing với design team: semantic categories improved icon findability 67%.
+Đặt tên danh mục ngữ nghĩa không phải kỹ thuật: "Điều hướng" không phải "Hướng", "Nội dung" không phải "Hoạt động CRUD". Thuật ngữ hướng người dùng khớp với các mô hình tinh thần của nhà thiết kế. Kiểm thử với nhóm thiết kế: các danh mục ngữ nghĩa cải thiện khả năng tìm thấy biểu tượng 67%.
 
-Each category averages 5-8 icons, manageable quantity. Psychology research: humans can hold 7±2 items in working memory. Categories with <10 icons allow designers scan all options quickly without cognitive overload.
+Mỗi danh mục trung bình 5-8 biểu tượng, số lượng có thể quản lý. Nghiên cứu tâm lý học: con người có thể giữ 7±2 mục trong bộ nhớ làm việc. Các danh mục với <10 biểu tượng cho phép các nhà thiết kế quét tất cả các tùy chọn nhanh chóng mà không quá tải nhận thức.
 
-Persona icons (Student, Professional, Academic, Creative) curated specifically for summarization context. Default Material Icons lack domain-specific glyphs, so closest matches selected: School icon for Student, Work for Professional, Science for Academic, Palette for Creative. Testing: 82% users correctly associate icons với persona names without labels - validates semantic appropriateness.
+Biểu tượng nhân vật (Sinh viên, Chuyên nghiệp, Học giả, Sáng tạo) được tuyển chọn đặc biệt cho ngữ cảnh tóm tắt. Material Icons mặc định thiếu các biểu tượng cụ thể miền, vì vậy các khớp gần nhất được chọn: biểu tượng Trường học cho Sinh viên, Công việc cho Chuyên nghiệp, Khoa học cho Học giả, Bảng màu cho Sáng tạo. Kiểm thử: 82% người dùng liên kết chính xác biểu tượng với tên nhân vật mà không có nhãn - xác thực sự phù hợp ngữ nghĩa.
 
-**6. Icon Accessibility - Beyond Visual:**
+**6. Khả năng Tiếp cận Biểu tượng - Vượt ra ngoài Trực quan:**
 
-Content descriptions mandatory for all icons following WCAG 2.1 success criterion 1.1.1 (Non-text Content). Every Icon component includes descriptive contentDescription. Example: `Icon(Icons.Default.Search, contentDescription = "Search summaries")` - screen readers announce "Search summaries button" providing full context.
+Mô tả nội dung bắt buộc cho tất cả biểu tượng theo tiêu chí thành công WCAG 2.1 1.1.1 (Nội dung Không phải Văn bản). Mọi thành phần Icon bao gồm contentDescription mô tả. Ví dụ: `Icon(Icons.Default.Search, contentDescription = "Tìm kiếm bản tóm tắt")` - trình đọc màn hình thông báo "nút Tìm kiếm bản tóm tắt" cung cấp ngữ cảnh đầy đủ.
 
-Touch targets minimum 48×48dp even though icons only 24dp. IconButton component automatically pads to meet accessibility guidelines. Testing with motor-impaired users: 48dp targets achieved 94% tap success rate vs 67% with 36dp targets.
+Mục tiêu chạm tối thiểu 48×48dp mặc dù biểu tượng chỉ 24dp. Thành phần IconButton tự động đệm để đáp ứng hướng dẫn khả năng tiếp cận. Kiểm thử với người dùng khuyết tật vận động: mục tiêu 48dp đạt tỷ lệ thành công chạm 94% so với 67% với mục tiêu 36dp.
 
-Icon-text combination preferred over icon-only where space permits. Bottom Navigation includes both icons AND labels ("Home", "History", "Settings"). Testing: icon+label combination improves navigation accuracy 45% vs icon-only, particularly for first-time users unfamiliar with icon meanings.
+Kết hợp biểu tượng-văn bản được ưu tiên hơn chỉ biểu tượng nơi không gian cho phép. Điều hướng Dưới cùng bao gồm cả biểu tượng VÀ nhãn ("Trang chủ", "Lịch sử", "Cài đặt"). Kiểm thử: kết hợp biểu tượng+nhãn cải thiện độ chính xác điều hướng 45% so với chỉ biểu tượng, đặc biệt cho người dùng lần đầu không quen với ý nghĩa biểu tượng.
 
-Color not sole differentiator - shape differences ensure distinction for color-blind users. Favorite filled vs outlined distinguishable by shape alone (solid vs stroke) without color. Success checkmark vs error X distinguishable by shape (✓ vs ✗) independent of green vs red colors.
+Màu sắc không phải là yếu tố phân biệt duy nhất - sự khác biệt hình dạng đảm bảo sự phân biệt cho người dùng mù màu. Yêu thích filled so với outlined có thể phân biệt chỉ bằng hình dạng (đặc so với nét) mà không có màu. Dấu kiểm thành công so với X lỗi có thể phân biệt bằng hình dạng (✓ so với ✗) độc lập với màu xanh lá so với đỏ.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Material Icons recognition: 94% correctly identify common icons vs 67% custom icons. Material vs FontAwesome mobile legibility: +1.8 vs +0.9 rating. Filled/outlined state: 89% recognizable for color-blind vs 45% color-only. Favorite toggle filled/outlined: 34% faster actions. Tab switching filled/outlined: 28% improved accuracy. 24dp icon recognition: 230ms vs 420ms for 16dp, 96dp width vs 120dp for 32dp. Inline 16dp icons: 91% recognition with text context. Semantic color patterns: 92% correctly interpret meanings. Disabled 38% opacity: clearly distinguished from active. Categorized icons: 67% improved findability, <30s search time. Persona icon association: 82% correct without labels. 48dp touch targets: 94% tap success vs 67% for 36dp. Icon+label navigation: 45% improved accuracy vs icon-only.
+Nhận dạng Material Icons: 94% xác định chính xác biểu tượng phổ biến so với 67% biểu tượng tùy chỉnh. Khả năng đọc di động Material so với FontAwesome: đánh giá +1.8 so với +0.9. Trạng thái Filled/outlined: 89% nhận ra cho mù màu so với 45% chỉ màu. Chuyển đổi yêu thích filled/outlined: hành động nhanh hơn 34%. Chuyển tab filled/outlined: cải thiện độ chính xác 28%. Nhận dạng biểu tượng 24dp: 230ms so với 420ms cho 16dp, chiều rộng 96dp so với 120dp cho 32dp. Biểu tượng inline 16dp: nhận dạng 91% với ngữ cảnh văn bản. Mẫu màu ngữ nghĩa: 92% giải thích chính xác ý nghĩa. Độ mờ bị vô hiệu hóa 38%: phân biệt rõ ràng với hoạt động. Biểu tượng được phân loại: cải thiện 67% khả năng tìm thấy, thời gian tìm kiếm <30s. Liên kết biểu tượng nhân vật: 82% chính xác mà không có nhãn. Mục tiêu chạm 48dp: thành công chạm 94% so với 67% cho 36dp. Điều hướng biểu tượng+nhãn: cải thiện độ chính xác 45% so với chỉ biểu tượng.
 
-**Các cân nhắc về accessibility:**
+**Các cân nhắc về khả năng tiếp cận:**
 
-All icons have descriptive contentDescription for screen readers (WCAG 1.1.1). IconButtons minimum 48×48dp touch targets (WCAG 2.5.5). Icon colors meet 3:1 contrast ratio minimum for graphics (WCAG 1.4.11). Shape differentiation (filled vs outlined, ✓ vs ✗) ensures color-blind accessibility. Icon+text combinations provided where space permits for clarity. Semantic consistency (Primary = selected, gray = default, red = error) leverages learned conventions reducing cognitive load. Material Icons' balanced stroke weight maintains legibility for low-vision users at standard sizes.
+Tất cả biểu tượng có contentDescription mô tả cho trình đọc màn hình (WCAG 1.1.1). IconButtons mục tiêu chạm tối thiểu 48×48dp (WCAG 2.5.5). Màu biểu tượng đáp ứng tỷ lệ tương phản tối thiểu 3:1 cho đồ họa (WCAG 1.4.11). Phân biệt hình dạng (filled so với outlined, ✓ so với ✗) đảm bảo khả năng tiếp cận mù màu. Kết hợp biểu tượng+văn bản được cung cấp nơi không gian cho phép cho sự rõ ràng. Tính nhất quán ngữ nghĩa (Chính = đã chọn, xám = mặc định, đỏ = lỗi) tận dụng các quy ước đã học giảm tải nhận thức. Trọng lượng nét cân bằng của Material Icons duy trì khả năng đọc cho người dùng thị lực kém ở kích thước tiêu chuẩn.
 
 ---
 
@@ -1274,97 +1274,97 @@ Components:
 
 ---
 
-#### **Design Rationale & Justification - Component Library:**
+#### **Lý do thiết kế & Giải thích - Component Library:**
 
-Component library được thiết kế dựa trên reusability principles, accessibility-first mindset, và platform convention adherence. Mỗi component choice optimized cho consistency, usability, và development efficiency, với systematic hierarchy ensuring appropriate component selection for each use case.
+Thư viện component được thiết kế dựa trên các nguyên tắc tái sử dụng, tư duy ưu tiên khả năng tiếp cận, và tuân thủ các quy ước của nền tảng. Mỗi lựa chọn component được tối ưu hóa cho tính nhất quán, khả năng sử dụng, và hiệu quả phát triển, với hệ thống phân cấp có hệ thống đảm bảo lựa chọn component phù hợp cho từng trường hợp sử dụng.
 
-**1. Button Hierarchy (Filled, Outlined, Text) - Visual Weight System:**
+**1. Phân cấp Button (Filled, Outlined, Text) - Hệ thống Trọng lượng Thị giác:**
 
-Three-tier button hierarchy (Filled Primary, Outlined Secondary, Text Tertiary) chosen sau khi testing alternative approaches. Phương án flat hierarchy (all buttons same style, differentiated only by color) bị loại vì lacks visual priority. Testing: users spend 28% longer deciding which action to take when all buttons have equal visual weight. Primary action unclear leads to decision paralysis.
+Hệ thống phân cấp button ba tầng (Filled Primary, Outlined Secondary, Text Tertiary) được chọn sau khi thử nghiệm các phương án thay thế. Phương án phân cấp phẳng (tất cả button cùng kiểu, chỉ phân biệt bằng màu) bị loại bỏ vì thiếu ưu tiên thị giác. Thử nghiệm: người dùng mất nhiều thời gian hơn 28% để quyết định hành động nào cần thực hiện khi tất cả button có trọng lượng thị giác ngang nhau. Hành động chính không rõ ràng dẫn đến tình trạng tê liệt quyết định.
 
-Phương án two-tier system (Filled + Text only, no Outlined) considered but insufficient cho complex screens. Example: Error Dialog requires three actions - primary (Retry), secondary (Cancel), tertiary (Details). Two-tier system forces inappropriate emphasis - either Cancel too prominent (Filled style inappropriate for negative action) or too subtle (Text style easily missed). Three-tier provides perfect mapping: Retry = Filled (primary), Cancel = Outlined (secondary), Details = Text (tertiary).
+Phương án hệ thống hai tầng (chỉ Filled + Text, không có Outlined) được cân nhắc nhưng không đủ cho các màn hình phức tạp. Ví dụ: Error Dialog yêu cầu ba hành động - chính (Retry), phụ (Cancel), phụ trợ (Details). Hệ thống hai tầng buộc phải nhấn mạnh không phù hợp - hoặc Cancel quá nổi bật (kiểu Filled không phù hợp cho hành động tiêu cực) hoặc quá tinh tế (kiểu Text dễ bị bỏ qua). Hệ thống ba tầng cung cấp ánh xạ hoàn hảo: Retry = Filled (chính), Cancel = Outlined (phụ), Details = Text (phụ trợ).
 
-Filled Primary buttons command highest visual weight via solid color background. Material Design 3 research: filled buttons achieve 89% attention capture in eye-tracking studies vs 67% outlined, 45% text-only. Primary action (Summarize Text, Save, Confirm) always Filled ensuring instant recognition. Testing trong Main Screen: Summarize Text button as Filled resulted in 34% faster task initiation vs Outlined style where users questioned if it was primary action.
+Các button Filled Primary có trọng lượng thị giác cao nhất thông qua nền màu đặc. Nghiên cứu Material Design 3: button filled đạt được 89% thu hút sự chú ý trong các nghiên cứu theo dõi mắt so với 67% outlined, 45% chỉ text. Hành động chính (Summarize Text, Save, Confirm) luôn là Filled đảm bảo nhận diện ngay lập tức. Thử nghiệm trong Main Screen: button Summarize Text ở dạng Filled dẫn đến khởi tạo tác vụ nhanh hơn 34% so với kiểu Outlined nơi người dùng nghi ngờ liệu nó có phải hành động chính hay không.
 
-Outlined Secondary buttons provide mid-tier emphasis. Use cases: cancellation (Try Again in errors), alternative paths (Upload Document vs Enter Text). Outlined style visible enough to discover but not competing với Primary. Survey: 91% users correctly identify Outlined buttons as "secondary options" without training.
+Các button Outlined Secondary cung cấp mức độ nhấn mạnh trung bình. Trường hợp sử dụng: hủy bỏ (Try Again trong lỗi), đường dẫn thay thế (Upload Document vs Enter Text). Kiểu Outlined đủ rõ ràng để khám phá nhưng không cạnh tranh với Primary. Khảo sát: 91% người dùng xác định đúng button Outlined là "tùy chọn phụ" mà không cần đào tạo.
 
-Text buttons lowest visual weight for tertiary actions: Skip, Learn More, Cancel in low-stakes contexts. Advantages: minimal space consumption (no border/background reduces touch target bloat), focus remains on primary/secondary actions. Disadvantage: too subtle for important actions - strictly reserved for optional/dismissive actions.
+Button Text có trọng lượng thị giác thấp nhất cho các hành động phụ trợ: Skip, Learn More, Cancel trong các ngữ cảnh ít quan trọng. Ưu điểm: tiêu thụ không gian tối thiểu (không có viền/nền giảm độ phồng của vùng chạm), trọng tâm vẫn ở các hành động chính/phụ. Nhược điểm: quá tinh tế cho các hành động quan trọng - chỉ dành riêng cho các hành động tùy chọn/bác bỏ.
 
-**2. 48dp Button Height - Touch Target Standard:**
+**2. Chiều cao Button 48dp - Tiêu chuẩn Vùng chạm:**
 
-48dp minimum height for all buttons follows WCAG 2.5.5 (Target Size Level AAA: 44×44 CSS pixels minimum). Android Material Design recommends 48dp accounting for higher pixel density. Testing với motor-impaired users: 48dp buttons achieved 96% tap success rate vs 82% for 40dp, 91% for 44dp. 8dp difference meaningful for users with tremors or limited dexterity.
+Chiều cao tối thiểu 48dp cho tất cả button tuân theo WCAG 2.5.5 (Target Size Level AAA: tối thiểu 44×44 CSS pixels). Android Material Design khuyến nghị 48dp để tính đến mật độ pixel cao hơn. Thử nghiệm với người dùng bị suy giảm vận động: button 48dp đạt tỷ lệ thành công khi chạm 96% so với 82% cho 40dp, 91% cho 44dp. Sự khác biệt 8dp có ý nghĩa đối với người dùng bị run hoặc hạn chế khả năng vận động tinh.
 
-Phương án variable heights (40dp for Text buttons, 48dp for Filled) bị loại vì creates inconsistent rhythm. Buttons stacked vertically (Dialog: Cancel + Confirm) with different heights feel misaligned even when mathematically centered. Uniform 48dp height creates visual harmony.
+Phương án chiều cao biến đổi (40dp cho button Text, 48dp cho Filled) bị loại bỏ vì tạo nhịp điệu không nhất quán. Các button xếp chồng theo chiều dọc (Dialog: Cancel + Confirm) với chiều cao khác nhau cảm thấy không căn chỉnh ngay cả khi được căn giữa về mặt toán học. Chiều cao đồng nhất 48dp tạo ra sự hài hòa thị giác.
 
-Exception: IconButton can be 40dp when icon-only (no text) vì 24dp icon + 8dp padding each side = 40dp still adequate. Testing: icon-only 40dp buttons maintain 93% tap success (only 3% drop from 48dp) vì visual target matches touch target (no text creating false expectations).
+Ngoại lệ: IconButton có thể là 40dp khi chỉ có icon (không có text) vì 24dp icon + 8dp padding mỗi bên = 40dp vẫn đủ. Thử nghiệm: button 40dp chỉ có icon duy trì 93% thành công khi chạm (chỉ giảm 3% so với 48dp) vì mục tiêu thị giác khớp với mục tiêu chạm (không có text tạo kỳ vọng sai lệch).
 
-**3. 12dp Corner Radius - Modern but Not Extreme:**
+**3. Bán kính góc 12dp - Hiện đại nhưng không Cực đoan:**
 
-12dp corner radius chosen for buttons, text fields, cards after testing range 8-20dp. Phương án 8dp (Material Design 2 standard) feels dated - user survey: 68% describe 8dp as "old Android look". Phương án 16dp+ moves into iOS territory (16-20dp typical on iPhone) - testing: 16dp buttons on Android feel "wrong" to 72% long-time Android users.
+Bán kính góc 12dp được chọn cho button, text field, card sau khi thử nghiệm phạm vi 8-20dp. Phương án 8dp (tiêu chuẩn Material Design 2) cảm thấy lỗi thời - khảo sát người dùng: 68% mô tả 8dp là "vẻ Android cũ". Phương án 16dp+ chuyển sang lãnh thổ iOS (16-20dp điển hình trên iPhone) - thử nghiệm: button 16dp trên Android cảm thấy "sai" với 72% người dùng Android lâu năm.
 
-12dp strikes balance: modern enough (softer than old 8dp), platform-appropriate (not copying iOS), mathematically clean (divisible by 4, aligns với 8dp grid via 12 = 8 + 4). Material Design 3 dynamic theming system defaults to 12dp for small components, validating choice.
+12dp đạt được sự cân bằng: đủ hiện đại (mềm mại hơn 8dp cũ), phù hợp với nền tảng (không sao chép iOS), toán học gọn gàng (chia hết cho 4, căn chỉnh với lưới 8dp thông qua 12 = 8 + 4). Hệ thống chủ đề động Material Design 3 mặc định là 12dp cho các component nhỏ, xác thực lựa chọn.
 
-Exception: Search Bar uses 28dp corner radius (pill shape) following Material Design Search Bar component specification. Pill shape (height/2 radius) signals "search input" via learned convention - users immediately recognize rounded pill as search field. Testing: 89% users correctly identify pill-shaped field as search vs 76% for rectangular field with label.
+Ngoại lệ: Search Bar sử dụng bán kính góc 28dp (hình viên thuốc) theo đặc tả component Search Bar của Material Design. Hình viên thuốc (bán kính height/2) báo hiệu "nhập tìm kiếm" thông qua quy ước đã học - người dùng ngay lập tức nhận ra viên thuốc tròn là trường tìm kiếm. Thử nghiệm: 89% người dùng xác định đúng trường hình viên thuốc là tìm kiếm so với 76% cho trường hình chữ nhật có nhãn.
 
-FAB corner radius 16dp (not 12dp) creates subtle distinction from buttons. FAB semantically different (persistent action across screens) deserves visual differentiation. 16dp radius on 56dp circle creates 28.6% corner curve vs 25% for 12dp - visually rounder, emphasizing FAB's special role.
+Bán kính góc FAB 16dp (không phải 12dp) tạo ra sự phân biệt tinh tế so với button. FAB khác về mặt ngữ nghĩa (hành động liên tục trên các màn hình) xứng đáng với sự khác biệt thị giác. Bán kính 16dp trên vòng tròn 56dp tạo ra đường cong góc 28,6% so với 25% cho 12dp - tròn hơn về mặt thị giác, nhấn mạnh vai trò đặc biệt của FAB.
 
-**4. Card Elevation Strategy - Light Theme 2dp, Dark Theme Tonal:**
+**4. Chiến lược Độ nổi Card - Chủ đề Sáng 2dp, Chủ đề Tối Tonal:**
 
-Card elevation differs between themes: Light theme uses 2dp shadow elevation, Dark theme uses tonal elevation (colored surface, no shadow). Phương án consistent elevation across themes bị loại vì dark surfaces cannot show shadows effectively. Shadow requires luminosity contrast - black shadow on dark gray background invisible or barely visible.
+Độ nổi card khác nhau giữa các chủ đề: Chủ đề sáng sử dụng độ nổi bóng đổ 2dp, Chủ đề tối sử dụng độ nổi tonal (bề mặt màu, không có bóng). Phương án độ nổi nhất quán trên các chủ đề bị loại bỏ vì bề mặt tối không thể hiển thị bóng đổ hiệu quả. Bóng đổ yêu cầu độ tương phản độ sáng - bóng đen trên nền xám tối vô hình hoặc hầu như không thấy.
 
-Material Design 3 elevation overlay system: Dark theme elevates surfaces by lightening color (higher elevation = lighter gray) instead of shadows. Testing: tonal elevation in dark theme improved card distinction 58% vs shadow-based approach. Users easily differentiate Background (black), Surface (dark gray), Surface+2dp (lighter gray).
+Hệ thống lớp phủ độ nổi Material Design 3: Chủ đề tối nâng cao bề mặt bằng cách làm sáng màu (độ nổi cao hơn = xám sáng hơn) thay vì bóng đổ. Thử nghiệm: độ nổi tonal trong chủ đề tối cải thiện sự phân biệt card 58% so với phương pháp dựa trên bóng đổ. Người dùng dễ dàng phân biệt Background (đen), Surface (xám tối), Surface+2dp (xám sáng hơn).
 
-Light theme retains shadow elevation vì shadows work well on light backgrounds. 2dp elevation subtle but sufficient - creates gentle separation without harsh drop shadows. Testing: 2dp shadow improved card scannability 23% (cards visually distinct from background) vs 0dp elevation where cards blend together.
+Chủ đề sáng giữ lại độ nổi bóng đổ vì bóng đổ hoạt động tốt trên nền sáng. Độ nổi 2dp tinh tế nhưng đủ - tạo ra sự tách biệt nhẹ nhàng mà không có bóng đổ mạnh. Thử nghiệm: bóng đổ 2dp cải thiện khả năng quét card 23% (card phân biệt rõ ràng với nền) so với độ nổi 0dp nơi card hòa lẫn với nhau.
 
-Elevation consistency within theme: All cards 2dp, all dialogs 16dp. Consistent elevation creates coherent layering system. Material Design elevation hierarchy: Dialogs (16-24dp) above FABs (6-8dp) above cards (2-4dp) above surfaces (0-1dp). SumUp follows this hierarchy ensuring proper z-ordering.
+Tính nhất quán độ nổi trong chủ đề: Tất cả card 2dp, tất cả dialog 16dp. Độ nổi nhất quán tạo ra hệ thống phân lớp mạch lạc. Hệ thống phân cấp độ nổi Material Design: Dialog (16-24dp) trên FAB (6-8dp) trên card (2-4dp) trên surface (0-1dp). SumUp tuân theo hệ thống phân cấp này đảm bảo thứ tự z đúng.
 
-**5. Auto-Save Text Field Indicator - Real-time Feedback:**
+**5. Chỉ báo Text Field Tự động lưu - Phản hồi Thời gian thực:**
 
-Auto-save indicator (pulsing dots during save, checkmark when complete) provides crucial feedback for draft system. Phương án silent auto-save bị loại vì users fear data loss. Testing: 78% users repeatedly typed, deleted, retyped text vì uncertain if auto-save working - wasted time/anxiety. Visual indicator eliminated repeated-typing behavior entirely.
+Chỉ báo tự động lưu (chấm nhấp nháy khi lưu, dấu kiểm khi hoàn thành) cung cấp phản hồi quan trọng cho hệ thống bản thảo. Phương án tự động lưu im lặng bị loại bỏ vì người dùng lo sợ mất dữ liệu. Thử nghiệm: 78% người dùng liên tục gõ, xóa, gõ lại text vì không chắc chắn liệu tự động lưu có hoạt động - lãng phí thời gian/lo lắng. Chỉ báo thị giác loại bỏ hoàn toàn hành vi gõ lại.
 
-Pulsing dots animation chosen over spinner for subtle feel. Spinner (rotating circle) feels heavy, implies long wait. Pulsing dots (three dots fading in/out) lightweight, signals background operation. Animation duration 2 seconds matches actual save debounce time - indicator accurately represents system state.
+Hoạt ảnh chấm nhấp nháy được chọn thay vì vòng quay cho cảm giác tinh tế. Vòng quay (vòng tròn quay) cảm thấy nặng nề, ngụ ý chờ lâu. Chấm nhấp nháy (ba chấm mờ dần vào/ra) nhẹ nhàng, báo hiệu hoạt động nền. Thời gian hoạt ảnh 2 giây khớp với thời gian debounce lưu thực tế - chỉ báo đại diện chính xác trạng thái hệ thống.
 
-Checkmark confirmation appears for 3 seconds after save completion. Testing determined 3-second duration optimal: 2 seconds too brief (47% users miss it), 4+ seconds feels lingering (checkmark distracts from typing). 3 seconds: 91% users notice confirmation, then it disappears naturally.
+Xác nhận dấu kiểm xuất hiện trong 3 giây sau khi hoàn thành lưu. Thử nghiệm xác định thời gian 3 giây tối ưu: 2 giây quá ngắn (47% người dùng bỏ lỡ), 4+ giây cảm thấy kéo dài (dấu kiểm làm phân tâm khỏi việc gõ). 3 giây: 91% người dùng nhận thấy xác nhận, sau đó nó biến mất một cách tự nhiên.
 
-Placement: indicator positioned trailing edge of text field (right side for LTR languages), outside input area to avoid obscuring text. Testing: inline indicators (inside text field) caused users to hit backspace thinking dots were typed characters - 23% accidental deletion rate.
+Vị trí: chỉ báo được đặt ở cạnh sau của text field (bên phải cho ngôn ngữ LTR), bên ngoài khu vực nhập để tránh che khuất text. Thử nghiệm: chỉ báo nội tuyến (bên trong text field) khiến người dùng nhấn backspace nghĩ rằng chấm là ký tự đã gõ - tỷ lệ xóa nhầm 23%.
 
-**6. Swipeable Cards - Direct Manipulation:**
+**6. Card Vuốt được - Thao tác Trực tiếp:**
 
-Summary cards in History support swipe gestures (swipe right for favorite, swipe left for delete) implementing direct manipulation principle. Phương án tap-only interactions (long-press menu, three-dot menu) bị loại vì requires extra steps. Swipe gestures enable one-motion actions: user swipes card → action executed → card animates → done. Tap-based: user taps → menu opens → user finds action in menu → taps action → menu closes → action executes - 4 steps vs 1 gesture.
+Card tóm tắt trong Lịch sử hỗ trợ cử chỉ vuốt (vuốt phải để yêu thích, vuốt trái để xóa) thực hiện nguyên tắc thao tác trực tiếp. Phương án tương tác chỉ chạm (menu nhấn giữ, menu ba chấm) bị loại bỏ vì yêu cầu các bước bổ sung. Cử chỉ vuốt cho phép hành động một chuyển động: người dùng vuốt card → hành động được thực thi → card hoạt ảnh → xong. Dựa trên chạm: người dùng chạm → menu mở → người dùng tìm hành động trong menu → chạm hành động → menu đóng → hành động thực thi - 4 bước so với 1 cử chỉ.
 
-Testing: swipe gestures reduced average time-to-favorite from 2.8 seconds (tap-based) to 0.9 seconds (swipe) - 68% faster. Users describe swipe as "satisfying", "natural", "feels responsive". Swipe leverages muscle memory from similar actions (email apps, note apps) - 94% users correctly swipe without tutorial.
+Thử nghiệm: cử chỉ vuốt giảm thời gian yêu thích trung bình từ 2,8 giây (dựa trên chạm) xuống 0,9 giây (vuốt) - nhanh hơn 68%. Người dùng mô tả vuốt là "thỏa mãn", "tự nhiên", "cảm thấy phản hồi nhanh". Vuốt tận dụng bộ nhớ cơ bắp từ các hành động tương tự (ứng dụng email, ứng dụng ghi chú) - 94% người dùng vuốt đúng mà không cần hướng dẫn.
 
-Swipe direction semantics: swipe right (positive direction) for positive action (favorite), swipe left (negative direction) for negative action (delete). Color coding reinforces: green background appears on right-swipe, red on left-swipe. Survey: 97% users correctly interpret swipe directions without instructions - validates semantic appropriateness.
+Ngữ nghĩa hướng vuốt: vuốt phải (hướng tích cực) cho hành động tích cực (yêu thích), vuốt trái (hướng tiêu cực) cho hành động tiêu cực (xóa). Mã hóa màu củng cố: nền xanh lá xuất hiện khi vuốt phải, đỏ khi vuốt trái. Khảo sát: 97% người dùng diễn giải đúng hướng vuốt mà không có hướng dẫn - xác thực tính phù hợp ngữ nghĩa.
 
-Accessibility consideration: swipe gestures provide fast path for power users but all actions also available via tap menus ensuring users unable to swipe (motor impairments, screen reader users) can still access functionality. Three-dot menu on each card provides tap-based alternative.
+Cân nhắc về khả năng tiếp cận: cử chỉ vuốt cung cấp đường dẫn nhanh cho người dùng chuyên nghiệp nhưng tất cả hành động cũng có sẵn qua menu chạm đảm bảo người dùng không thể vuốt (suy giảm vận động, người dùng trình đọc màn hình) vẫn có thể truy cập chức năng. Menu ba chấm trên mỗi card cung cấp lựa chọn thay thế dựa trên chạm.
 
-**7. Shimmer Loading vs Skeleton Screens - Content Preview:**
+**7. Shimmer Loading so với Skeleton Screens - Xem trước Nội dung:**
 
-Shimmer loading (animated gradient sweep across placeholder content) chosen over generic spinners for skeleton screens. Phương án spinner (centered circular progress) bị loại vì provides no context about loading content. Users see spinner, uncertain what's loading or how much content to expect. Anxiety: "Is it loading one item or 100 items? Small text or large document?"
+Shimmer loading (quét gradient hoạt ảnh qua nội dung giữ chỗ) được chọn thay vì vòng quay chung chung cho skeleton screen. Phương án vòng quay (tiến trình vòng tròn ở giữa) bị loại bỏ vì không cung cấp ngữ cảnh về nội dung đang tải. Người dùng thấy vòng quay, không chắc chắn cái gì đang tải hoặc mong đợi bao nhiêu nội dung. Lo lắng: "Có đang tải một mục hay 100 mục? Text nhỏ hay tài liệu lớn?"
 
-Shimmer skeleton screens preview content structure while loading. Example: History loading shows 5 card skeletons → users immediately understand "loading list of summaries, approximately 5 items visible". Testing: skeleton screens reduced perceived wait time 32% vs spinners even though actual loading time identical. Psychology: knowing what to expect makes waiting easier.
+Skeleton screen shimmer xem trước cấu trúc nội dung trong khi tải. Ví dụ: Lịch sử tải hiển thị 5 skeleton card → người dùng ngay lập tức hiểu "đang tải danh sách tóm tắt, khoảng 5 mục hiển thị". Thử nghiệm: skeleton screen giảm thời gian chờ cảm nhận 32% so với vòng quay mặc dù thời gian tải thực tế giống hệt nhau. Tâm lý: biết điều gì mong đợi khiến việc chờ đợi dễ dàng hơn.
 
-Shimmer animation (left-to-right gradient sweep, 1.5 second duration) signals "loading in progress" preventing users from thinking app frozen. Testing: static gray skeletons (no animation) caused 41% users tap screen or press back thinking app hung. Animated shimmer clearly signals activity.
+Hoạt ảnh shimmer (quét gradient từ trái sang phải, thời gian 1,5 giây) báo hiệu "đang tải" ngăn người dùng nghĩ ứng dụng bị đóng băng. Thử nghiệm: skeleton xám tĩnh (không có hoạt ảnh) khiến 41% người dùng chạm màn hình hoặc nhấn back nghĩ ứng dụng bị treo. Shimmer hoạt ảnh báo hiệu rõ ràng hoạt động.
 
-Gradient parameters optimized for subtlety: 20% opacity difference between dark/light regions. High-contrast shimmers (50%+ opacity difference) feel aggressive, draw excessive attention to loading state. Subtle 20% gradient noticeable enough to signal progress but calm enough not to distract.
+Tham số gradient được tối ưu hóa cho sự tinh tế: độ chênh lệch độ mờ 20% giữa các vùng tối/sáng. Shimmer tương phản cao (chênh lệch độ mờ 50%+) cảm thấy hung hăng, thu hút quá nhiều sự chú ý vào trạng thái tải. Gradient tinh tế 20% đủ đáng chú ý để báo hiệu tiến trình nhưng đủ bình tĩnh để không làm phân tâm.
 
-**8. Empty State Illustration + CTA - Onboarding Moment:**
+**8. Empty State Illustration + CTA - Thời điểm Onboarding:**
 
-Empty states (No Summaries Yet, No Favorites) include three components: illustration (96dp icon), message (headline + body text), CTA button (primary action). Phương án text-only empty states bị loại vì feels cold, uninviting. Testing: text-only empty states resulted in 34% users closing app immediately - perceived as "broken" or "empty app". Illustrated empty states with CTA reduced app abandonment to 12%.
+Empty state (Chưa có Tóm tắt, Không có Yêu thích) bao gồm ba component: illustration (icon 96dp), thông điệp (headline + body text), button CTA (hành động chính). Phương án empty state chỉ text bị loại bỏ vì cảm thấy lạnh lùng, không hấp dẫn. Thử nghiệm: empty state chỉ text dẫn đến 34% người dùng đóng ứng dụng ngay lập tức - cảm nhận là "bị hỏng" hoặc "ứng dụng trống". Empty state minh họa với CTA giảm tỷ lệ từ bỏ ứng dụng xuống 12%.
 
-Illustration choice: 96dp oversized icon (not custom artwork) maintains consistency với icon system while achieving sufficient visual presence. Custom illustrations considered but rejected vì inconsistent với app's minimalist design language và requires design/maintenance effort. Oversized icon (4× standard 24dp size) provides friendly visual without custom artwork.
+Lựa chọn illustration: icon quá khổ 96dp (không phải tác phẩm nghệ thuật tùy chỉnh) duy trì tính nhất quán với hệ thống icon đồng thời đạt được sự hiện diện thị giác đủ. Illustration tùy chỉnh được cân nhắc nhưng bị từ chối vì không nhất quán với ngôn ngữ thiết kế tối giản của ứng dụng và yêu cầu nỗ lực thiết kế/bảo trì. Icon quá khổ (4× kích thước tiêu chuẩn 24dp) cung cấp hình ảnh thân thiện mà không cần tác phẩm nghệ thuật tùy chỉnh.
 
-CTA button in empty state critical for user guidance. Message "No Summaries Yet" identifies situation, but CTA "Start Summarizing" tells user exactly what to do next. Button usage rate: 87% users tap CTA button in empty state vs 56% users who figure out action independently when no CTA present. CTA converts empty state from dead-end into onboarding opportunity.
+Button CTA trong empty state quan trọng cho hướng dẫn người dùng. Thông điệp "Chưa có Tóm tắt" xác định tình huống, nhưng CTA "Bắt đầu Tóm tắt" cho người dùng biết chính xác phải làm gì tiếp theo. Tỷ lệ sử dụng button: 87% người dùng chạm button CTA trong empty state so với 56% người dùng tự tìm ra hành động khi không có CTA. CTA chuyển đổi empty state từ ngõ cụt thành cơ hội onboarding.
 
-Message tone positive ("No Summaries Yet" not "No Summaries") frames situation as beginning ("yet" implies future content) not failure. Testing: positive framing increased user confidence 28% (measured via post-task survey) vs negative framing ("You haven't created any summaries") which felt judgmental.
+Giọng điệu thông điệp tích cực ("Chưa có Tóm tắt" không phải "Không có Tóm tắt") định hình tình huống là bắt đầu ("chưa" ngụ ý nội dung tương lai) không phải thất bại. Thử nghiệm: định hình tích cực tăng sự tự tin của người dùng 28% (đo qua khảo sát sau tác vụ) so với định hình tiêu cực ("Bạn chưa tạo tóm tắt nào") cảm thấy phán xét.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Button hierarchy testing: Filled buttons 89% attention capture vs 67% outlined, 45% text. Three-tier buttons 34% faster task decisions vs flat hierarchy. Error dialog three-tier: 91% correctly identify secondary actions. 48dp touch targets: 96% tap success vs 82% for 40dp. 12dp corner radius: 68% describe as modern vs 8dp dated. Pill search bar: 89% recognize vs 76% rectangular. 2dp card elevation: 23% improved scannability. Dark tonal elevation: 58% improved distinction. Auto-save indicator: eliminated repeated-typing anxiety in 78% users. 3-second checkmark: 91% notice. Swipe gestures: 68% faster (0.9s vs 2.8s), 94% correct without tutorial, 97% interpret directions correctly. Shimmer loading: 32% reduced perceived wait time, animated vs static 41% reduction in "app frozen" perception. Empty state illustrations: reduced abandonment from 34% to 12%. Empty state CTA: 87% usage rate vs 56% without. Positive message framing: 28% increased confidence.
+Thử nghiệm phân cấp button: Button filled 89% thu hút chú ý so với 67% outlined, 45% text. Button ba tầng nhanh hơn 34% quyết định tác vụ so với phân cấp phẳng. Error dialog ba tầng: 91% xác định đúng hành động phụ. Vùng chạm 48dp: 96% thành công chạm so với 82% cho 40dp. Bán kính góc 12dp: 68% mô tả là hiện đại so với 8dp lỗi thời. Thanh tìm kiếm hình viên thuốc: 89% nhận ra so với 76% hình chữ nhật. Độ nổi card 2dp: cải thiện 23% khả năng quét. Độ nổi tonal tối: cải thiện 58% sự phân biệt. Chỉ báo tự động lưu: loại bỏ lo lắng gõ lại ở 78% người dùng. Dấu kiểm 3 giây: 91% nhận thấy. Cử chỉ vuốt: nhanh hơn 68% (0.9s so với 2.8s), 94% đúng không cần hướng dẫn, 97% diễn giải hướng đúng. Shimmer loading: giảm 32% thời gian chờ cảm nhận, hoạt ảnh so với tĩnh giảm 41% cảm nhận "ứng dụng đóng băng". Illustration empty state: giảm từ bỏ từ 34% xuống 12%. CTA empty state: tỷ lệ sử dụng 87% so với 56% không có. Định hình thông điệp tích cực: tăng 28% sự tự tin.
 
 **Các cân nhắc về accessibility:**
 
-All buttons meet 48dp minimum touch target (WCAG 2.5.5 Level AAA). Button labels descriptive ("Summarize Text" not just "Submit") for screen readers. Focus indicators 2dp border with 2dp offset for keyboard navigation visibility. Cards support both swipe gestures AND tap menus ensuring multiple interaction modes. Auto-save feedback visual (pulsing dots) AND announces to screen readers ("Saving draft"). Shimmer loading includes "Loading" live region announcement. Empty states semantic structure (heading + body + button) navigable via screen reader gestures. Color not sole differentiator - green/red swipe backgrounds paired with icons (heart, trash). Dialog focus automatically moves to primary action for keyboard navigation efficiency. Snackbar duration 4-10 seconds (WCAG 2.2.1) allowing time to read messages. All interactive components have minimum 44×44dp touch targets per platform guidelines.
+Tất cả button đáp ứng vùng chạm tối thiểu 48dp (WCAG 2.5.5 Level AAA). Nhãn button mô tả ("Summarize Text" không chỉ "Submit") cho trình đọc màn hình. Chỉ báo focus viền 2dp với offset 2dp cho khả năng hiển thị điều hướng bàn phím. Card hỗ trợ cả cử chỉ vuốt VÀ menu chạm đảm bảo nhiều chế độ tương tác. Phản hồi tự động lưu thị giác (chấm nhấp nháy) VÀ thông báo cho trình đọc màn hình ("Saving draft"). Shimmer loading bao gồm thông báo vùng trực tiếp "Loading". Cấu trúc ngữ nghĩa empty state (heading + body + button) có thể điều hướng qua cử chỉ trình đọc màn hình. Màu sắc không phải yếu tố phân biệt duy nhất - nền vuốt xanh lá/đỏ kết hợp với icon (tim, thùng rác). Focus dialog tự động chuyển đến hành động chính để hiệu quả điều hướng bàn phím. Thời gian snackbar 4-10 giây (WCAG 2.2.1) cho phép thời gian đọc thông điệp. Tất cả component tương tác có vùng chạm tối thiểu 44×44dp theo hướng dẫn nền tảng.
 
 ---
 
@@ -2186,85 +2186,85 @@ Text(
 
 ---
 
-#### **Design Rationale & Justification - Responsive Design:**
+#### **Lý do thiết kế & Giải thích - Responsive Design:**
 
-Responsive design strategy được xây dựng dựa trên Material 3 adaptive design principles, device usage patterns research, và multi-device consistency requirements. Mỗi layout adaptation optimized cho specific device capabilities ensuring optimal content density và interaction affordances for each screen size class.
+Chiến lược thiết kế đáp ứng được xây dựng dựa trên các nguyên tắc thiết kế thích ứng Material 3, nghiên cứu mô hình sử dụng thiết bị, và yêu cầu nhất quán đa thiết bị. Mỗi điều chỉnh bố cục được tối ưu hóa cho khả năng thiết bị cụ thể đảm bảo mật độ nội dung tối ưu và khả năng tương tác cho từng lớp kích thước màn hình.
 
 **1. Material 3 Window Size Classes - Tại sao không Custom Breakpoints:**
 
-Material 3 window size classes (Compact <600dp, Medium 600-839dp, Expanded ≥840dp) adopted thay vì custom breakpoints hoặc CSS-style breakpoints (320px, 768px, 1024px, etc.). Phương án custom breakpoints bị loại vì requires extensive testing across device spectrum - hundreds of Android device sizes exist, manually defining breakpoints for each impractical.
+Các lớp kích thước cửa sổ Material 3 (Compact <600dp, Medium 600-839dp, Expanded ≥840dp) được áp dụng thay vì điểm ngắt tùy chỉnh hoặc điểm ngắt kiểu CSS (320px, 768px, 1024px, v.v.). Phương án điểm ngắt tùy chỉnh bị loại bỏ vì yêu cầu thử nghiệm rộng rãi trên phổ thiết bị - hàng trăm kích thước thiết bị Android tồn tại, định nghĩa thủ công điểm ngắt cho từng thiết bị không khả thi.
 
-Phương án CSS-style pixel breakpoints (768px, 1024px) considered but rejected vì Android uses density-independent pixels (dp), not pixels. Same 768px breakpoint represents vastly different physical sizes across devices: 768px on mdpi (160dpi) = 4.8 inches wide, on xxxhdpi (640dpi) = 1.2 inches wide. Material 3's dp-based breakpoints account for pixel density ensuring consistent physical dimensions.
+Phương án điểm ngắt pixel kiểu CSS (768px, 1024px) được cân nhắc nhưng bị từ chối vì Android sử dụng pixel độc lập mật độ (dp), không phải pixel. Cùng một điểm ngắt 768px đại diện cho kích thước vật lý hoàn toàn khác nhau trên các thiết bị: 768px trên mdpi (160dpi) = rộng 4,8 inch, trên xxxhdpi (640dpi) = rộng 1,2 inch. Điểm ngắt dựa trên dp của Material 3 tính đến mật độ pixel đảm bảo kích thước vật lý nhất quán.
 
-Material 3 window size classes chosen vì four reasons. Thứ nhất, **research-backed thresholds** - Google's analysis of Android ecosystem determined 600dp represents natural transition point where phone layouts feel cramped (tablets) and tablet layouts feel spacious (phones). 840dp marks point where permanent navigation drawer becomes practical without dominating screen. Thứ hai, **platform consistency** - Material 3 adaptive components (NavigationBar, NavigationRail, NavigationDrawer) designed specifically for these breakpoints. Using standard breakpoints ensures SumUp layouts match system apps và third-party apps. Thứ ba, **future-proof** - window size classes adapt to foldables, chromebooks, tablets automatically. Custom breakpoints would require updates for each new device category. Thứ tư, **simple decision logic** - three classes (not five or seven) minimize code complexity while providing sufficient differentiation.
+Các lớp kích thước cửa sổ Material 3 được chọn vì bốn lý do. Thứ nhất, **ngưỡng được hỗ trợ bởi nghiên cứu** - phân tích hệ sinh thái Android của Google xác định 600dp đại diện cho điểm chuyển tiếp tự nhiên nơi bố cục điện thoại cảm thấy chật chội (máy tính bảng) và bố cục máy tính bảng cảm thấy rộng rãi (điện thoại). 840dp đánh dấu điểm mà ngăn kéo điều hướng vĩnh viễn trở nên thực tế mà không chi phối màn hình. Thứ hai, **tính nhất quán nền tảng** - các component thích ứng Material 3 (NavigationBar, NavigationRail, NavigationDrawer) được thiết kế đặc biệt cho các điểm ngắt này. Sử dụng điểm ngắt tiêu chuẩn đảm bảo bố cục SumUp khớp với ứng dụng hệ thống và ứng dụng bên thứ ba. Thứ ba, **chống lỗi thời trong tương lai** - các lớp kích thước cửa sổ thích ứng với thiết bị gập, chromebook, máy tính bảng tự động. Điểm ngắt tùy chỉnh sẽ yêu cầu cập nhật cho mỗi danh mục thiết bị mới. Thứ tư, **logic quyết định đơn giản** - ba lớp (không phải năm hoặc bảy) giảm thiểu độ phức tạp mã trong khi cung cấp sự khác biệt đủ.
 
-Analytics data: SumUp user device distribution shows 78% Compact (phones), 15% Medium (tablets/landscape phones), 7% Expanded (large tablets/chromebooks/desktops). Three-tier system efficiently serves all segments without over-engineering for rare device sizes.
+Dữ liệu phân tích: phân phối thiết bị người dùng SumUp cho thấy 78% Compact (điện thoại), 15% Medium (máy tính bảng/điện thoại ngang), 7% Expanded (máy tính bảng lớn/chromebook/máy tính để bàn). Hệ thống ba tầng phục vụ hiệu quả tất cả phân khúc mà không kỹ thuật hóa quá mức cho kích thước thiết bị hiếm.
 
-**2. Navigation Pattern Progression - Bottom → Rail → Drawer:**
+**2. Phát triển Mẫu Điều hướng - Bottom → Rail → Drawer:**
 
-Navigation adapts across breakpoints: Bottom Navigation (Compact), Navigation Rail (Medium), Permanent Drawer (Expanded). Phương án consistent navigation across all sizes (always Bottom Nav) bị loại vì inappropriate for tablets. Bottom Nav on tablets wastes vertical space (80dp at bottom of tall screen) và feels awkward with landscape aspect ratios.
+Điều hướng thích ứng qua các điểm ngắt: Bottom Navigation (Compact), Navigation Rail (Medium), Permanent Drawer (Expanded). Phương án điều hướng nhất quán trên tất cả kích thước (luôn Bottom Nav) bị loại bỏ vì không phù hợp cho máy tính bảng. Bottom Nav trên máy tính bảng lãng phí không gian dọc (80dp ở dưới cùng màn hình cao) và cảm thấy vụng về với tỷ lệ khung hình ngang.
 
-Phương án always-drawer approach (even on phones) considered but rejected vì mobile-first principle. Drawer on phones requires tap to open, extra step compared to Bottom Nav's always-visible tabs. Testing: Bottom Nav task completion 42% faster on phones (immediate access vs tap-to-open drawer).
+Phương án cách tiếp cận luôn ngăn kéo (ngay cả trên điện thoại) được cân nhắc nhưng bị từ chối vì nguyên tắc ưu tiên di động. Ngăn kéo trên điện thoại yêu cầu chạm để mở, bước bổ sung so với các tab luôn hiển thị của Bottom Nav. Thử nghiệm: hoàn thành tác vụ Bottom Nav nhanh hơn 42% trên điện thoại (truy cập ngay lập tức so với chạm để mở ngăn kéo).
 
-Navigation progression chosen based on device capabilities và screen aspect ratios. **Bottom Navigation** optimal for phones vì thumb-reachable (one-handed operation), always visible (no hidden affordances), space-efficient on narrow screens (horizontal layout maximizes vertical content space). Material Design research: 83% users operate phones one-handed, Bottom Nav within natural thumb zone.
+Phát triển điều hướng được chọn dựa trên khả năng thiết bị và tỷ lệ khung hình màn hình. **Bottom Navigation** tối ưu cho điện thoại vì có thể với tới bằng ngón cái (thao tác một tay), luôn hiển thị (không có khả năng ẩn), hiệu quả không gian trên màn hình hẹp (bố cục ngang tối đa hóa không gian nội dung dọc). Nghiên cứu Material Design: 83% người dùng vận hành điện thoại một tay, Bottom Nav trong vùng ngón cái tự nhiên.
 
-**Navigation Rail** emerges at Medium breakpoint (600dp+) vì landscape aspect ratios favor vertical navigation. Tablets/landscape phones have abundant horizontal space but limited vertical space - vertical rail (80dp width) less costly than horizontal bottom bar (80dp height). Rail also supports more destinations (5-7 items comfortable) vs Bottom Nav (3-5 items maximum before crowding).
+**Navigation Rail** xuất hiện ở điểm ngắt Medium (600dp+) vì tỷ lệ khung hình ngang ưu tiên điều hướng dọc. Máy tính bảng/điện thoại ngang có không gian ngang dồi dào nhưng không gian dọc hạn chế - rail dọc (rộng 80dp) ít tốn kém hơn thanh dưới cùng ngang (cao 80dp). Rail cũng hỗ trợ nhiều đích đến hơn (5-7 mục thoải mái) so với Bottom Nav (tối đa 3-5 mục trước khi đông đúc).
 
-**Permanent Drawer** at Expanded breakpoint (840dp+) leverages abundance of horizontal space. 256dp drawer on 840dp screen = 30% width, acceptable. Same 256dp drawer on 600dp screen = 43% width, excessive. Drawer provides richest information density: icons + full text labels + section grouping + app branding - comprehensive navigation appropriate for desktop-class experiences.
+**Permanent Drawer** ở điểm ngắt Expanded (840dp+) tận dụng sự dồi dào của không gian ngang. Ngăn kéo 256dp trên màn hình 840dp = rộng 30%, chấp nhận được. Cùng ngăn kéo 256dp trên màn hình 600dp = rộng 43%, quá mức. Ngăn kéo cung cấp mật độ thông tin phong phú nhất: icon + nhãn text đầy đủ + nhóm phần + thương hiệu ứng dụng - điều hướng toàn diện phù hợp cho trải nghiệm cấp máy tính để bàn.
 
-User testing confirmed progression: 91% users rated navigation as "appropriate for device size" across all breakpoints. Alternative patterns (same navigation everywhere) scored 67% on phones, 54% on tablets.
+Thử nghiệm người dùng xác nhận phát triển: 91% người dùng đánh giá điều hướng là "phù hợp với kích thước thiết bị" trên tất cả điểm ngắt. Các mẫu thay thế (cùng điều hướng ở mọi nơi) đạt điểm 67% trên điện thoại, 54% trên máy tính bảng.
 
-**3. Content Width Constraints - Tại sao không Full Width Everywhere:**
+**3. Ràng buộc Chiều rộng Nội dung - Tại sao không Full Width Everywhere:**
 
-Content width constrained across breakpoints: Full width (Compact), 600dp max (Medium), 800dp max centered (Expanded). Phương án full-width content on all devices bị loại vì readability suffers on large screens. Typography research: optimal reading line length 50-75 characters. At 16sp body text, 50-75 characters = approximately 500-600dp width. Text lines exceeding 100 characters (>800dp width) force excessive horizontal eye movement, reducing reading speed 28%.
+Chiều rộng nội dung bị ràng buộc qua các điểm ngắt: Chiều rộng đầy đủ (Compact), tối đa 600dp (Medium), tối đa 800dp căn giữa (Expanded). Phương án nội dung chiều rộng đầy đủ trên tất cả thiết bị bị loại bỏ vì khả năng đọc bị ảnh hưởng trên màn hình lớn. Nghiên cứu kiểu chữ: độ dài dòng đọc tối ưu 50-75 ký tự. Ở 16sp body text, 50-75 ký tự = khoảng chiều rộng 500-600dp. Dòng text vượt quá 100 ký tự (>800dp chiều rộng) buộc chuyển động mắt ngang quá mức, giảm tốc độ đọc 28%.
 
-Phương án aggressive constraints (400dp max width even on tablets) considered but wastes screen real estate. Testing với tablets: 400dp content centered on 1024dp screen leaves 312dp empty margins each side (61% wasted space) - users describe as "giant phone UI" not "optimized tablet experience".
+Phương án ràng buộc hung hăng (chiều rộng tối đa 400dp ngay cả trên máy tính bảng) được cân nhắc nhưng lãng phí bất động sản màn hình. Thử nghiệm với máy tính bảng: nội dung 400dp căn giữa trên màn hình 1024dp để lại lề trống 312dp mỗi bên (61% không gian lãng phí) - người dùng mô tả là "UI điện thoại khổng lồ" không phải "trải nghiệm máy tính bảng tối ưu hóa".
 
-Chosen constraints balance readability và space utilization. **Compact full width** maximizes limited phone screen space. **Medium 600dp max** prevents excessive line lengths on small tablets while utilizing available width. **Expanded 800dp max centered** prioritizes reading comfort on large displays - content remains focused central region, excess space used for margins/whitespace creating calm, uncluttered layouts.
+Các ràng buộc được chọn cân bằng khả năng đọc và sử dụng không gian. **Compact chiều rộng đầy đủ** tối đa hóa không gian màn hình điện thoại hạn chế. **Medium tối đa 600dp** ngăn độ dài dòng quá mức trên máy tính bảng nhỏ trong khi sử dụng chiều rộng có sẵn. **Expanded tối đa 800dp căn giữa** ưu tiên sự thoải mái đọc trên màn hình lớn - nội dung vẫn tập trung vùng trung tâm, không gian dư được sử dụng cho lề/khoảng trắng tạo bố cục bình tĩnh, không lộn xộn.
 
-Side panels (Quick Options, Quick Actions) on Expanded layouts productively use margin space. Rather than empty whitespace, context-relevant actions positioned in sidebar maintaining single-column content flow for primary information.
+Các bảng điều khiển bên (Quick Options, Quick Actions) trên bố cục Expanded sử dụng hiệu quả không gian lề. Thay vì khoảng trắng rỗng, các hành động liên quan ngữ cảnh được đặt trong thanh bên duy trì luồng nội dung cột đơn cho thông tin chính.
 
-Eye-tracking study: constrained content widths reduced horizontal saccades (eye jumps) 34% compared to full-width layouts on tablets. Survey: 89% users prefer centered content with sidebars vs full-width stretched content.
+Nghiên cứu theo dõi mắt: chiều rộng nội dung bị ràng buộc giảm chuyển động ngang của mắt (nhảy mắt) 34% so với bố cục chiều rộng đầy đủ trên máy tính bảng. Khảo sát: 89% người dùng thích nội dung căn giữa với thanh bên so với nội dung kéo dài chiều rộng đầy đủ.
 
-**4. Metrics Layout Adaptation - Optimizing Space per Context:**
+**4. Điều chỉnh Bố cục Metrics - Tối ưu hóa Không gian theo Ngữ cảnh:**
 
-Metrics cards adapt dramatically: 2×2 grid (Compact), 1×4 horizontal (Medium), vertical list in sidebar (Expanded). Phương án consistent 2×2 grid everywhere bị loại vì inappropriate space usage. 2×2 grid on tablets consumes significant vertical space (200dp+ height) pushing summary content below fold. Tablets' landscape aspect ratio favors horizontal layouts.
+Card metrics thích ứng mạnh mẽ: lưới 2×2 (Compact), ngang 1×4 (Medium), danh sách dọc trong thanh bên (Expanded). Phương án lưới 2×2 nhất quán ở mọi nơi bị loại bỏ vì sử dụng không gian không phù hợp. Lưới 2×2 trên máy tính bảng tiêu thụ không gian dọc đáng kể (chiều cao 200dp+) đẩy nội dung tóm tắt xuống dưới nếp gấp. Tỷ lệ khung hình ngang của máy tính bảng ưu tiên bố cục ngang.
 
-Phương án always horizontal (1×4 everywhere) considered but fails on phones. 4 metrics cards horizontal on 360dp phone screen = 90dp per card, too narrow. Metrics values (4-digit numbers, unit labels, icons) require minimum 110dp width for comfortable reading. Math: 4 cards × 110dp = 440dp minimum, exceeds phone width.
+Phương án luôn ngang (1×4 ở mọi nơi) được cân nhắc nhưng thất bại trên điện thoại. 4 card metrics ngang trên màn hình điện thoại 360dp = 90dp mỗi card, quá hẹp. Giá trị metrics (số 4 chữ số, nhãn đơn vị, icon) yêu cầu chiều rộng tối thiểu 110dp để đọc thoải mái. Toán học: 4 card × 110dp = tối thiểu 440dp, vượt quá chiều rộng điện thoại.
 
-**Compact 2×2 grid** chosen vì vertical scrolling natural on phones (thumb-driven scrolling), grid maintains card size (each card ~170dp width on 360dp screen allowing readable typography). **Medium 1×4 horizontal** leverages landscape space - 4 cards horizontally span ~550dp fitting comfortably within 600-839dp range, saving vertical space for content. **Expanded sidebar list** moves metrics into side panel freeing central content area entirely for summary text - optimal for desktop reading workflows where user wants content center-stage with supporting information accessible in periphery.
+**Lưới 2×2 Compact** được chọn vì cuộn dọc tự nhiên trên điện thoại (cuộn bằng ngón cái), lưới duy trì kích thước card (mỗi card ~170dp chiều rộng trên màn hình 360dp cho phép kiểu chữ có thể đọc được). **Ngang 1×4 Medium** tận dụng không gian ngang - 4 card ngang trải dài ~550dp vừa vặn trong phạm vi 600-839dp, tiết kiệm không gian dọc cho nội dung. **Danh sách thanh bên Expanded** di chuyển metrics vào bảng điều khiển bên giải phóng hoàn toàn khu vực nội dung trung tâm cho text tóm tắt - tối ưu cho quy trình đọc máy tính để bàn nơi người dùng muốn nội dung ở vị trí trung tâm với thông tin hỗ trợ có thể truy cập ở ngoại vi.
 
-Testing: adapted metrics layouts improved summary reading focus 37% (measured via time-to-first-read) vs consistent 2×2 grid everywhere - users spend less time scanning for content start point.
+Thử nghiệm: bố cục metrics được điều chỉnh cải thiện trọng tâm đọc tóm tắt 37% (đo qua thời gian đến lần đọc đầu tiên) so với lưới 2×2 nhất quán ở mọi nơi - người dùng dành ít thời gian hơn để quét điểm bắt đầu nội dung.
 
-**5. Dialog Adaptation - Full-Screen vs Modal:**
+**5. Điều chỉnh Dialog - Full-Screen so với Modal:**
 
-Complex dialogs (Export, PDF Options) display full-screen on Compact, modal centered on Medium/Expanded. Phương án always modal bị loại vì cramped on phones. Export dialog contains 8+ form controls (format selection, include options, filename input) - fitting all controls into 280dp modal width (Material guideline: max 320dp minus padding) forces tiny touch targets (32dp instead of 48dp) và excessive vertical scrolling.
+Các dialog phức tạp (Export, PDF Options) hiển thị toàn màn hình trên Compact, modal căn giữa trên Medium/Expanded. Phương án luôn modal bị loại bỏ vì chật chội trên điện thoại. Dialog Export chứa 8+ điều khiển biểu mẫu (chọn định dạng, tùy chọn bao gồm, nhập tên file) - khớp tất cả điều khiển vào chiều rộng modal 280dp (hướng dẫn Material: tối đa 320dp trừ padding) buộc vùng chạm nhỏ (32dp thay vì 48dp) và cuộn dọc quá mức.
 
-Phương án always full-screen (even on tablets/desktop) considered but inappropriate context. Full-screen dialogs signal major workflow shift - appropriate on phones where screen real estate precious, overkill on tablets where modal clearly represents temporary overlay.
+Phương án luôn toàn màn hình (ngay cả trên máy tính bảng/máy tính để bàn) được cân nhắc nhưng ngữ cảnh không phù hợp. Dialog toàn màn hình báo hiệu thay đổi quy trình làm việc lớn - phù hợp trên điện thoại nơi bất động sản màn hình quý giá, quá mức trên máy tính bảng nơi modal rõ ràng đại diện cho lớp phủ tạm thời.
 
-Full-screen dialogs on phones eliminate modal's reduced context problem. Modal dialogs dim 70% of screen hiding underlying content - on 6-inch phone, visible background area minimal, users forget origin context. Full-screen dialog with close button provides clear "this is temporary overlay" signal via UI (top bar with close X) rather than spatial context (floating modal).
+Dialog toàn màn hình trên điện thoại loại bỏ vấn đề ngữ cảnh giảm của modal. Dialog modal làm mờ 70% màn hình ẩn nội dung bên dưới - trên điện thoại 6 inch, khu vực nền hiển thị tối thiểu, người dùng quên ngữ cảnh gốc. Dialog toàn màn hình với nút đóng cung cấp tín hiệu rõ ràng "đây là lớp phủ tạm thời" qua UI (thanh trên cùng với X đóng) thay vì ngữ cảnh không gian (modal nổi).
 
-Modal dialogs on tablets/desktop maintain spatial context. 400dp modal on 840dp+ screen leaves substantial visible background (>50% screen) clearly signaling "temporary overlay, underlying screen still present". Modal also enables comparison workflows - users can reference content behind dialog while filling form.
+Dialog modal trên máy tính bảng/máy tính để bàn duy trì ngữ cảnh không gian. Modal 400dp trên màn hình 840dp+ để lại nền hiển thị đáng kể (>50% màn hình) rõ ràng báo hiệu "lớp phủ tạm thời, màn hình bên dưới vẫn hiện diện". Modal cũng cho phép quy trình so sánh - người dùng có thể tham chiếu nội dung phía sau dialog trong khi điền biểu mẫu.
 
-Testing: full-screen dialogs on phones improved form completion rate 23% (fewer abandonments) vs cramped modals. Modal dialogs on tablets reduced accidental dismissals 31% vs full-screen (full-screen users hit back button thinking dialog is new screen).
+Thử nghiệm: dialog toàn màn hình trên điện thoại cải thiện tỷ lệ hoàn thành biểu mẫu 23% (ít từ bỏ hơn) so với modal chật chội. Dialog modal trên máy tính bảng giảm bác bỏ nhầm 31% so với toàn màn hình (người dùng toàn màn hình nhấn nút back nghĩ dialog là màn hình mới).
 
-**6. Responsive Typography Scaling - Subtle not Aggressive:**
+**6. Mở rộng Typography Đáp ứng - Tinh tế không Hung hăng:**
 
-Typography scales subtly with screen size: Display Large 45sp (Compact) → 57sp (Expanded), but Body remains 16sp across all sizes. Phương án aggressive scaling (proportional to screen size) bị loại vì typography should scale with viewing distance, not screen size. Users hold phones 12 inches from face, tablets 15-18 inches, desktops 24+ inches - larger screens require proportionally larger text to maintain perceived size (angular size).
+Typography mở rộng tinh tế với kích thước màn hình: Display Large 45sp (Compact) → 57sp (Expanded), nhưng Body vẫn là 16sp trên tất cả kích thước. Phương án mở rộng hung hăng (tỷ lệ với kích thước màn hình) bị loại bỏ vì typography nên mở rộng theo khoảng cách xem, không phải kích thước màn hình. Người dùng giữ điện thoại cách mặt 12 inch, máy tính bảng 15-18 inch, máy tính để bàn 24+ inch - màn hình lớn hơn yêu cầu text lớn hơn tỷ lệ để duy trì kích thước cảm nhận (kích thước góc).
 
-However, phương án proportional scaling (2× screen width = 2× font size) overcorrects. Testing: fully proportional scaling resulted in 28sp body text on desktops feeling "comically large", users instinctively zoomed out. Reading distance increases with screen size but not linearly - exponential relationship better modeled by logarithmic scaling.
+Tuy nhiên, phương án mở rộng tỷ lệ (2× chiều rộng màn hình = 2× kích thước font) điều chỉnh quá mức. Thử nghiệm: mở rộng tỷ lệ đầy đủ dẫn đến body text 28sp trên máy tính để bàn cảm thấy "lớn một cách khôi hài", người dùng bản năng thu nhỏ. Khoảng cách đọc tăng với kích thước màn hình nhưng không tuyến tính - mối quan hệ hàm mũ được mô hình hóa tốt hơn bằng mở rộng logarit.
 
-Chosen approach: **Display text scales** (headlines, titles) vì these elements serve visual hierarchy role, larger screens afford more dramatic hierarchy. **Body text stable** (16sp everywhere) vì reading comfort optimal at 16sp regardless of device once viewing distance factored. Survey: 94% users rated 16sp body text as "comfortable" on all device types when using at natural distances.
+Phương pháp được chọn: **Display text mở rộng** (headline, title) vì các phần tử này phục vụ vai trò phân cấp thị giác, màn hình lớn hơn cho phép phân cấp ấn tượng hơn. **Body text ổn định** (16sp ở mọi nơi) vì sự thoải mái đọc tối ưu ở 16sp bất kể thiết bị nào khi đã tính đến khoảng cách xem. Khảo sát: 94% người dùng đánh giá body text 16sp là "thoải mái" trên tất cả loại thiết bị khi sử dụng ở khoảng cách tự nhiên.
 
-Scale factors (0.9×, 1.0×, 1.1×) represent 10% adjustments - subtle enough to avoid jarring differences, sufficient to optimize for viewing context. Material Design typography research validates minimal scaling approach: excessive scaling disrupts learned mental models (users expect text to feel familiar across devices).
+Hệ số mở rộng (0.9×, 1.0×, 1.1×) đại diện cho điều chỉnh 10% - đủ tinh tế để tránh sự khác biệt gây giật, đủ để tối ưu hóa cho ngữ cảnh xem. Nghiên cứu typography Material Design xác thực phương pháp mở rộng tối thiểu: mở rộng quá mức làm gián đoạn các mô hình tinh thần đã học (người dùng mong đợi text cảm thấy quen thuộc trên các thiết bị).
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Material 3 breakpoints: user device distribution 78% Compact, 15% Medium, 7% Expanded. Bottom Nav: 83% one-handed phone usage, 42% faster task completion vs drawer on phones. Navigation progression: 91% rated appropriate across breakpoints vs 67% phones/54% tablets for consistent approach. Content width constraints: reduced horizontal eye movement 34%, 89% prefer centered content with sidebars. Optimal line length 50-75 characters = 500-600dp width. Text >100 characters reduced reading speed 28%. Metrics adaptation: 37% improved reading focus with adapted layouts. Full-screen dialogs on phones: 23% improved form completion. Modal dialogs on tablets: 31% reduced accidental dismissals. Typography scaling: 94% rated 16sp body comfortable across devices.
+Điểm ngắt Material 3: phân phối thiết bị người dùng 78% Compact, 15% Medium, 7% Expanded. Bottom Nav: 83% sử dụng điện thoại một tay, hoàn thành tác vụ nhanh hơn 42% so với ngăn kéo trên điện thoại. Phát triển điều hướng: 91% đánh giá phù hợp trên các điểm ngắt so với 67% điện thoại/54% máy tính bảng cho phương pháp nhất quán. Ràng buộc chiều rộng nội dung: giảm chuyển động mắt ngang 34%, 89% thích nội dung căn giữa với thanh bên. Độ dài dòng tối ưu 50-75 ký tự = chiều rộng 500-600dp. Text >100 ký tự giảm tốc độ đọc 28%. Điều chỉnh metrics: cải thiện 37% trọng tâm đọc với bố cục được điều chỉnh. Dialog toàn màn hình trên điện thoại: cải thiện 23% hoàn thành biểu mẫu. Dialog modal trên máy tính bảng: giảm 31% bác bỏ nhầm. Mở rộng typography: 94% đánh giá body 16sp thoải mái trên các thiết bị.
 
 **Các cân nhắc về accessibility:**
 
-Window size classes automatically adapt to user preferences (font scaling, display size) via dp units (density-independent). Navigation patterns maintain consistent semantics across breakpoints (same destinations, same order) ensuring learned navigation transfers between devices. Content width constraints improve readability for dyslexic users (shorter lines reduce tracking errors). Touch targets maintain 48dp minimum across all breakpoints (buttons don't shrink on tablets). Full-screen dialogs on phones ensure form controls meet size requirements. Modal dialogs on large screens maintain focus trapping for keyboard navigation. Typography scaling accounts for viewing distance ensuring perceived size consistency (users don't need to zoom). All responsive layouts tested with screen readers ensuring adaptive navigation remains logical (no orphaned elements, proper focus management). Dynamic layouts respond to user-initiated zoom (content reflows) supporting vision-impaired users.
+Các lớp kích thước cửa sổ tự động thích ứng với tùy chọn người dùng (mở rộng font, kích thước hiển thị) qua đơn vị dp (độc lập mật độ). Các mẫu điều hướng duy trì ngữ nghĩa nhất quán qua các điểm ngắt (cùng đích đến, cùng thứ tự) đảm bảo điều hướng đã học chuyển giữa các thiết bị. Ràng buộc chiều rộng nội dung cải thiện khả năng đọc cho người dùng khó đọc (dòng ngắn hơn giảm lỗi theo dõi). Vùng chạm duy trì tối thiểu 48dp trên tất cả điểm ngắt (button không thu nhỏ trên máy tính bảng). Dialog toàn màn hình trên điện thoại đảm bảo điều khiển biểu mẫu đáp ứng yêu cầu kích thước. Dialog modal trên màn hình lớn duy trì bẫy focus cho điều hướng bàn phím. Mở rộng typography tính đến khoảng cách xem đảm bảo tính nhất quán kích thước cảm nhận (người dùng không cần zoom). Tất cả bố cục đáp ứng được kiểm tra với trình đọc màn hình đảm bảo điều hướng thích ứng vẫn hợp lý (không có phần tử mồ côi, quản lý focus đúng). Bố cục động phản hồi zoom do người dùng khởi tạo (nội dung tái cấu trúc) hỗ trợ người dùng bị suy giảm thị lực.
 
 ---
 
@@ -2795,97 +2795,97 @@ Users có thể enable "Reduce motion" in system settings. SumUp respects this:
 
 ---
 
-#### **Design Rationale & Justification - Animation Principles:**
+#### **Lý do thiết kế & Giải thích - Animation Principles:**
 
-Animation system được thiết kế dựa trên Material Motion principles, cognitive psychology research về attention và perception, và performance constraints của mobile platforms. Mỗi animation decision optimized cho user comprehension, perceived performance, và accessibility compliance while maintaining 60fps rendering target.
+Hệ thống animation được thiết kế dựa trên các nguyên tắc Material Motion, nghiên cứu tâm lý học nhận thức về sự chú ý và nhận thức, và các ràng buộc hiệu suất của nền tảng di động. Mỗi quyết định animation được tối ưu hóa cho sự hiểu biết của người dùng, hiệu suất cảm nhận, và tuân thủ khả năng tiếp cận trong khi duy trì mục tiêu kết xuất 60fps.
 
 **1. Material Motion Principles - Tại sao không Custom Animation Philosophy:**
 
-Material Motion's four principles (Purposeful, Natural, Quick, Clear) adopted thay vì custom animation philosophy hoặc competitive frameworks (iOS Human Interface Guidelines, Fluent Design Motion). Phương án custom philosophy bị loại vì requires extensive research establishing effectiveness - Material Motion backed by Google's UX research across billions of Android interactions, validated baseline more reliable than unproven custom approach.
+Bốn nguyên tắc của Material Motion (Purposeful, Natural, Quick, Clear) được áp dụng thay vì triết lý animation tùy chỉnh hoặc các khung cạnh tranh (iOS Human Interface Guidelines, Fluent Design Motion). Phương án triết lý tùy chỉnh bị loại bỏ vì yêu cầu nghiên cứu rộng rãi thiết lập hiệu quả - Material Motion được hỗ trợ bởi nghiên cứu UX của Google trên hàng tỷ tương tác Android, cơ sở được xác thực đáng tin cậy hơn phương pháp tùy chỉnh chưa được chứng minh.
 
-Phương án iOS-style animations (spring physics, bounce effects, slower timings) considered but inappropriate for Android. Testing: iOS-style animations on Android rated "feels wrong" by 78% Android users - platform conventions shape user expectations, cross-platform animation styles create cognitive dissonance.
+Phương án animation kiểu iOS (vật lý lò xo, hiệu ứng nảy, thời gian chậm hơn) được cân nhắc nhưng không phù hợp cho Android. Thử nghiệm: animation kiểu iOS trên Android được đánh giá "cảm thấy sai" bởi 78% người dùng Android - các quy ước nền tảng hình thành kỳ vọng của người dùng, kiểu animation đa nền tảng tạo ra sự bất hòa nhận thức.
 
-Material Motion chosen vì research-backed principles directly address animation purpose. **Purposeful** principle eliminates decorative animations - testing shows purposeless animations increase task completion time 12% (users wait for animations without gaining information). Every SumUp animation communicates state change, guides attention, or provides feedback. **Natural** principle (physics-based easing) creates familiarity - real-world objects don't move linearly, eased animations feel intuitive. Testing: ease-in-out animations rated 91% "smooth" vs 67% for linear. **Quick** principle (150-300ms) respects user time - animations >500ms feel sluggish, 68% users describe as "slow app". **Clear** principle (simple transitions) maintains comprehension - complex choreography may impress designers but 54% users report feeling "lost" during elaborate multi-element animations.
+Material Motion được chọn vì các nguyên tắc được hỗ trợ bởi nghiên cứu trực tiếp giải quyết mục đích animation. Nguyên tắc **Purposeful** loại bỏ animation trang trí - thử nghiệm cho thấy animation vô mục đích tăng thời gian hoàn thành tác vụ 12% (người dùng chờ animation mà không nhận được thông tin). Mọi animation SumUp truyền đạt thay đổi trạng thái, hướng dẫn sự chú ý, hoặc cung cấp phản hồi. Nguyên tắc **Natural** (easing dựa trên vật lý) tạo ra sự quen thuộc - các đối tượng trong thế giới thực không di chuyển tuyến tính, animation eased cảm thấy trực quan. Thử nghiệm: animation ease-in-out được đánh giá 91% "mượt mà" so với 67% cho tuyến tính. Nguyên tắc **Quick** (150-300ms) tôn trọng thời gian người dùng - animation >500ms cảm thấy chậm chạp, 68% người dùng mô tả là "ứng dụng chậm". Nguyên tắc **Clear** (chuyển tiếp đơn giản) duy trì sự hiểu biết - biên đạo phức tạp có thể gây ấn tượng với nhà thiết kế nhưng 54% người dùng báo cáo cảm thấy "lạc lối" trong animation nhiều phần tử phức tạp.
 
-Analytics: Material Motion animations achieve 0.8% abandonment rate during transitions vs 2.3% for slower custom animations - users less likely to press back during snappy transitions.
+Phân tích: animation Material Motion đạt tỷ lệ từ bỏ 0,8% trong chuyển tiếp so với 2,3% cho animation tùy chỉnh chậm hơn - người dùng ít có khả năng nhấn back trong chuyển tiếp nhanh.
 
-**2. Duration Standards (150-300ms) - Tại sao không Longer:**
+**2. Tiêu chuẩn Thời lượng (150-300ms) - Tại sao không Dài hơn:**
 
-Animation durations standardized at 150ms (short), 300ms (medium), 500ms (long) after testing range 100-800ms. Phương án longer durations (400-600ms standard) bị loại vì feels slow. Survey: 72% users describe 500ms screen transitions as "laggy" even though technically smooth 60fps. Psychology: perceived duration longer than actual duration - users overestimate animation time by 1.5-2×.
+Thời lượng animation được chuẩn hóa ở 150ms (ngắn), 300ms (trung bình), 500ms (dài) sau khi thử nghiệm phạm vi 100-800ms. Phương án thời lượng dài hơn (tiêu chuẩn 400-600ms) bị loại bỏ vì cảm thấy chậm. Khảo sát: 72% người dùng mô tả chuyển tiếp màn hình 500ms là "giật lag" mặc dù về mặt kỹ thuật mượt mà 60fps. Tâm lý: thời lượng cảm nhận dài hơn thời lượng thực tế - người dùng đánh giá quá cao thời gian animation gấp 1,5-2×.
 
-Phương án shorter durations (<100ms) considered but too abrupt. Testing: 80ms screen transitions rated "jarring" by 63% users - insufficient time for visual system to track movement. Human perception requires minimum ~100ms to register motion as smooth transition vs instant jump. 150ms emerges as sweet spot: long enough to perceive smooth motion, short enough to feel instant.
+Phương án thời lượng ngắn hơn (<100ms) được cân nhắc nhưng quá đột ngột. Thử nghiệm: chuyển tiếp màn hình 80ms được đánh giá "gây giật" bởi 63% người dùng - thời gian không đủ để hệ thống thị giác theo dõi chuyển động. Nhận thức của con người yêu cầu tối thiểu ~100ms để đăng ký chuyển động là chuyển tiếp mượt mà so với nhảy ngay lập tức. 150ms nổi lên là điểm ngọt ngào: đủ dài để nhận thức chuyển động mượt mà, đủ ngắn để cảm thấy tức thì.
 
-**150ms short** used for minor state changes (checkbox check, fade, color transitions) - changes that communicate binary state where prolonging animation provides no additional information. **300ms medium** for screen transitions và significant layout changes - sufficient time for users to track spatial relationships (where elements came from, where they're going). **500ms long** reserved for complex state changes requiring user attention (onboarding sequences, celebration animations). Durations beyond 500ms never used for blocking animations - user cannot proceed during animation, longer durations create frustration.
+**150ms ngắn** được sử dụng cho thay đổi trạng thái nhỏ (kiểm tra checkbox, fade, chuyển tiếp màu) - thay đổi truyền đạt trạng thái nhị phân nơi kéo dài animation không cung cấp thông tin bổ sung. **300ms trung bình** cho chuyển tiếp màn hình và thay đổi bố cục quan trọng - thời gian đủ cho người dùng theo dõi mối quan hệ không gian (các phần tử đến từ đâu, chúng đi đâu). **500ms dài** dành riêng cho thay đổi trạng thái phức tạp yêu cầu sự chú ý của người dùng (chuỗi onboarding, animation kỷ niệm). Thời lượng vượt quá 500ms không bao giờ được sử dụng cho animation chặn - người dùng không thể tiếp tục trong animation, thời lượng dài hơn tạo ra sự thất vọng.
 
-Frame budget: At 60fps, 300ms animation = 18 frames. Complex animations (fade + slide) possible within budget. 500ms = 30 frames, adequate for intricate choreography if needed. Testing confirmed: 300ms screen transitions maintain 60fps on mid-range devices (Snapdragon 600-series, 4GB RAM).
+Ngân sách khung hình: Ở 60fps, animation 300ms = 18 khung. Animation phức tạp (fade + slide) có thể trong ngân sách. 500ms = 30 khung, đủ cho biên đạo phức tạp nếu cần. Thử nghiệm xác nhận: chuyển tiếp màn hình 300ms duy trì 60fps trên thiết bị tầm trung (Snapdragon 600-series, 4GB RAM).
 
-**3. Screen Transition Direction - Horizontal Slide vs Vertical:**
+**3. Hướng Chuyển tiếp Màn hình - Slide Ngang so với Dọc:**
 
-Forward navigation uses horizontal slide-in from right, backward navigation slides out to right. Phương án vertical slides (up/down) bị loại vì conflicts with scrolling gestures. Testing: vertical screen transitions confused users - 34% attempted to scroll during transition thinking screen was scrolling content. Horizontal slides clearly distinguishable from vertical scrolling.
+Điều hướng tiến sử dụng slide-in ngang từ phải, điều hướng lùi slide ra phải. Phương án slide dọc (lên/xuống) bị loại bỏ vì xung đột với cử chỉ cuộn. Thử nghiệm: chuyển tiếp màn hình dọc làm người dùng nhầm lẫn - 34% cố cuộn trong chuyển tiếp nghĩ màn hình đang cuộn nội dung. Slide ngang có thể phân biệt rõ ràng với cuộn dọc.
 
-Phương án fade-only transitions (no slide) considered for simplicity but loses spatial context. Slide animations communicate hierarchical navigation: new screen slides in "on top" signaling deeper hierarchy level, slide out reveals previous screen "underneath" signaling return to parent. Testing: slide transitions improved navigation mental model - 87% users correctly identified current depth in navigation stack vs 71% with fade-only.
+Phương án chuyển tiếp chỉ fade (không slide) được cân nhắc cho sự đơn giản nhưng mất ngữ cảnh không gian. Animation slide truyền đạt điều hướng phân cấp: màn hình mới slide vào "ở trên" báo hiệu cấp phân cấp sâu hơn, slide ra tiết lộ màn hình trước "ở dưới" báo hiệu quay lại cha. Thử nghiệm: chuyển tiếp slide cải thiện mô hình tinh thần điều hướng - 87% người dùng xác định đúng độ sâu hiện tại trong ngăn xếp điều hướng so với 71% với chỉ fade.
 
-Direction semantics: right-to-left slide for forward navigation matches reading direction (for LTR languages) và platform convention. Right edge represents "future/new", left edge represents "past/previous". Survey: 94% users correctly predict navigation direction based on slide direction without instruction - validates learned convention.
+Ngữ nghĩa hướng: slide phải sang trái cho điều hướng tiến khớp với hướng đọc (cho ngôn ngữ LTR) và quy ước nền tảng. Cạnh phải đại diện "tương lai/mới", cạnh trái đại diện "quá khứ/trước đó". Khảo sát: 94% người dùng dự đoán đúng hướng điều hướng dựa trên hướng slide mà không có hướng dẫn - xác thực quy ước đã học.
 
-Tab switching uses crossfade (no slide) vì tabs represent lateral movement (same hierarchy level), not forward/backward. Slide would incorrectly imply hierarchy. Testing: horizontal slides for tab switching resulted in 28% users believing tabs were separate navigation paths rather than parallel views.
+Chuyển đổi tab sử dụng crossfade (không slide) vì tab đại diện cho chuyển động ngang (cùng cấp phân cấp), không phải tiến/lùi. Slide sẽ ngụ ý phân cấp không chính xác. Thử nghiệm: slide ngang cho chuyển đổi tab dẫn đến 28% người dùng tin rằng tab là đường dẫn điều hướng riêng biệt thay vì chế độ xem song song.
 
 **4. Button Press Scale (0.95) - Subtle Tactile Feedback:**
 
-Button press animates scale 1.0 → 0.95 → 1.0 providing tactile feedback. Phương án scale 0.90 (more dramatic) bị loại vì too exaggerated - survey: 67% users describe 0.90 scale as "weird" or "too squishy". Phương án no scale (only color change) lacks physicality - testing: scale animation increased perceived responsiveness 23% even though actual response time identical.
+Nhấn button tạo animation scale 1.0 → 0.95 → 1.0 cung cấp phản hồi xúc giác. Phương án scale 0.90 (ấn tượng hơn) bị loại bỏ vì quá phóng đại - khảo sát: 67% người dùng mô tả scale 0.90 là "kỳ lạ" hoặc "quá mềm nhũn". Phương án không scale (chỉ thay đổi màu) thiếu tính vật lý - thử nghiệm: animation scale tăng độ đáp ứng cảm nhận 23% mặc dù thời gian phản hồi thực tế giống hệt nhau.
 
-0.95 scale (5% reduction) chosen as subtle but noticeable. Psychology: change detection threshold ~5% for size - smaller changes not reliably perceived. 5% large enough for visual system to register press, small enough to avoid cartoonish feel. Combined with elevation change (2dp → 0dp) creates realistic "pressing into screen" effect.
+Scale 0.95 (giảm 5%) được chọn là tinh tế nhưng đáng chú ý. Tâm lý: ngưỡng phát hiện thay đổi ~5% cho kích thước - thay đổi nhỏ hơn không được nhận thức đáng tin cậy. 5% đủ lớn để hệ thống thị giác đăng ký nhấn, đủ nhỏ để tránh cảm giác hoạt hình. Kết hợp với thay đổi độ nổi (2dp → 0dp) tạo hiệu ứng "nhấn vào màn hình" thực tế.
 
-Duration 100ms down, 150ms up creates snappy response. Asymmetric timing (faster down, slower up) mimics physics - pressing button requires force (quick), releasing springs back (slightly slower). Testing: asymmetric timing rated 89% "natural" vs 78% for symmetric timing.
+Thời lượng 100ms xuống, 150ms lên tạo phản hồi nhanh. Thời gian bất đối xứng (nhanh hơn khi xuống, chậm hơn khi lên) bắt chước vật lý - nhấn button yêu cầu lực (nhanh), nhả lò xo trở lại (hơi chậm hơn). Thử nghiệm: thời gian bất đối xứng được đánh giá 89% "tự nhiên" so với 78% cho thời gian đối xứng.
 
-Haptic feedback (light tap) accompanies scale animation reinforcing tactile sensation. Testing: button press with haptic feedback perceived as 34% more responsive than visual-only feedback - multisensory feedback enhances perceived performance.
+Phản hồi haptic (chạm nhẹ) đi kèm animation scale củng cố cảm giác xúc giác. Thử nghiệm: nhấn button với phản hồi haptic được cảm nhận là đáp ứng hơn 34% so với phản hồi chỉ thị giác - phản hồi đa giác quan tăng cường hiệu suất cảm nhận.
 
 **5. Shimmer Loading vs Spinner - Content Preview:**
 
-Shimmer loading (animated gradient sweep) chosen over spinner for skeleton screens. Phương án spinner (circular progress) bị loại vì provides no content context - users uncertain what's loading, how much, or when it will complete. Spinner creates anxiety: "How long will this take?"
+Shimmer loading (quét gradient hoạt ảnh) được chọn thay vì vòng quay cho skeleton screen. Phương án vòng quay (tiến trình vòng tròn) bị loại bỏ vì không cung cấp ngữ cảnh nội dung - người dùng không chắc chắn cái gì đang tải, bao nhiêu, hoặc khi nào sẽ hoàn thành. Vòng quay tạo lo lắng: "Điều này sẽ mất bao lâu?"
 
-Shimmer skeleton screens preview content structure providing psychological comfort. Example: History loading shows 5 shimmer cards → users immediately understand "loading list, probably 5+ items, should take 2-3 seconds based on past experience". Testing: skeleton screens reduced perceived wait time 32% vs spinners despite identical actual loading time. Psychology: predictability reduces anxiety - knowing what to expect makes waiting tolerable.
+Skeleton screen shimmer xem trước cấu trúc nội dung cung cấp sự thoải mái tâm lý. Ví dụ: Tải lịch sử hiển thị 5 card shimmer → người dùng ngay lập tức hiểu "đang tải danh sách, có thể 5+ mục, nên mất 2-3 giây dựa trên kinh nghiệm quá khứ". Thử nghiệm: skeleton screen giảm thời gian chờ cảm nhận 32% so với vòng quay mặc dù thời gian tải thực tế giống hệt nhau. Tâm lý: khả năng dự đoán giảm lo lắng - biết điều gì mong đợi khiến chờ đợi chịu đựng được.
 
-Shimmer animation (1.5 second sweep) signals activity preventing "app frozen" perception. Testing: static gray skeletons (no animation) caused 41% users to tap screen or press back within 3 seconds thinking app hung. Animated shimmer clearly communicates "loading in progress, please wait". 1.5 second duration chosen as perceptible but not distracting - faster sweeps (0.8s) feel frantic, slower (2.5s) feel sluggish.
+Animation shimmer (quét 1,5 giây) báo hiệu hoạt động ngăn ngừa nhận thức "ứng dụng đóng băng". Thử nghiệm: skeleton xám tĩnh (không có animation) khiến 41% người dùng chạm màn hình hoặc nhấn back trong vòng 3 giây nghĩ ứng dụng bị treo. Shimmer hoạt ảnh rõ ràng truyền đạt "đang tải, vui lòng chờ". Thời lượng 1,5 giây được chọn là có thể nhận thức nhưng không gây phân tâm - quét nhanh hơn (0.8s) cảm thấy điên cuồng, chậm hơn (2.5s) cảm thấy chậm chạp.
 
-Subtle gradient (20% opacity difference) maintains calm aesthetic. High-contrast shimmers (50%+ difference) draw excessive attention creating perception of slow loading. Survey: 86% users prefer subtle shimmer, describing high-contrast as "distracting" or "makes loading feel longer".
+Gradient tinh tế (chênh lệch độ mờ 20%) duy trì thẩm mỹ bình tĩnh. Shimmer tương phản cao (chênh lệch 50%+) thu hút quá nhiều sự chú ý tạo nhận thức tải chậm. Khảo sát: 86% người dùng thích shimmer tinh tế, mô tả tương phản cao là "gây phân tâm" hoặc "khiến tải cảm thấy lâu hơn".
 
 **6. Micro-Interactions (100-200ms) - Instant Gratification:**
 
-Micro-interactions (favorite toggle, checkbox, color change) use 100-200ms durations providing instant gratification. Phương án 300ms+ for micro-interactions bị loại vì feels laggy. Psychology: actions requiring immediate feedback (like/favorite) need near-instant response (<200ms) to feel rewarding. Delays >200ms break action-feedback loop creating uncertainty.
+Micro-interaction (chuyển đổi yêu thích, checkbox, thay đổi màu) sử dụng thời lượng 100-200ms cung cấp sự thỏa mãn tức thì. Phương án 300ms+ cho micro-interaction bị loại bỏ vì cảm thấy giật lag. Tâm lý: hành động yêu cầu phản hồi ngay lập tức (thích/yêu thích) cần phản hồi gần như tức thì (<200ms) để cảm thấy bổ ích. Độ trễ >200ms phá vỡ vòng lặp hành động-phản hồi tạo sự không chắc chắn.
 
-Favorite toggle animation combines three elements: scale bounce (1.0 → 1.3 → 1.0), color change (gray → red), icon change (outline → filled). Multi-element animation creates satisfying "pop" effect. Testing: combined animation achieved 91% user satisfaction vs 67% for simple color change - layered feedback more rewarding.
+Animation chuyển đổi yêu thích kết hợp ba phần tử: nảy scale (1.0 → 1.3 → 1.0), thay đổi màu (xám → đỏ), thay đổi icon (viền → đầy). Animation nhiều phần tử tạo hiệu ứng "pop" thỏa mãn. Thử nghiệm: animation kết hợp đạt 91% sự hài lòng của người dùng so với 67% cho thay đổi màu đơn giản - phản hồi nhiều lớp bổ ích hơn.
 
-Scale bounce (1.3×) exceeds normal press scale (0.95) creating emphasis. Favorite is positive action deserving celebration, bounce communicates success. 200ms duration keeps animation snappy while allowing bounce to be perceived. Haptic light tap reinforces positive feedback.
+Nảy scale (1.3×) vượt quá scale nhấn bình thường (0.95) tạo sự nhấn mạnh. Yêu thích là hành động tích cực xứng đáng kỷ niệm, nảy truyền đạt thành công. Thời lượng 200ms giữ animation nhanh trong khi cho phép nảy được nhận thức. Chạm nhẹ haptic củng cố phản hồi tích cực.
 
-Character counter color transition (150ms) provides continuous awareness without interruption. Smooth color fade (green → yellow → red) communicates graduated warning. Testing: instant color change (no transition) startled users - 34% reported being "surprised" by sudden red text. 150ms fade gentle enough not to startle while quick enough to be noticed.
+Chuyển tiếp màu bộ đếm ký tự (150ms) cung cấp nhận thức liên tục không bị gián đoạn. Fade màu mượt mà (xanh lá → vàng → đỏ) truyền đạt cảnh báo dần dần. Thử nghiệm: thay đổi màu tức thì (không có chuyển tiếp) làm người dùng giật mình - 34% báo cáo bị "ngạc nhiên" bởi text đỏ đột ngột. Fade 150ms đủ nhẹ nhàng để không làm giật mình trong khi đủ nhanh để được chú ý.
 
 **7. Error Shake (400ms, 2 cycles) - Attention + Negative Feedback:**
 
-Error states trigger shake animation (±8dp horizontal oscillation, 400ms, 2 cycles) communicating rejection. Phương án static error (no animation) bị loại vì insufficient attention capture. Testing: users missed static error messages 38% of time, continued attempting action. Shake animation ensures error noticed - 96% attention capture rate.
+Trạng thái lỗi kích hoạt animation lắc (dao động ngang ±8dp, 400ms, 2 chu kỳ) truyền đạt sự từ chối. Phương án lỗi tĩnh (không có animation) bị loại bỏ vì không đủ thu hút sự chú ý. Thử nghiệm: người dùng bỏ lỡ thông báo lỗi tĩnh 38% thời gian, tiếp tục cố gắng hành động. Animation lắc đảm bảo lỗi được chú ý - tỷ lệ thu hút chú ý 96%.
 
-Horizontal shake chosen over vertical vì cross-cultural "no" gesture (head shake left-right). Vertical movement lacks semantic meaning. Shake magnitude ±8dp large enough to be obvious, small enough not to distort UI. Testing: ±4dp shake barely noticeable (67% missed), ±12dp too aggressive (rated "violent" by 54% users).
+Lắc ngang được chọn thay vì dọc vì cử chỉ "không" xuyên văn hóa (lắc đầu trái-phải). Chuyển động dọc thiếu ý nghĩa ngữ nghĩa. Độ lớn lắc ±8dp đủ lớn để rõ ràng, đủ nhỏ để không làm biến dạng UI. Thử nghiệm: lắc ±4dp hầu như không thể nhận thấy (67% bỏ lỡ), ±12dp quá hung hăng (được đánh giá "bạo lực" bởi 54% người dùng).
 
-Duration 400ms (2 cycles at 200ms each) provides emphasis without prolonging frustration. Single cycle (200ms) too brief - 43% users missed it. Three cycles (600ms) feels mocking - survey: described as "app making fun of me". Two cycles strikes balance: noticeable emphasis, respectful of user's mistake.
+Thời lượng 400ms (2 chu kỳ ở 200ms mỗi chu kỳ) cung cấp sự nhấn mạnh mà không kéo dài sự thất vọng. Chu kỳ đơn (200ms) quá ngắn - 43% người dùng bỏ lỡ. Ba chu kỳ (600ms) cảm thấy chế nhạo - khảo sát: được mô tả là "ứng dụng chế giễu tôi". Hai chu kỳ đạt được sự cân bằng: nhấn mạnh đáng chú ý, tôn trọng sai lầm của người dùng.
 
-Heavy haptic feedback accompanies shake reinforcing negative signal. Testing: error shake with heavy haptic resulted in 89% users correcting mistake immediately vs 72% with no haptic - strong tactile feedback ensures error registered.
+Phản hồi haptic nặng đi kèm lắc củng cố tín hiệu tiêu cực. Thử nghiệm: lắc lỗi với haptic nặng dẫn đến 89% người dùng sửa sai lầm ngay lập tức so với 72% không có haptic - phản hồi xúc giác mạnh đảm bảo lỗi được đăng ký.
 
 **8. Reduce Motion Accessibility - Tại sao không Disable All Animations:**
 
-Reduce motion preference respected via alternative behaviors (instant transitions, simple fades, immediate state changes). Phương án completely disabling all animations bị loại vì removes crucial feedback. Testing với vestibular disorder users: complete absence of transitions felt disorienting - instant screen changes without visual continuity caused confusion "Where am I? How did I get here?"
+Tùy chọn giảm chuyển động được tôn trọng thông qua các hành vi thay thế (chuyển tiếp tức thì, fade đơn giản, thay đổi trạng thái ngay lập tức). Phương án vô hiệu hóa hoàn toàn tất cả animation bị loại bỏ vì loại bỏ phản hồi quan trọng. Thử nghiệm với người dùng rối loạn tiền đình: vắng mặt hoàn toàn chuyển tiếp cảm thấy mất phương hướng - thay đổi màn hình tức thì không có tính liên tục thị giác gây nhầm lẫn "Tôi đang ở đâu? Tôi đến đây như thế nào?"
 
-Phương án ignoring reduce motion preference (keeping all animations) inappropriate vì triggers motion sickness. Users with vestibular disorders, migraine sufferers, và elderly users report nausea, dizziness, headaches from parallax effects và elaborate animations. WCAG 2.1 requires respecting reduce motion (Success Criterion 2.3.3).
+Phương án bỏ qua tùy chọn giảm chuyển động (giữ tất cả animation) không phù hợp vì kích hoạt say chuyển động. Người dùng có rối loạn tiền đình, người bị đau nửa đầu, và người dùng cao tuổi báo cáo buồn nôn, chóng mặt, đau đầu từ hiệu ứng thị sai và animation phức tạp. WCAG 2.1 yêu cầu tôn trọng giảm chuyển động (Success Criterion 2.3.3).
 
-Chosen approach: replace motion with simple fades maintaining visual continuity without triggering symptoms. Screen transitions instant but with 150ms crossfade preventing jarring jumps. Loading replaces shimmer animation with pulse fade (opacity change only, no movement). Micro-interactions become immediate state changes but retain color/icon changes (non-motion feedback).
+Phương pháp được chọn: thay thế chuyển động bằng fade đơn giản duy trì tính liên tục thị giác mà không kích hoạt triệu chứng. Chuyển tiếp màn hình tức thì nhưng với crossfade 150ms ngăn nhảy gây giật. Tải thay thế animation shimmer bằng pulse fade (chỉ thay đổi độ mờ, không có chuyển động). Micro-interaction trở thành thay đổi trạng thái ngay lập tức nhưng giữ lại thay đổi màu/icon (phản hồi không chuyển động).
 
-Analytics: 3.2% SumUp users enable reduce motion. Testing with this cohort: 94% satisfaction with adapted animations vs 67% satisfaction when reduce motion ignored. Haptic feedback remains enabled (separate preference) providing alternative sensory channel.
+Phân tích: 3,2% người dùng SumUp bật giảm chuyển động. Thử nghiệm với nhóm này: 94% sự hài lòng với animation được điều chỉnh so với 67% sự hài lòng khi giảm chuyển động bị bỏ qua. Phản hồi haptic vẫn được bật (tùy chọn riêng biệt) cung cấp kênh giác quan thay thế.
 
 **Dữ liệu nghiên cứu người dùng hỗ trợ:**
 
-Material Motion: 0.8% abandonment during transitions vs 2.3% custom animations. Ease-in-out: 91% rated smooth vs 67% linear. 150-300ms durations: 72% describe 500ms as "laggy". 300ms transitions maintain 60fps on mid-range devices. Horizontal slides: 87% correctly identify navigation depth vs 71% fade-only, 94% predict direction. Button scale 0.95: 23% increased perceived responsiveness, 89% rated natural with asymmetric timing. Haptic feedback: 34% more responsive perception. Shimmer loading: 32% reduced perceived wait time, 41% thought static skeletons meant frozen app, 86% prefer subtle 20% contrast. Micro-interactions: <200ms feels instant, 91% satisfaction with layered feedback. Error shake: 96% attention capture vs 38% missed static errors, 89% immediate correction with haptic. Reduce motion: 3.2% users enabled, 94% satisfaction when respected vs 67% when ignored.
+Material Motion: 0,8% từ bỏ trong chuyển tiếp so với 2,3% animation tùy chỉnh. Ease-in-out: 91% đánh giá mượt mà so với 67% tuyến tính. Thời lượng 150-300ms: 72% mô tả 500ms là "giật lag". Chuyển tiếp 300ms duy trì 60fps trên thiết bị tầm trung. Slide ngang: 87% xác định đúng độ sâu điều hướng so với 71% chỉ fade, 94% dự đoán hướng. Button scale 0.95: tăng 23% độ đáp ứng cảm nhận, 89% đánh giá tự nhiên với thời gian bất đối xứng. Phản hồi haptic: nhận thức đáp ứng hơn 34%. Shimmer loading: giảm 32% thời gian chờ cảm nhận, 41% nghĩ skeleton tĩnh có nghĩa ứng dụng đóng băng, 86% thích tương phản tinh tế 20%. Micro-interaction: <200ms cảm thấy tức thì, 91% sự hài lòng với phản hồi nhiều lớp. Lắc lỗi: 96% thu hút chú ý so với 38% bỏ lỡ lỗi tĩnh, 89% sửa ngay lập tức với haptic. Giảm chuyển động: 3,2% người dùng bật, 94% sự hài lòng khi được tôn trọng so với 67% khi bị bỏ qua.
 
 **Các cân nhắc về accessibility:**
 
-All animations respect reduce motion system preference (WCAG 2.3.3) with instant transitions and simple fades as fallback. Essential feedback retained (color changes, haptic, sounds) ensuring users don't lose critical information. Animation durations under 500ms for blocking animations preventing frustration (WCAG 2.2.1 - no time limits). Haptic feedback provides alternative sensory channel for users with visual impairments. Color changes never sole indicator - animations combine multiple signals (color + icon + scale + haptic). Skeleton screens benefit screen reader users by maintaining DOM structure (announcement regions preserved) vs blank loading states. Predictive back gesture provides visual preview helping users with cognitive disabilities understand navigation consequences. All animations interruptible - users can tap during animation to proceed immediately, respecting diverse motor abilities and patience levels.
+Tất cả animation tôn trọng tùy chọn hệ thống giảm chuyển động (WCAG 2.3.3) với chuyển tiếp tức thì và fade đơn giản làm dự phòng. Phản hồi thiết yếu được giữ lại (thay đổi màu, haptic, âm thanh) đảm bảo người dùng không mất thông tin quan trọng. Thời lượng animation dưới 500ms cho animation chặn ngăn sự thất vọng (WCAG 2.2.1 - không có giới hạn thời gian). Phản hồi haptic cung cấp kênh giác quan thay thế cho người dùng bị suy giảm thị lực. Thay đổi màu không bao giờ là chỉ báo duy nhất - animation kết hợp nhiều tín hiệu (màu + icon + scale + haptic). Skeleton screen mang lại lợi ích cho người dùng trình đọc màn hình bằng cách duy trì cấu trúc DOM (các vùng thông báo được bảo toàn) so với trạng thái tải trống. Cử chỉ back dự đoán cung cấp xem trước thị giác giúp người dùng bị khuyết tật nhận thức hiểu hậu quả điều hướng. Tất cả animation có thể bị gián đoạn - người dùng có thể chạm trong animation để tiến hành ngay lập tức, tôn trọng khả năng vận động và mức độ kiên nhẫn đa dạng.
 
 ---
 
