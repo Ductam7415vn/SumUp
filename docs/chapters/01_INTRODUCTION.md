@@ -47,9 +47,13 @@ Xuất phát từ những vấn đề và cơ hội nêu trên, việc thiết k
 
 #### Mục tiêu chính
 
-**Thiết kế giao diện người dùng hoàn chỉnh cho ứng dụng SumUp** - một ứng dụng di động tóm tắt văn bản thông minh dựa trên công nghệ AI (Google Gemini), đáp ứng nhu cầu đa dạng của người dùng Việt Nam trong việc xử lý và tóm tắt thông tin văn bản nhanh chóng, chính xác và hiệu quả.
+**Thiết kế giao diện người dùng hoàn chỉnh cho ứng dụng SumUp** 
+- một ứng dụng di động tóm tắt văn bản thông minh dựa trên công nghệ AI (Google Gemini), 
+- áp ứng nhu cầu đa dạng của người dùng Việt Nam trong việc xử lý và tóm tắt thông tin văn bản nhanh chóng, 
+- chính xác và hiệu quả.
 
-Sản phẩm cuối cùng là một **bộ thiết kế giao diện hoàn chỉnh** (High-Fidelity Mockups và Interactive Prototype) đã được nghiên cứu, thiết kế, kiểm thử và tinh chỉnh dựa trên phương pháp thiết kế lấy người dùng làm trung tâm (User-Centered Design).
+Sản phẩm cuối cùng là một **bộ thiết kế giao diện hoàn chỉnh** (High-Fidelity Mockups và Interactive Prototype) đã được nghiên cứu,
+thiết kế, kiểm thử và tinh chỉnh dựa trên phương pháp thiết kế lấy người dùng làm trung tâm (User-Centered Design).
 
 #### Mục tiêu phụ
 
