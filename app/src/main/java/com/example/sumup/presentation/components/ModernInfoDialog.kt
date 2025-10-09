@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -36,7 +37,24 @@ fun ModernInfoDialog(
 ) {
     val haptics = LocalHapticFeedback.current
     var isVisible by remember { mutableStateOf(false) }
-    
+
+    // Responsive width and height calculation
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.9f   // Phone: 90%
+        screenWidth < 840.dp -> 480.dp                // Small tablet
+        else -> 550.dp                                 // Large tablet
+    }
+    val contentMaxHeight = remember(screenHeight) {
+        when {
+            screenHeight < 600.dp -> screenHeight * 0.5f  // 50% for small screens
+            screenHeight < 800.dp -> 400.dp               // Fixed for medium screens
+            else -> 500.dp                                 // Taller for large screens
+        }
+    }
+
     // Trigger haptic feedback and animation on show
     LaunchedEffect(Unit) {
         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -89,7 +107,8 @@ fun ModernInfoDialog(
         ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth(0.9f)
+                    .fillMaxWidth()
+                    .widthIn(max = dialogMaxWidth)
                     .wrapContentHeight(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
@@ -174,7 +193,7 @@ fun ModernInfoDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp)
-                                .heightIn(max = 400.dp) // Constrain height instead of using scroll
+                                .heightIn(max = contentMaxHeight) // Responsive height constraint
                                 .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {

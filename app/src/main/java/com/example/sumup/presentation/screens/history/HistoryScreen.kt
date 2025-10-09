@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.domain.model.Summary
 import com.example.sumup.presentation.screens.history.components.*
 import com.example.sumup.presentation.components.*
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -42,9 +43,15 @@ fun HistoryScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val filters by viewModel.filters.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showClearAllDialog by remember { mutableStateOf(false) }
-    
+    var deletedSummaryId by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             TopAppBar(
                 title = { 
@@ -255,7 +262,26 @@ fun HistoryScreen(
                                             }
                                         },
                                         onShare = { shareSummary(context, summary) },
-                                        onDelete = { viewModel.deleteSummary(summary.id) },
+                                        onDelete = {
+                                            deletedSummaryId = summary.id
+                                            viewModel.deleteSummary(summary.id)
+
+                                            // Show undo snackbar
+                                            scope.launch {
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = "Summary deleted",
+                                                    actionLabel = "Undo",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    // User clicked undo
+                                                    deletedSummaryId?.let { id ->
+                                                        viewModel.undoDelete(id)
+                                                    }
+                                                }
+                                                deletedSummaryId = null
+                                            }
+                                        },
                                         onToggleFavorite = { viewModel.toggleFavorite(summary.id) }
                                     )
                                 }
@@ -286,6 +312,18 @@ fun HistoryScreen(
                         onClick = {
                             viewModel.clearAllHistory()
                             showClearAllDialog = false
+
+                            // Show undo snackbar for clear all
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "All history cleared",
+                                    actionLabel = "Undo",
+                                    duration = SnackbarDuration.Long
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.undoClearAll()
+                                }
+                            }
                         },
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.error

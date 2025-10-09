@@ -126,64 +126,113 @@ object GeminiPromptBuilder {
         val briefLength = (sourceLength * 0.05).toInt().coerceAtLeast(50) // 5% of source, min 50 chars
         val standardLength = (sourceLength * 0.10).toInt().coerceAtLeast(100) // 10% of source, min 100 chars
         val detailedLength = (sourceLength * 0.20).toInt().coerceAtLeast(200) // 20% of source, min 200 chars
-        
+
         return """
-        LENGTH REQUIREMENTS:
-        - BRIEF: Exactly ${briefLength} characters (5% of source text)
-        - SUMMARY: Exactly ${standardLength} characters (10% of source text)
-        - DETAILED: Exactly ${detailedLength} characters (20% of source text)
+        LENGTH REQUIREMENTS - EXTREMELY IMPORTANT:
+        Source text length: ${sourceLength} characters
+
+        BRIEF (5%): Write EXACTLY ${briefLength} characters - ONE SHORT SENTENCE only
+        - Must be 1-2 sentences maximum
+        - Focus on the single most important point
+        - MUST BE SHORTER than SUMMARY
+
+        SUMMARY (10%): Write EXACTLY ${standardLength} characters - ONE PARAGRAPH
+        - Must be 3-5 sentences
+        - Cover main points comprehensively
+        - MUST BE LONGER than BRIEF but SHORTER than DETAILED
+
+        DETAILED (20%): Write EXACTLY ${detailedLength} characters - MULTIPLE PARAGRAPHS
+        - Must be 6-10 sentences
+        - Include full context, examples, and implications
+        - MUST BE THE LONGEST section - at least TWICE as long as SUMMARY
+
+        CRITICAL: These are THREE DIFFERENT summaries with DIFFERENT LENGTHS!
+        - BRIEF < SUMMARY < DETAILED (each progressively longer)
         - Each bullet point: 50-100 characters
         - Provide 5-7 bullet points based on content richness
-        - CRITICAL: You MUST meet these exact character counts for each section
-        - If source is short, still maintain the percentage ratios
-        - Focus on extracting TRUE CONTENT - no filler or repetition
     """.trimIndent()
     }
 
     private fun getOutputFormat(): String = """
-        OUTPUT FORMAT:
-        Please provide your response in PLAIN TEXT with the following structure:
-        
+        OUTPUT FORMAT - STRICT PLAIN TEXT (NOT JSON OR MARKDOWN):
+        You MUST respond in PLAIN TEXT format. DO NOT use JSON, Markdown headers (##, ###), or any formatting symbols.
+        Follow this EXACT structure with NOTHING ELSE:
+
         BRIEF:
-        [One concise sentence that is exactly 5% of the source text length]
-        
+        [Write ONE SHORT SENTENCE here - must be significantly shorter than SUMMARY]
+
         SUMMARY:
-        [Write a comprehensive paragraph that is exactly 10% of the source text length]
-        
+        [Write ONE FULL PARAGRAPH here - must be longer than BRIEF but shorter than DETAILED]
+
         DETAILED:
-        [Expanded analysis with full context that is exactly 20% of the source text length]
-        
+        [Write MULTIPLE PARAGRAPHS here - must be the LONGEST section, at least twice as long as SUMMARY]
+
         KEY POINTS:
-        • [First key point]
-        • [Second key point]
-        • [Third key point]
-        • [Fourth key point]
-        • [Fifth key point]
-        • [Additional points as needed, 5-7 total]
-        
+        • [First key point - complete sentence]
+        • [Second key point - complete sentence]
+        • [Third key point - complete sentence]
+        • [Fourth key point - complete sentence]
+        • [Fifth key point - complete sentence]
+        • [Additional points, 5-7 total]
+
         KEY INSIGHTS:
         • [Deep insight about implications]
         • [Pattern or trend identified]
         • [Critical observation]
         • [3-5 insights total]
-        
+
         ACTION ITEMS:
         • [Specific action if applicable]
         • [Next steps if relevant]
         • [Include only if actionable content exists]
-        
+
         KEYWORDS:
         [keyword1, keyword2, keyword3, keyword4, keyword5]
-        
-        FORMATTING RULES:
-        - Each section must start with its label in CAPS followed by colon
-        - Write brief as one concise sentence
-        - Summary should be one detailed paragraph
-        - Detailed should expand with more context
-        - Use bullet symbol (•) for all bullet points
-        - Each bullet point should be complete and standalone
-        - Include ACTION ITEMS only if the content suggests actions
-        - Keywords should be comma-separated, lowercase
+
+        CORRECT EXAMPLE (for 1000 character source):
+
+        BRIEF:
+        The article explains investment strategies that work in any market.
+
+        SUMMARY:
+        The article explains investment strategies that allow profit in any market condition through diversification. It covers three main approaches: long positions, short positions, and hedging techniques. These strategies help investors protect capital while seeking returns regardless of market direction.
+
+        DETAILED:
+        The article provides a comprehensive explanation of modern investment strategies that enable investors to generate profits regardless of market direction. It discusses the historical development of these approaches, starting from traditional buy-and-hold methods to more sophisticated hedging techniques. The content explores three primary strategies: establishing long positions in undervalued assets, taking short positions when markets are overpriced, and using derivatives to hedge against downside risk. Additionally, it explains how portfolio diversification across different asset classes and geographic regions can reduce overall risk while maintaining growth potential. The practical applications include specific examples of when to apply each strategy based on market conditions and investor risk tolerance.
+
+        KEY POINTS:
+        • Investment strategies can generate profits in both rising and falling markets
+        • Three main approaches: long positions, short positions, and hedging techniques
+        • Portfolio diversification reduces risk while maintaining growth potential
+        • Different strategies suit different market conditions and risk tolerances
+        • Understanding market cycles is crucial for effective strategy implementation
+
+        KEY INSIGHTS:
+        • Modern investors need flexibility to adapt to changing market conditions
+        • Risk management is as important as profit generation
+        • No single strategy works in all market environments
+
+        KEYWORDS:
+        investment, diversification, hedging, risk management, portfolio
+
+        ABSOLUTELY FORBIDDEN:
+        ❌ DO NOT use Markdown headers like ## or ###
+        ❌ DO NOT use JSON format with quotes and braces
+        ❌ DO NOT add extra introductory text before BRIEF:
+        ❌ DO NOT add extra explanatory text after KEYWORDS:
+        ❌ DO NOT use "BRIEF":" with quotes - use BRIEF: only
+
+        CRITICAL FORMATTING RULES:
+        ✓ Use PLAIN TEXT only - NO Markdown, NO JSON
+        ✓ Start IMMEDIATELY with "BRIEF:" on line 1
+        ✓ Each section label must be in CAPS followed by colon (BRIEF:, not "BRIEF":)
+        ✓ BRIEF must be 1-2 sentences (shortest)
+        ✓ SUMMARY must be 3-5 sentences (medium)
+        ✓ DETAILED must be 6-10 sentences (longest - TWICE as long as SUMMARY)
+        ✓ Put content on NEW LINE after each label
+        ✓ Use bullet symbol (•) for all bullet points
+        ✓ Keywords should be comma-separated, lowercase
+        ✓ No extra commentary outside the specified sections
     """.trimIndent()
 
     fun buildMultiModalPrompt(

@@ -66,7 +66,8 @@ fun SettingsScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
-    
+    val snackbarHostState = remember { SnackbarHostState() }
+
     // Search state
     var searchQuery by remember { mutableStateOf("") }
     var isSearchExpanded by remember { mutableStateOf(false) }
@@ -102,6 +103,9 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
             contentWindowInsets = WindowInsets(0.dp),
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            },
             topBar = {
                 SimplifiedSettingsTopBar(
                     onNavigateBack = onNavigateBack,
@@ -110,7 +114,7 @@ fun SettingsScreen(
             }
         ) { paddingValues ->
         EnhancedLoadingState(
-            isLoading = uiState.error != null, // Simple loading state check
+            isLoading = false, // Settings load instantly
             hasData = true,
             modifier = Modifier
                 .fillMaxSize()
@@ -567,16 +571,24 @@ fun SettingsScreen(
         if (uiState.showClearHistoryDialog) {
             ClearHistoryDialog(
                 summaryCount = uiState.summaryCountToDelete,
-                onConfirm = { viewModel.clearHistory() },
+                onConfirm = {
+                    viewModel.clearHistory()
+                    viewModel.hideClearHistoryDialog()
+
+                    // Show undo snackbar
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = "History cleared successfully",
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Long
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            viewModel.undoClearHistory()
+                        }
+                    }
+                },
                 onDismiss = { viewModel.hideClearHistoryDialog() },
                 isClearing = uiState.isClearing
-            )
-        }
-        
-        if (uiState.clearHistorySuccess) {
-            SuccessDialog(
-                message = "History cleared successfully",
-                onDismiss = { viewModel.dismissSuccess() }
             )
         }
         

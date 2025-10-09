@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +31,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import com.example.sumup.utils.InputValidator
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun HelpAndFeedbackDialog(
@@ -37,7 +41,16 @@ fun HelpAndFeedbackDialog(
 ) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    
+
+    // Responsive width calculation based on screen size
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.95f  // Phone: 95% of screen width
+        screenWidth < 840.dp -> 600.dp                // Small tablet: Fixed 600dp
+        else -> 800.dp                                 // Large tablet: Fixed 800dp (Help content needs space)
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -55,8 +68,10 @@ fun HelpAndFeedbackDialog(
         ) {
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .widthIn(max = dialogMaxWidth)
+                    .fillMaxHeight(0.92f) // 92% of available height instead of 100%
+                    .heightIn(max = configuration.screenHeightDp.dp * 0.92f) // Safety constraint
                     .shadow(24.dp, RoundedCornerShape(28.dp)),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface
@@ -193,7 +208,7 @@ fun HelpAndFeedbackDialog(
                     
                     FAQItem(
                         question = "How do I use SumUp?",
-                        answer = "1. Enter or paste your text (up to 30,000 characters)\n2. Click 'Generate Summary'\n3. View your AI-powered summary instantly!"
+                        answer = "1. Enter or paste your text (up to ${NumberFormat.getNumberInstance(Locale.US).format(InputValidator.MAX_TEXT_LENGTH)} characters)\n2. Click 'Generate Summary'\n3. View your AI-powered summary instantly!"
                     )
                     
                     FAQItem(

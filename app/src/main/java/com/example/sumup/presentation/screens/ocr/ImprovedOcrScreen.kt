@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import java.io.File
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -59,7 +60,9 @@ fun ImprovedOcrScreen(
     var showPreview by remember { mutableStateOf(false) }
     var showGuidance by remember { mutableStateOf(true) }
     var scanMode by remember { mutableStateOf(ScanMode.AUTO) }
-    
+    var flashEnabled by remember { mutableStateOf(false) }
+    var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
+
     Scaffold(
         topBar = {
             OcrTopBar(
@@ -83,6 +86,8 @@ fun ImprovedOcrScreen(
                     CameraPreviewWithOcr(
                         modifier = Modifier.fillMaxSize(),
                         scanMode = scanMode,
+                        flashEnabled = flashEnabled,
+                        onCameraReady = { cam -> camera = cam },
                         onTextDetected = { text ->
                             if (text.isNotEmpty() && !isProcessing) {
                                 hapticManager.performHapticFeedback(HapticFeedbackType.SUCCESS)
@@ -107,9 +112,15 @@ fun ImprovedOcrScreen(
                     OcrBottomControls(
                         scanMode = scanMode,
                         showGuidance = showGuidance,
+                        flashEnabled = flashEnabled,
                         onToggleGuidance = {
                             hapticManager.performHapticFeedback(HapticFeedbackType.TICK)
                             showGuidance = !showGuidance
+                        },
+                        onToggleFlash = {
+                            hapticManager.performHapticFeedback(HapticFeedbackType.TICK)
+                            flashEnabled = !flashEnabled
+                            camera?.cameraControl?.enableTorch(flashEnabled)
                         },
                         onCapture = {
                             // Manual capture handled by camera
@@ -223,6 +234,8 @@ enum class ScanMode {
 private fun CameraPreviewWithOcr(
     modifier: Modifier = Modifier,
     scanMode: ScanMode,
+    flashEnabled: Boolean,
+    onCameraReady: (androidx.camera.core.Camera) -> Unit,
     onTextDetected: (String) -> Unit,
     onCapture: (String) -> Unit
 ) {
@@ -285,16 +298,24 @@ private fun CameraPreviewWithOcr(
                     }
                 
                 val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                
+
                 try {
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
+                    val camera = cameraProvider.bindToLifecycle(
                         lifecycleOwner,
                         cameraSelector,
                         preview,
                         imageCapture,
                         imageAnalyzer
                     )
+
+                    // Enable flash if needed
+                    if (flashEnabled) {
+                        camera.cameraControl.enableTorch(true)
+                    }
+
+                    // Notify camera is ready
+                    onCameraReady(camera)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -356,8 +377,46 @@ private fun captureImage(
     textRecognizer: com.google.mlkit.vision.text.TextRecognizer,
     onTextRecognized: (String) -> Unit
 ) {
-    // Implementation for manual capture
-    // This would capture the image and process it with OCR
+    // Create a temporary file for the captured image
+    val photoFile = File(
+        context.cacheDir,
+        "ocr_capture_${System.currentTimeMillis()}.jpg"
+    )
+
+    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+    imageCapture.takePicture(
+        outputOptions,
+        ContextCompat.getMainExecutor(context),
+        object : ImageCapture.OnImageSavedCallback {
+            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                // Process the captured image with ML Kit
+                try {
+                    val image = InputImage.fromFilePath(context, android.net.Uri.fromFile(photoFile))
+                    textRecognizer.process(image)
+                        .addOnSuccessListener { visionText ->
+                            onTextRecognized(visionText.text)
+                            // Clean up temporary file
+                            photoFile.delete()
+                        }
+                        .addOnFailureListener { e ->
+                            android.util.Log.e("OCR", "Text recognition failed", e)
+                            photoFile.delete()
+                            onTextRecognized("")
+                        }
+                } catch (e: Exception) {
+                    android.util.Log.e("OCR", "Failed to process image", e)
+                    photoFile.delete()
+                    onTextRecognized("")
+                }
+            }
+
+            override fun onError(exc: ImageCaptureException) {
+                android.util.Log.e("OCR", "Photo capture failed: ${exc.message}", exc)
+                photoFile.delete()
+            }
+        }
+    )
 }
 
 @Composable
@@ -557,7 +616,9 @@ private fun OcrScanningOverlay(
 private fun OcrBottomControls(
     scanMode: ScanMode,
     showGuidance: Boolean,
+    flashEnabled: Boolean,
     onToggleGuidance: () -> Unit,
+    onToggleFlash: () -> Unit,
     onCapture: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -622,15 +683,15 @@ private fun OcrBottomControls(
                 }
             }
             
-            // Flash toggle (placeholder)
+            // Flash toggle
             IconButton(
-                onClick = { /* TODO: Toggle flash */ },
+                onClick = onToggleFlash,
                 modifier = Modifier.size(Dimensions.minTouchTarget)
             ) {
                 Icon(
-                    Icons.Default.FlashOff,
+                    if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
                     contentDescription = "Toggle flash",
-                    tint = Color.White,
+                    tint = if (flashEnabled) MaterialTheme.colorScheme.primary else Color.White,
                     modifier = Modifier.size(Dimensions.iconSizeMd)
                 )
             }

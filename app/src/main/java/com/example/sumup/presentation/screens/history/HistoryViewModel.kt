@@ -33,6 +33,10 @@ class HistoryViewModel @Inject constructor(
     private val _filters = MutableStateFlow(SummaryFilters())
     val filters: StateFlow<SummaryFilters> = _filters.asStateFlow()
 
+    // Undo support - temporarily store deleted items
+    private var recentlyDeletedSummary: Summary? = null
+    private var recentlyDeletedSummaries: List<Summary>? = null
+
     init {
         // Analytics: Log screen view
         analyticsManager.logScreenView(com.example.sumup.analytics.AnalyticsManager.SCREEN_HISTORY)
@@ -143,6 +147,9 @@ class HistoryViewModel @Inject constructor(
 
     fun deleteSummary(summaryId: String) {
         viewModelScope.launch {
+            // Store summary for potential undo
+            recentlyDeletedSummary = summaryRepository.getSummaryById(summaryId)
+
             // Analytics: Track single summary deletion
             analyticsManager.logShare(
                 method = "delete_single",
@@ -151,6 +158,20 @@ class HistoryViewModel @Inject constructor(
             crashlyticsManager.logAction("Delete summary", "ID: $summaryId")
 
             summaryRepository.deleteSummary(summaryId)
+        }
+    }
+
+    fun undoDelete(summaryId: String) {
+        viewModelScope.launch {
+            recentlyDeletedSummary?.let { summary ->
+                if (summary.id == summaryId) {
+                    summaryRepository.saveSummary(summary)
+                    recentlyDeletedSummary = null
+
+                    // Analytics: Track undo
+                    crashlyticsManager.logAction("Undo delete", "ID: $summaryId")
+                }
+            }
         }
     }
 
@@ -172,10 +193,29 @@ class HistoryViewModel @Inject constructor(
     
     fun clearAllHistory() {
         viewModelScope.launch {
+            // Store all summaries for potential undo
+            summaryRepository.getAllSummaries().first().let { summaries ->
+                recentlyDeletedSummaries = summaries
+            }
+
             // Analytics: Track history clear
             crashlyticsManager.logAction("Clear all history", "Action confirmed")
 
             summaryRepository.deleteAllSummaries()
+        }
+    }
+
+    fun undoClearAll() {
+        viewModelScope.launch {
+            recentlyDeletedSummaries?.let { summaries ->
+                summaries.forEach { summary ->
+                    summaryRepository.saveSummary(summary)
+                }
+                recentlyDeletedSummaries = null
+
+                // Analytics: Track undo
+                crashlyticsManager.logAction("Undo clear all", "Count: ${summaries.size}")
+            }
         }
     }
 

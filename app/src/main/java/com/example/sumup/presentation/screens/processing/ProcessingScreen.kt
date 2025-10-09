@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.sumup.domain.model.ProcessingState
@@ -256,16 +257,42 @@ fun ProcessingScreen(
                     }
                     
                     Spacer(modifier = Modifier.height(24.dp))
-                    
-//                    // Simple loading indicator instead of progress bar
-//                    CircularProgressIndicator(
-//                        modifier = Modifier
-//                            .size(48.dp)
-//                            .testTag(SharedElementKeys.PROCESSING_PROGRESS),
-//                        color = MaterialTheme.colorScheme.primary,
-//                        strokeWidth = 4.dp
-//                    )
-//
+
+                    // Progress indicator with percentage
+                    Box(
+                        modifier = Modifier.size(80.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { progress.coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag(SharedElementKeys.PROCESSING_PROGRESS),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 6.dp,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+
+                        // Percentage text
+                        AnimatedContent(
+                            targetState = (progress * 100).toInt(),
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(300)) togetherWith
+                                    fadeOut(animationSpec = tween(300))
+                            },
+                            label = "progress_text"
+                        ) { percent ->
+                            Text(
+                                text = "$percent%",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     // Error state
                     AnimatedVisibility(
                         visible = showError && errorMessage != null,

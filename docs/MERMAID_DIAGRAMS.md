@@ -746,7 +746,7 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph Use Cases
+    subgraph UseCases[Use Cases]
         SUMM[SummarizeTextUseCase]
         PROC_DOC[ProcessDocumentUseCase]
         SECT[SmartSectioningUseCase]
@@ -767,7 +767,7 @@ graph TB
         METRICS[SummaryMetrics]
     end
 
-    subgraph Document Processors
+    subgraph DocumentProcessors[Document Processors]
         PDF_PROC[PdfProcessor]
         DOCX_PROC[DocxProcessor]
         TXT_PROC[TxtProcessor]
@@ -788,30 +788,30 @@ graph TB
     SUMM -.throws.-> ERROR
     PROC_DOC -.emits.-> STATE
 
-    style "Use Cases" fill:#e1f5fe
+    style UseCases fill:#e1f5fe
     style Repositories fill:#f3e5f5
     style Models fill:#e8f5e9
-    style "Document Processors" fill:#fff3e0
+    style DocumentProcessors fill:#fff3e0
 ```
 
 ### 6.3. Data Layer Components
 
 ```mermaid
 graph TB
-    subgraph Repository Impl
+    subgraph RepositoryImpl[Repository Impl]
         SUMM_IMPL[SummaryRepositoryImpl]
         PDF_IMPL[PdfRepositoryImpl]
         SET_IMPL[SettingsRepositoryImpl]
     end
 
-    subgraph Local Data
+    subgraph LocalData[Local Data]
         ROOM[Room Database]
         DAO[DAOs]
         ENTITY[Entities]
         CONV[Converters]
     end
 
-    subgraph Remote Data
+    subgraph RemoteData[Remote Data]
         API[GeminiApiService]
         ENH_API[EnhancedApiService]
         MOCK[MockApiService]
@@ -824,7 +824,7 @@ graph TB
         SEC_PROV[SecureProvider]
     end
 
-    subgraph File Processing
+    subgraph FileProcessing[File Processing]
         PDF_BOX[PDFBox Android]
         MAMMOTH[Mammoth DOCX]
         MLKIT[ML Kit OCR]
@@ -846,11 +846,11 @@ graph TB
     AKM --> SEC_PROV
     SEC_PROV --> ENC
 
-    style "Repository Impl" fill:#e3f2fd
-    style "Local Data" fill:#f3e5f5
-    style "Remote Data" fill:#e8f5e9
+    style RepositoryImpl fill:#e3f2fd
+    style LocalData fill:#f3e5f5
+    style RemoteData fill:#e8f5e9
     style Security fill:#ffebee
-    style "File Processing" fill:#fff3e0
+    style FileProcessing fill:#fff3e0
 ```
 
 ---

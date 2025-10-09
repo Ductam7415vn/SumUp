@@ -33,6 +33,9 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    // Undo support - temporarily store deleted items
+    private var recentlyDeletedSummaries: List<com.example.sumup.domain.model.Summary>? = null
+
     init {
         // Analytics: Log screen view
         analyticsManager.logScreenView(com.example.sumup.analytics.AnalyticsManager.SCREEN_SETTINGS)
@@ -198,15 +201,20 @@ class SettingsViewModel @Inject constructor(
     fun clearHistory() {
         viewModelScope.launch {
             _uiState.update { it.copy(isClearing = true) }
-            
+
             try {
+                // Store summaries for potential undo
+                summaryRepository.getAllSummaries().first().let { summaries ->
+                    recentlyDeletedSummaries = summaries
+                }
+
                 // Clear only summaries, keep settings intact
                 summaryRepository.deleteAllSummaries()
-                
+
                 // Reload stats after clearing
                 loadUserStats()
-                
-                _uiState.update { 
+
+                _uiState.update {
                     it.copy(
                         isClearing = false,
                         showClearHistoryDialog = false,
@@ -216,7 +224,7 @@ class SettingsViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         isClearing = false,
                         error = "Failed to clear history: ${e.message}"
@@ -240,6 +248,29 @@ class SettingsViewModel @Inject constructor(
     
     fun dismissSuccess() {
         _uiState.update { it.copy(clearHistorySuccess = false) }
+    }
+
+    fun undoClearHistory() {
+        viewModelScope.launch {
+            recentlyDeletedSummaries?.let { summaries ->
+                try {
+                    summaries.forEach { summary ->
+                        summaryRepository.saveSummary(summary)
+                    }
+                    recentlyDeletedSummaries = null
+
+                    // Reload stats
+                    loadUserStats()
+
+                    // Analytics: Track undo
+                    crashlyticsManager.logAction("Undo clear history", "Count: ${summaries.size}")
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(error = "Failed to restore history: ${e.message}")
+                    }
+                }
+            }
+        }
     }
     
     fun dismissError() {

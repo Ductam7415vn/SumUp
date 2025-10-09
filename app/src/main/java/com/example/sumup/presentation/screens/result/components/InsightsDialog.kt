@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,11 +35,24 @@ fun InsightsDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Responsive width calculation
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.92f  // Phone: 92%
+        screenWidth < 840.dp -> 580.dp                // Small tablet
+        else -> 700.dp                                 // Large tablet (Insights need more space)
+    }
+    val dialogMaxHeight = screenHeight * 0.85f        // 85% of screen height
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.85f),
+                .widthIn(max = dialogMaxWidth)
+                .fillMaxHeight(0.85f)
+                .heightIn(max = dialogMaxHeight),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface

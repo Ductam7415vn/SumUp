@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +46,15 @@ fun ExportDialog(
     exportError: String? = null
 ) {
     if (isVisible) {
+        // Responsive width calculation
+        val configuration = LocalConfiguration.current
+        val screenWidth = configuration.screenWidthDp.dp
+        val dialogMaxWidth = when {
+            screenWidth < 600.dp -> screenWidth * 0.9f   // Phone: 90%
+            screenWidth < 840.dp -> 450.dp               // Small tablet
+            else -> 550.dp                                // Large tablet
+        }
+
         Dialog(onDismissRequest = onDismiss) {
             AnimatedVisibility(
                 visible = true,
@@ -54,6 +64,7 @@ fun ExportDialog(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .widthIn(max = dialogMaxWidth)
                         .padding(16.dp),
                     shape = RoundedCornerShape(24.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)

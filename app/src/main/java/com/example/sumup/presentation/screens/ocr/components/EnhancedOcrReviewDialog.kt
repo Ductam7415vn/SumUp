@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,10 +43,19 @@ fun EnhancedOcrReviewDialog(
     val hapticFeedback = LocalHapticFeedback.current
     var editedText by remember { mutableStateOf(detectedText) }
     var isEditing by remember { mutableStateOf(false) }
-    
+
     val wordCount = editedText.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
     val charCount = editedText.length
-    
+
+    // Responsive width calculation based on screen size
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.92f  // Phone: 92% of screen width
+        screenWidth < 840.dp -> 500.dp                // Small tablet: Fixed 500dp
+        else -> 650.dp                                 // Large tablet: Fixed 650dp (OCR needs more space)
+    }
+
     // Animated values
     val confidenceProgress by animateFloatAsState(
         targetValue = confidence,
@@ -74,6 +84,7 @@ fun EnhancedOcrReviewDialog(
             Card(
                 modifier = modifier
                     .fillMaxWidth()
+                    .widthIn(max = dialogMaxWidth)
                     .padding(24.dp),
                 shape = RoundedCornerShape(28.dp),
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),

@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -112,9 +113,19 @@ private fun EditProfileContent(
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
+    // Responsive width calculation
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.9f   // Phone: 90%
+        screenWidth < 840.dp -> 460.dp                // Small tablet
+        else -> 540.dp                                 // Large tablet
+    }
+
     Surface(
         modifier = Modifier
-            .fillMaxWidth(0.9f)
+            .fillMaxWidth()
+            .widthIn(max = dialogMaxWidth)
             .wrapContentHeight(),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,

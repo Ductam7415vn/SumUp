@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,11 +32,20 @@ fun ClearHistoryDialog(
     isClearing: Boolean = false
 ) {
     var showContent by remember { mutableStateOf(false) }
-    
+
+    // Responsive width calculation
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogMaxWidth = when {
+        screenWidth < 600.dp -> screenWidth * 0.9f   // Phone: 90%
+        screenWidth < 840.dp -> 420.dp                // Small tablet
+        else -> 500.dp                                 // Large tablet
+    }
+
     LaunchedEffect(Unit) {
         showContent = true
     }
-    
+
     Dialog(
         onDismissRequest = {
             if (!isClearing) onDismiss()
@@ -58,6 +68,7 @@ fun ClearHistoryDialog(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .widthIn(max = dialogMaxWidth)
                     .padding(16.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(

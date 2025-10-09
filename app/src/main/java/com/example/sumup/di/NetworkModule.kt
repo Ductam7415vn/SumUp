@@ -64,7 +64,26 @@ object NetworkModule {
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .addInterceptor(chuckerInterceptor)
-            
+
+        // Add custom DNS resolver to fix "Unable to resolve host" on some networks
+        builder.dns(object : okhttp3.Dns {
+            override fun lookup(hostname: String): List<java.net.InetAddress> {
+                return try {
+                    // Try default DNS first
+                    okhttp3.Dns.SYSTEM.lookup(hostname)
+                } catch (e: java.net.UnknownHostException) {
+                    // Fallback to Google Public DNS (8.8.8.8, 8.8.4.4)
+                    android.util.Log.w("NetworkModule", "DNS fallback for $hostname: ${e.message}")
+                    try {
+                        java.net.InetAddress.getAllByName(hostname).toList()
+                    } catch (fallbackError: Exception) {
+                        android.util.Log.e("NetworkModule", "DNS fallback also failed: ${fallbackError.message}")
+                        throw e // Rethrow original exception
+                    }
+                }
+            }
+        })
+
         // Add Certificate Pinning for production
         if (!BuildConfig.DEBUG) {
             val certificatePinner = okhttp3.CertificatePinner.Builder()
